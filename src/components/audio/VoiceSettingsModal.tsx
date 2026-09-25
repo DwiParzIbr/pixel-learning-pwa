@@ -26,7 +26,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
       const currentLang = voiceEngine.getLanguage();
       setSelectedLang(currentLang);
       setSelectedPersonaId(voiceEngine.getActivePersonaId());
-      setSelectedVoiceURI(voiceEngine.getSelectedVoiceURI() || '');
+      setSelectedVoiceURI(voiceEngine.getSelectedVoiceURI(currentLang) || '');
       loadSystemVoices(currentLang);
     }
   }, [isOpen]);
@@ -42,6 +42,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
     soundEngine.playSfx('click');
     setSelectedLang(lang);
     loadSystemVoices(lang);
+    setSelectedVoiceURI(voiceEngine.getSelectedVoiceURI(lang) || '');
     const personas = voiceEngine.getNarratorPersonas(lang);
     if (!personas.some(p => p.id === selectedPersonaId)) {
       setSelectedPersonaId(personas[0].id);
@@ -79,7 +80,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
     soundEngine.playSfx('celebrate');
     voiceEngine.setLanguage(selectedLang);
     voiceEngine.setPersona(selectedPersonaId);
-    voiceEngine.setSelectedVoiceURI(selectedVoiceURI || null);
+    voiceEngine.setSelectedVoiceURI(selectedVoiceURI || null, selectedLang);
     onClose();
   };
 
@@ -309,25 +310,38 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
           </div>
 
           {/* SECTION 3: SYSTEM VOICE OVERRIDE IF AVAILABLE */}
-          {systemVoices.length > 1 && (
-            <div className="pt-2 border-t border-slate-200">
-              <label className="block text-[11px] font-black text-slate-600 mb-1">
-                ⚙️ {selectedLang === 'en' ? 'Device System Voice (Optional):' : 'Suara Sistem Perangkat (Opsional):'}
-              </label>
+          <div className="pt-2 border-t border-slate-200">
+            <label className="block text-[11px] font-black text-slate-600 mb-1">
+              ⚙️ {selectedLang === 'en' ? 'Device System Voice:' : 'Suara Sistem Perangkat:'}
+            </label>
+            {systemVoices.length > 0 ? (
               <select
                 value={selectedVoiceURI}
                 onChange={(e) => setSelectedVoiceURI(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-purple-300"
               >
-                <option value="">{selectedLang === 'en' ? 'Automatic (Best Quality)' : 'Otomatis (Rekomendasi Terbaik)'}</option>
+                <option value="">
+                  {selectedLang === 'en'
+                    ? 'Otomatis (Sistem Suara Bahasa Inggris)'
+                    : 'Otomatis (Sistem Suara Asli Bahasa Indonesia id-ID)'}
+                </option>
                 {systemVoices.map((v) => (
                   <option key={v.voiceURI} value={v.voiceURI}>
                     {v.name} ({v.lang})
                   </option>
                 ))}
               </select>
-            </div>
-          )}
+            ) : (
+              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center gap-2">
+                <span>✅</span>
+                <span>
+                  {selectedLang === 'en'
+                    ? 'Sistem Suara Bahasa Inggris Aktif'
+                    : 'Sistem Suara Asli Bahasa Indonesia (id-ID) Aktif'}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Save Button */}

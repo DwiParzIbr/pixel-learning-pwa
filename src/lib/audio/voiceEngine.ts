@@ -222,6 +222,79 @@ export const ENGLISH_NARRATOR_PERSONAS: VoicePersona[] = [
 export const NARRATOR_PERSONAS = INDONESIAN_NARRATOR_PERSONAS;
 export const PRESET_VOICES = INDONESIAN_NARRATOR_PERSONAS;
 
+// Helper: Identify if a voice is an authentic Indonesian speech synthesis voice
+export function isIndonesianVoice(v: SpeechSynthesisVoice | null | undefined): boolean {
+  if (!v) return false;
+  const lang = (v.lang || '').toLowerCase().replace(/_/g, '-');
+  const name = (v.name || '').toLowerCase();
+  const uri = (v.voiceURI || '').toLowerCase();
+
+  // If voice is explicitly marked as another non-Indonesian language, exclude it
+  if (
+    lang.startsWith('en') ||
+    lang.startsWith('ja') ||
+    lang.startsWith('zh') ||
+    lang.startsWith('ko') ||
+    lang.startsWith('fr') ||
+    lang.startsWith('de') ||
+    lang.startsWith('es') ||
+    lang.startsWith('hi') ||
+    lang.startsWith('ru')
+  ) {
+    // Only accept if the name explicitly indicates Indonesian
+    return name.includes('indonesia') || name.includes('bahasa indonesia');
+  }
+
+  // Indonesian language codes: id, id-id, id-ID, in, in-id, in_ID
+  if (
+    lang === 'id' ||
+    lang.startsWith('id-') ||
+    lang === 'in' ||
+    lang.startsWith('in-') ||
+    lang.startsWith('ind')
+  ) {
+    return true;
+  }
+
+  // Voice names and URIs containing Indonesian keywords
+  if (
+    name.includes('indonesia') ||
+    name.includes('bahasa') ||
+    name.includes('damayanti') ||
+    name.includes('gadis') ||
+    name.includes('ardi') ||
+    name.includes('andika') ||
+    uri.includes('indonesia') ||
+    uri.includes('id-id') ||
+    uri.includes('id_id')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+// Helper: Identify if a voice is an English speech synthesis voice
+export function isEnglishVoice(v: SpeechSynthesisVoice | null | undefined): boolean {
+  if (!v) return false;
+  const lang = (v.lang || '').toLowerCase().replace(/_/g, '-');
+  return lang.startsWith('en');
+}
+
+// Rank Indonesian voices by quality (Natural/Online > Google > Damayanti/Siri > Others)
+function rankIndonesianVoice(v: SpeechSynthesisVoice): number {
+  let score = 0;
+  const name = v.name.toLowerCase();
+  const lang = (v.lang || '').toLowerCase().replace(/_/g, '-');
+  if (name.includes('natural') || name.includes('online')) score += 50;
+  if (name.includes('google')) score += 40;
+  if (name.includes('damayanti') || name.includes('siri')) score += 35;
+  if (name.includes('gadis') || name.includes('ardi')) score += 30;
+  if (lang === 'id-id' || lang === 'id') score += 20;
+  if (v.default) score += 5;
+  return score;
+}
+
 class VoiceEngine {
   private synth: SpeechSynthesis | null = null;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
@@ -248,9 +321,11 @@ class VoiceEngine {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       this.synth = window.speechSynthesis;
       this.loadVoices();
-      if (this.synth.onvoiceschanged !== undefined) {
-        this.synth.onvoiceschanged = () => this.loadVoices();
+
+      if (this.synth.addEventListener) {
+        this.synth.addEventListener('voiceschanged', () => this.loadVoices());
       }
+      this.synth.onvoiceschanged = () => this.loadVoices();
 
       try {
         const savedLang = localStorage.getItem('pixel_learning_voice_lang') as VoiceLanguage | null;
@@ -264,9 +339,12 @@ class VoiceEngine {
         if (savedPersona) {
           this.activeNarratorPersonaId = savedPersona;
         }
-        const savedVoiceURI = localStorage.getItem('pixel_learning_voice_uri');
+
+        const savedVoiceURI = localStorage.getItem(`pixel_learning_voice_uri_${this.activeLanguage}`);
         if (savedVoiceURI) {
           this.selectedVoiceURI = savedVoiceURI;
+        } else {
+          this.selectedVoiceURI = null;
         }
       } catch {
         // localStorage not available
@@ -279,24 +357,24 @@ class VoiceEngine {
     const voices = this.synth.getVoices();
     if (!voices || voices.length === 0) return;
 
-    // 1. Indonesian Voices
-    const idVoices = voices.filter(
-      v => v.lang.toLowerCase().includes('id') || v.lang.toLowerCase().includes('indonesia')
-    );
-    const femaleNameRegex = /(female|wanita|gadis|damayanti|siti|putri|zira|susan|victoria|karen|samantha|kyoko|yuna)/i;
-    const maleNameRegex = /(male|pria|laki|andika|budi|arva|david|daniel|alex|george|fred)/i;
+    // 1. Indonesian Voices - filter and rank authentic Indonesian voices
+    const idVoices = voices
+      .filter(isIndonesianVoice)
+      .sort((a, b) => rankIndonesianVoice(b) - rankIndonesianVoice(a));
 
-    this.idFemaleVoice = idVoices.find(v => femaleNameRegex.test(v.name)) || null;
-    this.idMaleVoice = idVoices.find(v => maleNameRegex.test(v.name)) || null;
-    this.indonesianVoice = idVoices[0] || voices[0] || null;
+    const femaleNameRegex = /(female|wanita|perempuan|gadis|damayanti|siti|putri|ayu)/i;
+    const maleNameRegex = /(male|pria|laki|andika|budi|arva|ardi|bagus)/i;
+
+    this.idFemaleVoice = idVoices.find(v => femaleNameRegex.test(v.name)) || idVoices[0] || null;
+    this.idMaleVoice = idVoices.find(v => maleNameRegex.test(v.name)) || idVoices.find(v => v !== this.idFemaleVoice) || idVoices[0] || null;
+    // CRITICAL: NEVER fall back to voices[0] (which is typically English!)
+    this.indonesianVoice = idVoices[0] || null;
 
     // 2. English Voices
-    const enVoices = voices.filter(
-      v => v.lang.toLowerCase().startsWith('en')
-    );
-    this.enFemaleVoice = enVoices.find(v => femaleNameRegex.test(v.name)) || enVoices.find(v => /(samantha|karen|victoria|zira|tessa|moira|fiona)/i.test(v.name)) || null;
-    this.enMaleVoice = enVoices.find(v => maleNameRegex.test(v.name)) || enVoices.find(v => /(daniel|alex|fred|david|oliver|tom)/i.test(v.name)) || null;
-    this.enVoice = enVoices.find(v => v.lang.toLowerCase() === 'en-us' || v.lang.toLowerCase() === 'en-gb') || enVoices[0] || null;
+    const enVoices = voices.filter(isEnglishVoice);
+    this.enFemaleVoice = enVoices.find(v => /(female|samantha|karen|victoria|zira|tessa|moira|fiona|jenny|aria)/i.test(v.name)) || enVoices[0] || null;
+    this.enMaleVoice = enVoices.find(v => /(male|daniel|alex|fred|david|oliver|tom|guy|ryan)/i.test(v.name)) || enVoices.find(v => v !== this.enFemaleVoice) || enVoices[0] || null;
+    this.enVoice = enVoices.find(v => (v.lang || '').toLowerCase() === 'en-us' || (v.lang || '').toLowerCase() === 'en-gb') || enVoices[0] || null;
   }
 
   public getLanguage(): VoiceLanguage {
@@ -307,6 +385,8 @@ class VoiceEngine {
     this.activeLanguage = lang;
     try {
       localStorage.setItem('pixel_learning_voice_lang', lang);
+      const savedVoiceURI = localStorage.getItem(`pixel_learning_voice_uri_${lang}`);
+      this.selectedVoiceURI = savedVoiceURI || null;
     } catch {
       // ignore
     }
@@ -366,23 +446,31 @@ class VoiceEngine {
     const voices = this.synth.getVoices();
     const targetLang = lang || this.activeLanguage;
     if (targetLang === 'en') {
-      const en = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
-      return en.length > 0 ? en : voices;
+      return voices.filter(isEnglishVoice);
     }
-    const id = voices.filter(v => v.lang.toLowerCase().includes('id'));
-    return id.length > 0 ? id : voices;
+    return voices.filter(isIndonesianVoice);
   }
 
-  public getSelectedVoiceURI(): string | null {
+  public getSelectedVoiceURI(lang?: VoiceLanguage): string | null {
+    const targetLang = lang || this.activeLanguage;
+    try {
+      const uri = localStorage.getItem(`pixel_learning_voice_uri_${targetLang}`);
+      if (uri) return uri;
+    } catch {
+      // ignore
+    }
     return this.selectedVoiceURI;
   }
 
-  public setSelectedVoiceURI(uri: string | null) {
+  public setSelectedVoiceURI(uri: string | null, lang?: VoiceLanguage) {
+    const targetLang = lang || this.activeLanguage;
     this.selectedVoiceURI = uri;
     try {
       if (uri) {
+        localStorage.setItem(`pixel_learning_voice_uri_${targetLang}`, uri);
         localStorage.setItem('pixel_learning_voice_uri', uri);
       } else {
+        localStorage.removeItem(`pixel_learning_voice_uri_${targetLang}`);
         localStorage.removeItem('pixel_learning_voice_uri');
       }
     } catch {
@@ -429,7 +517,7 @@ class VoiceEngine {
 
   public speak(text: string, options: VoiceOptions = {}): Promise<void> {
     return new Promise((resolve) => {
-      if (!this.synth || typeof window !== 'undefined' && !('speechSynthesis' in window)) {
+      if (!this.synth || (typeof window !== 'undefined' && !('speechSynthesis' in window))) {
         options.onStart?.();
         setTimeout(() => {
           options.onEnd?.();
@@ -440,12 +528,30 @@ class VoiceEngine {
 
       this.stop();
 
-      const targetLang: VoiceLanguage = (options.lang === 'en' || options.lang === 'id')
-        ? options.lang
-        : this.activeLanguage;
+      // Ensure fresh voice cache
+      this.loadVoices();
 
-      // Translate text to natural English if in English mode
-      const spokenText = targetLang === 'en' ? translateStoryToEnglish(text) : text;
+      const targetLang: VoiceLanguage =
+        options.lang === 'en' || options.lang === 'id' ? options.lang : this.activeLanguage;
+
+      // Clean & normalize spoken text according to target language
+      let spokenText = text.trim();
+
+      if (targetLang === 'en') {
+        spokenText = translateStoryToEnglish(spokenText);
+      } else {
+        // Natural Indonesian speech preparation:
+        // Convert arithmetic symbols into natural Indonesian spoken words
+        spokenText = spokenText
+          .replace(/(\d+)\s*[-−]\s*(\d+)/g, '$1 dikurang $2')
+          .replace(/(\d+)\s*\+\s*(\d+)/g, '$1 ditambah $2')
+          .replace(/(\d+)\s*[x*×]\s*(\d+)/g, '$1 dikali $2')
+          .replace(/(\d+)\s*[:/÷]\s*(\d+)/g, '$1 dibagi $2')
+          .replace(/\s*=\s*/g, ' sama dengan ')
+          .replace(/["“”«»]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
 
       const utterance = new SpeechSynthesisUtterance(spokenText);
       this.currentUtterance = utterance;
@@ -453,20 +559,23 @@ class VoiceEngine {
       const speaker = (options.speaker || 'narrator').toLowerCase();
       const voices = this.synth.getVoices();
 
-      // Distinct voice selection per character and language
       let chosenVoice: SpeechSynthesisVoice | null = null;
 
       if (targetLang === 'en') {
         if (speaker === 'siti') {
-          chosenVoice = this.enFemaleVoice || this.enVoice || voices[0];
+          chosenVoice = this.enFemaleVoice || this.enVoice;
         } else if (speaker === 'budi') {
-          chosenVoice = this.enMaleVoice || this.enVoice || voices[0];
+          chosenVoice = this.enMaleVoice || this.enVoice;
         } else if (this.selectedVoiceURI && speaker === 'narrator') {
-          chosenVoice = voices.find(v => v.voiceURI === this.selectedVoiceURI) || this.enVoice || voices[0];
+          const matched = voices.find(v => v.voiceURI === this.selectedVoiceURI);
+          chosenVoice = (matched && isEnglishVoice(matched)) ? matched : this.enVoice;
         } else {
-          chosenVoice = this.enVoice || (voices.length > 0 ? voices[0] : null);
+          chosenVoice = this.enVoice;
         }
         utterance.lang = 'en-US';
+        if (chosenVoice) {
+          utterance.voice = chosenVoice;
+        }
       } else {
         // Indonesian mode
         if (speaker === 'siti') {
@@ -474,15 +583,19 @@ class VoiceEngine {
         } else if (speaker === 'budi') {
           chosenVoice = this.idMaleVoice || this.indonesianVoice;
         } else if (this.selectedVoiceURI && (speaker === 'narrator' || !options.speaker)) {
-          chosenVoice = voices.find(v => v.voiceURI === this.selectedVoiceURI) || this.indonesianVoice;
+          const matched = voices.find(v => v.voiceURI === this.selectedVoiceURI);
+          chosenVoice = (matched && isIndonesianVoice(matched)) ? matched : this.indonesianVoice;
         } else {
-          chosenVoice = this.indonesianVoice || (voices.length > 0 ? voices[0] : null);
+          chosenVoice = this.indonesianVoice;
         }
         utterance.lang = 'id-ID';
-      }
 
-      if (chosenVoice) {
-        utterance.voice = chosenVoice;
+        // CRITICAL FIX: Only assign utterance.voice if chosenVoice is an authentic Indonesian voice!
+        // NEVER assign an English voice (Alex/Samantha/David) to an Indonesian utterance,
+        // because doing so forces the browser to pronounce Indonesian text using English phonetics!
+        if (chosenVoice && isIndonesianVoice(chosenVoice)) {
+          utterance.voice = chosenVoice;
+        }
       }
 
       // Acoustic differentiation (Pitch & Rate)
@@ -490,10 +603,10 @@ class VoiceEngine {
       let targetRate = 1.0;
 
       if (speaker === 'budi') {
-        targetPitch = targetLang === 'en' ? 1.40 : 1.45;
-        targetRate = targetLang === 'en' ? 1.02 : 1.05;
+        targetPitch = targetLang === 'en' ? 1.35 : 1.30;
+        targetRate = targetLang === 'en' ? 1.02 : 1.02;
       } else if (speaker === 'siti') {
-        targetPitch = targetLang === 'en' ? 1.70 : 1.75;
+        targetPitch = targetLang === 'en' ? 1.65 : 1.55;
         targetRate = targetLang === 'en' ? 0.96 : 0.96;
       } else if (speaker === 'bibo' || speaker === 'robot') {
         targetPitch = 1.90;

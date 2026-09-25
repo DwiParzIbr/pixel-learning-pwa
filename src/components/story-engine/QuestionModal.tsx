@@ -58,9 +58,10 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         colors: ['#fbbf24', '#38bdf8', '#4ade80', '#f472b6', '#a855f7'],
       });
 
+      const currentLang = voiceEngine.getLanguage();
       const congratulation = `Hebat sekali! Jawabanmu benar! ${question.explanation}`;
       setFeedbackMessage(congratulation);
-      voiceEngine.speak(congratulation, { speaker: 'narrator' });
+      voiceEngine.speak(congratulation, { speaker: 'narrator', lang: currentLang });
 
       const res = onAnswerSubmit(true, hintUsed, currentAttempts, false);
       setRewardData(res);
@@ -68,20 +69,21 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
       setFeedbackState('wrong');
       soundEngine.playSfx('wrong_gentle');
 
+      const currentLang = voiceEngine.getLanguage();
       if (currentAttempts === 1) {
         const msg = 'Belum tepat. Tidak apa-apa, yuk coba hitung lagi ya!';
         setFeedbackMessage(msg);
-        voiceEngine.speak(msg, { speaker: 'budi' });
+        voiceEngine.speak(msg, { speaker: 'budi', lang: currentLang });
       } else if (currentAttempts === 2) {
         setShowHint(true);
         setHintUsed(true);
         const msg = 'Masih belum tepat. Buka Petunjuk di bawah untuk membantu kamu!';
         setFeedbackMessage(msg);
-        voiceEngine.speak(msg, { speaker: 'siti' });
+        voiceEngine.speak(msg, { speaker: 'siti', lang: currentLang });
       } else {
         const msg = 'Yuk coba kita lihat Cerita Remedial singkat bersama Budi!';
         setFeedbackMessage(msg);
-        voiceEngine.speak(msg, { speaker: 'narrator' });
+        voiceEngine.speak(msg, { speaker: 'narrator', lang: currentLang });
       }
 
       onAnswerSubmit(false, hintUsed, currentAttempts, false);

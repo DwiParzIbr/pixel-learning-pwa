@@ -171,6 +171,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
       setActiveSpeaker('narrator');
       voiceEngine.speak(textToSpeak, {
         speaker: 'narrator',
+        lang: voiceLang,
         onEnd: () => {
           setActiveSpeaker(null);
 
@@ -183,6 +184,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
 
               voiceEngine.speak(currentScene.dialogue!.text, {
                 speaker: charSpeaker,
+                lang: voiceLang,
                 onEnd: () => {
                   setActiveSpeaker(null);
                   advanceToNext();
@@ -223,7 +225,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
       setActiveSpeaker(null);
       voiceEngine.stop();
     };
-  }, [currentSceneIndex, isRemedialMode, isMuted, isPaused, showQuestion, scenes.length, currentScene]);
+  }, [currentSceneIndex, isRemedialMode, isMuted, isPaused, showQuestion, scenes.length, currentScene, voiceLang, storyRestartNonce]);
 
   const handleRestartFullStory = () => {
     soundEngine.playSfx('click');
@@ -265,6 +267,14 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
   const toggleBgm = () => {
     const active = soundEngine.toggleBgm();
     setIsBgmActive(active);
+  };
+
+  const toggleLanguage = () => {
+    const nextLang: 'id' | 'en' = voiceLang === 'id' ? 'en' : 'id';
+    soundEngine.playSfx('click');
+    voiceEngine.stop();
+    setVoiceLang(nextLang);
+    voiceEngine.setLanguage(nextLang);
   };
 
   const handleAnswerSubmit = (
@@ -348,15 +358,24 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
 
         {/* Playful Top Controls */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Quick Language Toggle Button: 🇮🇩 ID / 🇬🇧 EN */}
+          <button
+            onClick={toggleLanguage}
+            title={voiceLang === 'id' ? 'Ganti ke Bahasa Inggris (English)' : 'Ganti ke Bahasa Indonesia'}
+            className="candy-btn candy-btn-yellow px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl sm:rounded-2xl font-black flex items-center gap-1 text-xs active:scale-95 shadow-xs"
+          >
+            <span className="text-sm sm:text-base leading-none">{voiceLang === 'en' ? '🇬🇧' : '🇮🇩'}</span>
+            <span className="text-[11px] font-black hidden xs:inline uppercase">
+              {voiceLang === 'en' ? 'EN' : 'ID'}
+            </span>
+          </button>
+
           <button
             onClick={() => setShowVoiceModal(true)}
-            title="Pilih Suara Karakter & Narasi"
-            className="candy-btn candy-btn-purple p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center text-xs active:scale-95 relative"
+            title="Pilih Karakter & Pengaturan Suara"
+            className="candy-btn candy-btn-purple p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center text-xs active:scale-95"
           >
             <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="absolute -top-1 -right-1 text-[9px] font-black bg-white px-1 py-0.2 rounded-full border border-purple-300 text-purple-900 shadow-xs leading-tight">
-              {voiceLang === 'en' ? '🇬🇧' : '🇮🇩'}
-            </span>
           </button>
 
           <button
@@ -471,18 +490,24 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                 </div>
 
                 {/* Scene Narration */}
-                <p
+                <div
                   className={`text-base sm:text-2xl font-black leading-relaxed transition-all duration-300 ${
                     activeSpeaker === 'narrator' ? 'text-slate-900' : 'text-slate-600'
                   }`}
                 >
-                  {currentScene.narration}
-                  {voiceLang === 'en' && (
-                    <span className="block text-xs sm:text-base font-bold text-indigo-700 italic mt-1 bg-indigo-50/70 px-2.5 py-1 rounded-xl border border-indigo-200/60">
-                      🇬🇧 &ldquo;{translateStoryToEnglish(currentScene.narration)}&rdquo;
-                    </span>
+                  {voiceLang === 'en' ? (
+                    <>
+                      <p className="text-indigo-950 font-black">
+                        {translateStoryToEnglish(currentScene.narration)}
+                      </p>
+                      <p className="text-xs sm:text-sm font-bold text-slate-500 mt-1 italic">
+                        🇮🇩 &ldquo;{currentScene.narration}&rdquo;
+                      </p>
+                    </>
+                  ) : (
+                    <p>{currentScene.narration}</p>
                   )}
-                </p>
+                </div>
 
                 {/* Character Dialogue Box */}
                 {currentScene.dialogue && (
@@ -500,13 +525,21 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                     </span>
                     <div className="flex-1 min-w-0">
                       <span className="text-[11px] sm:text-xs uppercase tracking-wider block font-bold mb-0.5 text-slate-400">
-                        {currentScene.dialogue.speaker === 'siti' ? 'Siti Menjawab:' : 'Budi Berkata:'}
+                        {currentScene.dialogue.speaker === 'siti'
+                          ? (voiceLang === 'en' ? 'Siti Replies:' : 'Siti Menjawab:')
+                          : (voiceLang === 'en' ? 'Budi Says:' : 'Budi Berkata:')}
                       </span>
-                      <span className="leading-snug">&ldquo;{currentScene.dialogue.text}&rdquo;</span>
-                      {voiceLang === 'en' && (
-                        <span className="block text-xs sm:text-sm font-bold text-slate-500 italic mt-0.5">
-                          🇬🇧 &ldquo;{translateStoryToEnglish(currentScene.dialogue.text)}&rdquo;
-                        </span>
+                      {voiceLang === 'en' ? (
+                        <>
+                          <span className="leading-snug text-indigo-950 block">
+                            &ldquo;{translateStoryToEnglish(currentScene.dialogue.text)}&rdquo;
+                          </span>
+                          <span className="block text-xs sm:text-sm font-bold text-slate-500 italic mt-0.5">
+                            🇮🇩 &ldquo;{currentScene.dialogue.text}&rdquo;
+                          </span>
+                        </>
+                      ) : (
+                        <span className="leading-snug">&ldquo;{currentScene.dialogue.text}&rdquo;</span>
                       )}
                     </div>
                   </div>
