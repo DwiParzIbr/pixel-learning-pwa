@@ -32,6 +32,7 @@ interface CharacterEntity {
   emotion: CharacterEmotion;
   speechBubble?: string;
   stepCycle: number;
+  emotionTimer?: number;
 }
 
 interface ObjectEntity {
@@ -313,7 +314,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       ctx.imageSmoothingEnabled = false;
       drawEnvironment(ctx, w, h, currentScene.background, state.tick);
 
-      // Character Movement Physics
+      // Character Movement Physics & Emotion State
       state.characters.forEach(char => {
         if (char.x !== char.targetX) {
           const diff = char.targetX - char.x;
@@ -329,6 +330,17 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
           }
         } else {
           char.isWalking = false;
+        }
+
+        // Celebrate settles into gentle happy stance after ~2.5 seconds
+        if (char.emotion === 'celebrate') {
+          char.emotionTimer = (char.emotionTimer || 0) + 1;
+          if (char.emotionTimer > 150) {
+            char.emotion = 'happy';
+            char.emotionTimer = 0;
+          }
+        } else {
+          char.emotionTimer = 0;
         }
       });
 
@@ -793,14 +805,31 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
   let armSwing = 0;
 
   if (char.isWalking) {
-    stepOffset = Math.sin(char.stepCycle) * 10;
-    armSwing = Math.cos(char.stepCycle) * 8;
-    bobY = Math.abs(Math.sin(char.stepCycle)) * 6;
-  } else if (char.emotion === 'celebrate' || char.emotion === 'happy') {
-    bobY = Math.abs(Math.sin(tick * 0.25)) * 16;
-    armSwing = -14;
-  } else if (char.emotion === 'idle') {
-    bobY = Math.sin(tick * 0.08) * 3;
+    stepOffset = Math.sin(char.stepCycle) * 7;
+    armSwing = Math.cos(char.stepCycle) * 6;
+    bobY = Math.abs(Math.sin(char.stepCycle)) * 3;
+  } else if (char.emotion === 'celebrate') {
+    // Gentle cute hops for celebration (smooth 6px, calm rhythm)
+    bobY = Math.max(0, Math.sin(tick * 0.09)) * 6;
+    armSwing = -11 + Math.sin(tick * 0.09) * 2;
+  } else if (char.emotion === 'happy') {
+    // Natural cheerful stance: arms relaxed, calm breathing, no shaking!
+    bobY = Math.sin(tick * 0.05) * 2;
+    armSwing = Math.sin(tick * 0.05) * 1.5;
+  } else if (char.emotion === 'talk') {
+    // Gentle speaking bob
+    bobY = Math.sin(tick * 0.07) * 2;
+    armSwing = Math.sin(tick * 0.07) * 3;
+  } else if (char.emotion === 'think') {
+    bobY = Math.sin(tick * 0.04) * 1.5;
+    armSwing = -2;
+  } else if (char.emotion === 'surprised') {
+    bobY = Math.max(0, Math.sin(tick * 0.06)) * 3;
+    armSwing = -6;
+  } else {
+    // idle / default: smooth, calm resting pose
+    bobY = Math.sin(tick * 0.04) * 1.8;
+    armSwing = 0;
   }
 
   const baseCy = cy - bobY;
@@ -862,9 +891,9 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
   }
 
   if (char.emotion === 'talk') {
-    const mouthOpen = Math.sin(tick * 0.4) > 0;
+    const mouthOpen = Math.sin(tick * 0.2) > 0;
     ctx.fillStyle = '#dc2626';
-    ctx.fillRect(cx - 4, baseCy - 18, 8, mouthOpen ? 7 : 3);
+    ctx.fillRect(cx - 4, baseCy - 18, 8, mouthOpen ? 6 : 3);
   } else if (char.emotion === 'celebrate' || char.emotion === 'happy') {
     ctx.fillStyle = '#dc2626';
     ctx.fillRect(cx - 5, baseCy - 18, 10, 5);
