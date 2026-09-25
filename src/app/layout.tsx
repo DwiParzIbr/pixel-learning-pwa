@@ -16,7 +16,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#0f172a',
+  themeColor: '#38bdf8',
 };
 
 export default function RootLayout({
@@ -47,7 +47,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-slate-950 text-slate-100 antialiased min-h-screen selection:bg-amber-400 selection:text-slate-950">
+      <body className="bg-sky-100 text-slate-800 antialiased min-h-screen selection:bg-amber-400 selection:text-slate-950 overflow-x-hidden">
         {children}
       </body>
     </html>

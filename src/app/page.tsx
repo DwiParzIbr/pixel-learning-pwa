@@ -41,7 +41,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white font-fun">
+    <main className="min-h-screen bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100 text-slate-800 font-fun">
       {currentMode === 'map' && (
         <WorldMap
           onSelectLesson={handleSelectLesson}

@@ -16,6 +16,7 @@ import {
   Shield,
   Plus,
   Compass,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface WorldMapProps {
@@ -48,7 +49,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     const isUnlocked = activeChild.xp >= level.requiredXp;
     if (!isUnlocked) {
       soundEngine.playSfx('wrong_gentle');
-      alert(`Level ini masih terkunci! Butuh ${level.requiredXp} XP (XP kamu saat ini: ${activeChild.xp} XP). Selesaikan petualangan sebelumnya yuk!`);
+      alert(`Level ini masih terkunci! Butuh ${level.requiredXp} XP (XP kamu saat ini: ${activeChild.xp} XP). Selesaikan level sebelumnya dulu ya!`);
       return;
     }
     soundEngine.playSfx('click');
@@ -66,16 +67,38 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     soundEngine.playSfx('celebrate');
   };
 
-  const xpProgressToNext = (activeChild.xp % 100);
+  const xpProgressToNext = activeChild.xp % 100;
 
-  // Find current active level index
-  const currentLevelIndex = mockLevels.findIndex(lvl => activeChild.xp >= lvl.requiredXp && !activeChild.completedLessons.some(id => lvl.lessons.some(l => l.lessonId === id)));
+  const currentLevelIndex = mockLevels.findIndex(
+    lvl => activeChild.xp >= lvl.requiredXp && !activeChild.completedLessons.some(id => lvl.lessons.some(l => l.lessonId === id))
+  );
   const activePinIdx = currentLevelIndex !== -1 ? currentLevelIndex : 0;
 
+  const levelColorThemes = [
+    { border: 'border-rose-400', badgeBg: 'bg-rose-100 text-rose-800', btn: 'candy-btn-yellow', path: '#f43f5e' },
+    { border: 'border-amber-400', badgeBg: 'bg-amber-100 text-amber-900', btn: 'candy-btn-yellow', path: '#f59e0b' },
+    { border: 'border-sky-400', badgeBg: 'bg-sky-100 text-sky-800', btn: 'candy-btn-blue', path: '#0ea5e9' },
+    { border: 'border-emerald-400', badgeBg: 'bg-emerald-100 text-emerald-800', btn: 'candy-btn-green', path: '#10b981' },
+    { border: 'border-orange-400', badgeBg: 'bg-orange-100 text-orange-800', btn: 'candy-btn-orange', path: '#f97316' },
+    { border: 'border-pink-400', badgeBg: 'bg-pink-100 text-pink-800', btn: 'candy-btn-pink', path: '#ec4899' },
+    { border: 'border-purple-400', badgeBg: 'bg-purple-100 text-purple-800', btn: 'candy-btn-purple', path: '#8b5cf6' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-yellow-50/50 to-emerald-50 text-slate-800 font-fun pb-20 select-none">
-      {/* Top Friendly Child Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-3 border-amber-200 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.05)]">
+    <div className="min-h-screen text-slate-800 font-fun pb-24 select-none relative overflow-hidden bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-100">
+      {/* Decorative Cartoon Floating Clouds */}
+      <div className="absolute top-16 left-8 w-44 h-16 bg-white/70 rounded-full blur-[1px] -z-0 pointer-events-none animate-float-kid" />
+      <div className="absolute top-44 right-12 w-56 h-20 bg-white/80 rounded-full blur-[1px] -z-0 pointer-events-none animate-float-kid" style={{ animationDelay: '1.5s' }} />
+      <div className="absolute top-96 left-16 w-48 h-16 bg-white/60 rounded-full blur-[1px] -z-0 pointer-events-none animate-float-kid" style={{ animationDelay: '2.5s' }} />
+      <div className="absolute top-[600px] right-20 w-64 h-22 bg-white/70 rounded-full blur-[1px] -z-0 pointer-events-none animate-float-kid" />
+
+      {/* Smiling Cartoon Sun on Top Right */}
+      <div className="absolute top-6 right-6 w-20 h-20 bg-yellow-300 rounded-full border-4 border-yellow-400 shadow-[0_0_40px_rgba(253,224,71,0.8)] -z-0 pointer-events-none flex items-center justify-center text-3xl">
+        ☀️
+      </div>
+
+      {/* Top Navbar */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-4 border-amber-300 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           {/* Child Profile Pill */}
           <div
@@ -83,7 +106,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
               soundEngine.playSfx('click');
               setShowProfileModal(true);
             }}
-            className="flex items-center gap-3 bg-amber-50 hover:bg-amber-100/80 border-3 border-amber-300 rounded-3xl px-3.5 py-1.5 cursor-pointer transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-3 bg-amber-50 hover:bg-amber-100/90 border-3 border-amber-300 rounded-3xl px-3.5 py-1.5 cursor-pointer transition-all active:scale-95 shadow-sm"
           >
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-white flex items-center justify-center text-2xl shadow">
               {activeChild.avatar}
@@ -95,9 +118,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                   Level {activeChild.level}
                 </span>
               </div>
-              {/* XP Progress Bar */}
               <div className="flex items-center gap-2 mt-1">
-                <div className="w-24 sm:w-32 bg-amber-200/80 h-3 rounded-full overflow-hidden border border-amber-300 shadow-inner">
+                <div className="w-24 sm:w-32 bg-amber-200/90 h-3 rounded-full overflow-hidden border border-amber-300 shadow-inner">
                   <div
                     className="bg-gradient-to-r from-amber-400 to-yellow-400 h-full rounded-full transition-all duration-500"
                     style={{ width: `${xpProgressToNext}%` }}
@@ -110,19 +132,16 @@ export const WorldMap: React.FC<WorldMapProps> = ({
 
           {/* Child Stats & Badges */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Stars Pill */}
             <div className="flex items-center gap-1.5 bg-yellow-100 border-2 border-yellow-300 px-3 py-1.5 rounded-2xl text-yellow-900 font-black text-sm shadow-sm">
               <Star className="w-5 h-5 text-yellow-500 fill-yellow-400" />
               <span>{activeChild.stars}</span>
             </div>
 
-            {/* Streak Pill */}
             <div className="flex items-center gap-1.5 bg-rose-100 border-2 border-rose-300 px-3 py-1.5 rounded-2xl text-rose-900 font-black text-sm shadow-sm">
               <Flame className="w-5 h-5 text-rose-500 fill-rose-400" />
-              <span>{activeChild.streakDays} Hari</span>
+              <span>{activeChild.streakDays}h</span>
             </div>
 
-            {/* Badges Trophy Button */}
             <button
               onClick={() => {
                 soundEngine.playSfx('click');
@@ -134,7 +153,6 @@ export const WorldMap: React.FC<WorldMapProps> = ({
               <Trophy className="w-5 h-5" />
             </button>
 
-            {/* Parent Mode Gate Button */}
             <button
               onClick={() => {
                 soundEngine.playSfx('click');
@@ -147,7 +165,6 @@ export const WorldMap: React.FC<WorldMapProps> = ({
               <span className="hidden sm:inline">Orang Tua</span>
             </button>
 
-            {/* Admin Studio Button */}
             <button
               onClick={() => {
                 soundEngine.playSfx('click');
@@ -162,24 +179,24 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       </header>
 
       {/* World Hero Island Banner */}
-      <section className="max-w-5xl mx-auto px-4 pt-6 pb-2">
-        <div className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 border-4 border-white rounded-[2.5rem] p-6 sm:p-8 shadow-[0_16px_32px_rgba(59,130,246,0.25)] relative overflow-hidden text-white">
+      <section className="max-w-5xl mx-auto px-4 pt-6 pb-2 relative z-10">
+        <div className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 border-4 border-white rounded-[2.5rem] p-6 sm:p-8 shadow-[0_12px_24px_rgba(59,130,246,0.3)] relative overflow-hidden text-white">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-white font-extrabold text-xs uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center gap-2 bg-white/25 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-black text-xs uppercase tracking-wider mb-2.5 shadow-sm">
                 <Compass className="w-4 h-4" />
                 <span>World 1: Petualangan Matematika</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl font-black text-white tracking-wide drop-shadow">
-                Pulau Angka Ajaib! 🏝️
+              <h1 className="text-3xl sm:text-5xl font-black text-white tracking-wide drop-shadow-md">
+                Jelajahi Pulau Angka! 🏝️
               </h1>
-              <p className="text-white/95 text-base sm:text-lg font-bold mt-2 max-w-xl leading-relaxed">
+              <p className="text-white text-base sm:text-lg font-bold mt-2 max-w-xl leading-relaxed drop-shadow-sm">
                 Pilih pulau petualanganmu, nikmati cerita seru bersama Budi & Siti, dan kumpulkan bintang pahlawan!
               </p>
             </div>
 
             <div className="shrink-0 flex items-center justify-center">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white/25 rounded-[2rem] border-3 border-white/60 flex items-center justify-center text-5xl sm:text-6xl shadow-xl animate-float-kid">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white/30 rounded-[2rem] border-3 border-white/70 flex items-center justify-center text-5xl sm:text-6xl shadow-xl animate-float-kid">
                 🗺️
               </div>
             </div>
@@ -187,11 +204,11 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         </div>
       </section>
 
-      {/* Winding Island Adventure Trail */}
-      <section className="max-w-3xl mx-auto px-4 py-8">
-        <div className="relative flex flex-col items-center gap-7">
-          {/* Playful Dotted Adventure Path */}
-          <div className="absolute top-12 bottom-12 w-4 border-l-4 border-dashed border-amber-300 -z-0 opacity-80" />
+      {/* Adventure Trail Path with Cartoon Stepping Stones */}
+      <section className="max-w-3xl mx-auto px-4 py-8 relative z-10">
+        <div className="relative flex flex-col items-center gap-8">
+          {/* Stepping Stone Connector Line */}
+          <div className="absolute top-12 bottom-12 w-6 bg-gradient-to-b from-amber-300 via-emerald-300 to-yellow-400 rounded-full border-3 border-amber-400/80 shadow-md -z-0" />
 
           {mockLevels.map((lvl, index) => {
             const isUnlocked = activeChild.xp >= lvl.requiredXp;
@@ -200,16 +217,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
             );
             const isCurrentPin = activePinIdx === index;
             const isEven = index % 2 === 0;
-
-            const themeCardColors = [
-              'border-rose-400 bg-white hover:bg-rose-50/50 shadow-rose-200',
-              'border-amber-400 bg-white hover:bg-amber-50/50 shadow-amber-200',
-              'border-sky-400 bg-white hover:bg-sky-50/50 shadow-sky-200',
-              'border-emerald-400 bg-white hover:bg-emerald-50/50 shadow-emerald-200',
-              'border-orange-400 bg-white hover:bg-orange-50/50 shadow-orange-200',
-              'border-pink-400 bg-white hover:bg-pink-50/50 shadow-pink-200',
-              'border-purple-400 bg-white hover:bg-purple-50/50 shadow-purple-200',
-            ];
+            const theme = levelColorThemes[index % levelColorThemes.length];
 
             return (
               <div
@@ -218,38 +226,40 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                   isEven ? 'justify-start sm:pl-10' : 'justify-end sm:pr-10'
                 }`}
               >
-                {/* Active Child Standing Pin */}
+                {/* Active Child Pin Mascot */}
                 {isCurrentPin && (
-                  <div className={`absolute -top-7 ${isEven ? 'left-6 sm:left-16' : 'right-6 sm:right-16'} z-20 flex flex-col items-center animate-bounceSubtle`}>
-                    <span className="bg-amber-400 text-amber-950 font-black text-xs px-3 py-1 rounded-full shadow-lg border-2 border-white flex items-center gap-1">
-                      <span>{activeChild.avatar}</span>
+                  <div className={`absolute -top-9 ${isEven ? 'left-8 sm:left-18' : 'right-8 sm:right-18'} z-20 flex flex-col items-center animate-bounceSubtle`}>
+                    <span className="bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 font-black text-xs px-3.5 py-1.5 rounded-full shadow-[0_4px_12px_rgba(245,158,11,0.5)] border-2 border-white flex items-center gap-1.5">
+                      <span className="text-base">{activeChild.avatar}</span>
                       <span>PETUALANGAN KITA!</span>
                     </span>
-                    <div className="w-0 h-0 border-l-6 border-l-transparent border-r-6 border-r-transparent border-t-6 border-t-amber-400" />
+                    <div className="w-0 h-0 border-l-6 border-l-transparent border-r-6 border-r-transparent border-t-8 border-t-amber-400" />
                   </div>
                 )}
 
                 {/* Level Island Card */}
                 <div
                   onClick={() => handleSelectLevel(lvl)}
-                  className={`w-full max-w-md p-5 rounded-[2rem] border-4 transition-all cursor-pointer shadow-[0_10px_24px_rgba(0,0,0,0.06)] relative group active:scale-[0.98]
-                    ${isUnlocked
+                  className={`w-full max-w-md p-5 rounded-[2.2rem] border-4 transition-all cursor-pointer relative group active:scale-[0.98] ${
+                    isUnlocked
                       ? isCompleted
-                        ? 'border-emerald-400 bg-white hover:bg-emerald-50/40 shadow-emerald-100 scale-[1.01]'
-                        : `${themeCardColors[index % themeCardColors.length]} ${isCurrentPin ? 'ring-4 ring-amber-300 ring-offset-2' : ''}`
-                      : 'border-slate-300 bg-slate-100/80 opacity-70 cursor-not-allowed shadow-none'
-                    }`}
+                        ? 'border-emerald-400 bg-white shadow-[0_10px_0_#10b981]'
+                        : isCurrentPin
+                        ? `${theme.border} bg-white shadow-[0_10px_0_#f59e0b] ring-4 ring-amber-300 ring-offset-2`
+                        : `${theme.border} bg-white shadow-[0_8px_0_rgba(0,0,0,0.08)] hover:-translate-y-1`
+                      : 'border-slate-300 bg-slate-100/90 opacity-60 cursor-not-allowed shadow-none'
+                  }`}
                 >
                   <div className="flex items-center gap-4">
                     {/* Level Icon Badge */}
                     <div
-                      className={`w-18 h-18 rounded-[1.6rem] flex items-center justify-center text-4xl shrink-0 border-3 shadow-md
-                        ${isUnlocked
+                      className={`w-18 h-18 rounded-[1.6rem] flex items-center justify-center text-4xl shrink-0 border-3 shadow-sm ${
+                        isUnlocked
                           ? isCompleted
                             ? 'bg-emerald-100 border-emerald-400 text-emerald-800'
                             : 'bg-amber-100 border-amber-400 text-amber-900 animate-wiggle'
                           : 'bg-slate-200 border-slate-300 text-slate-400'
-                        }`}
+                      }`}
                     >
                       {isUnlocked ? lvl.icon : <Lock className="w-8 h-8 text-slate-400" />}
                     </div>
@@ -263,12 +273,12 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                         {isCompleted && (
                           <span className="bg-emerald-500 text-white font-black text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                             <span>Selesai</span>
-                            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                           </span>
                         )}
                       </div>
 
-                      <h3 className="text-xl sm:text-2xl font-black text-slate-800 truncate">
+                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 truncate">
                         {lvl.title.split('—')[1] || lvl.title}
                       </h3>
 
@@ -277,12 +287,22 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                       </p>
 
                       <div className="flex items-center justify-between mt-3 pt-2.5 border-t-2 border-slate-100">
-                        <span className="text-xs font-extrabold text-slate-500">
-                          {isUnlocked ? '🌟 Siap Dimainkan!' : `🔒 Butuh ${lvl.requiredXp} XP`}
-                        </span>
+                        <div className="flex items-center gap-1 text-yellow-400">
+                          {isCompleted ? (
+                            <>
+                              <Star className="w-4 h-4 fill-yellow-400" />
+                              <Star className="w-4 h-4 fill-yellow-400" />
+                              <Star className="w-4 h-4 fill-yellow-400" />
+                            </>
+                          ) : (
+                            <span className="text-xs font-black text-slate-500">
+                              {isUnlocked ? '🌟 Siap Dimainkan!' : `🔒 Butuh ${lvl.requiredXp} XP`}
+                            </span>
+                          )}
+                        </div>
 
                         {isUnlocked && (
-                          <span className="candy-btn candy-btn-yellow px-4 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-sm">
+                          <span className={`candy-btn ${theme.btn} px-4 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-sm`}>
                             <Play className="w-3.5 h-3.5 fill-current" />
                             <span>Mulai</span>
                           </span>
@@ -297,9 +317,12 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         </div>
       </section>
 
+      {/* Rolling Cartoon Meadow Hills Ground Layer at Bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-emerald-400 via-emerald-300 to-transparent -z-0 pointer-events-none opacity-80" />
+
       {/* Profile Switcher Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-pop-in">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-pop-in">
           <div className="bg-white border-4 border-amber-300 rounded-[2.5rem] p-6 max-w-md w-full shadow-2xl text-slate-800">
             <h3 className="text-2xl font-black text-slate-800 mb-4 flex items-center gap-2">
               <Users className="w-7 h-7 text-amber-500" />
@@ -390,7 +413,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
 
       {/* Badges Collection Modal */}
       {showBadgesModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-pop-in">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-pop-in">
           <div className="bg-white border-4 border-amber-300 rounded-[2.5rem] p-6 sm:p-8 max-w-lg w-full shadow-2xl text-slate-800">
             <h3 className="text-2xl font-black text-slate-800 mb-4 flex items-center gap-2">
               <Trophy className="w-8 h-8 text-yellow-500" />
