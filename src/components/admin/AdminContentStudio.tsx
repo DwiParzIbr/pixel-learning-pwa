@@ -578,7 +578,8 @@ export const AdminContentStudio: React.FC<AdminContentStudioProps> = ({
 
             <div className="w-full max-w-4xl">
               <PixelCanvas
-                currentScene={currentLesson.scenes[previewSceneIdx] || currentLesson.scenes[0]}
+                allScenes={currentLesson.scenes}
+                activeSceneIndex={previewSceneIdx}
                 characters={currentLesson.characters}
                 isPaused={false}
               />

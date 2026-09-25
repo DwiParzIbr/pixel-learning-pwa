@@ -3,13 +3,14 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { CharacterDef, CharacterEmotion, EnvironmentType, ObjectType, SceneDef } from '@/types/story';
 import { soundEngine } from '@/lib/audio/soundEngine';
-import { Sparkles, Hand, RotateCcw, Play } from 'lucide-react';
+import { Hand, RotateCcw } from 'lucide-react';
 
 interface PixelCanvasProps {
-  currentScene: SceneDef;
+  allScenes: SceneDef[];
+  activeSceneIndex: number;
   characters: CharacterDef[];
   isPaused: boolean;
-  onSceneAnimationComplete?: () => void;
+  onSceneComplete?: (sceneIndex: number) => void;
   onObjectCounted?: (count: number) => void;
   interactiveCountMode?: boolean;
 }
@@ -27,7 +28,6 @@ interface CharacterEntity {
   facing: 'left' | 'right';
   emotion: CharacterEmotion;
   speechBubble?: string;
-  jumpOffset: number;
   stepCycle: number;
 }
 
@@ -40,7 +40,6 @@ interface ObjectEntity {
   targetX: number;
   targetY: number;
   groundY: number;
-  dropProgress: number; // 0 to 1 for falling/spawning
   isTransferring: boolean;
   transferProgress: number;
   fromX: number;
@@ -52,7 +51,6 @@ interface ObjectEntity {
   countNumber?: number;
   isHighlighted: boolean;
   bounceOffset: number;
-  scale: number;
 }
 
 interface Particle {
@@ -68,127 +66,204 @@ interface Particle {
 }
 
 export const PixelCanvas: React.FC<PixelCanvasProps> = ({
-  currentScene,
+  allScenes,
+  activeSceneIndex,
   characters,
   isPaused,
-  onSceneAnimationComplete,
+  onSceneComplete,
   onObjectCounted,
   interactiveCountMode = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [countedTotal, setCountedTotal] = useState<number>(0);
-  const [isPlayingSeq, setIsPlayingSeq] = useState<boolean>(true);
 
-  // Mutable Game State stored in Ref to guarantee 60fps glitch-free physics and animation
+  // Persistent Game State across all scenes in the full story
   const gameStateRef = useRef<{
     characters: Map<string, CharacterEntity>;
     objects: ObjectEntity[];
     particles: Particle[];
     tick: number;
-    timelineTime: number;
-    timelineStep: number;
+    currentProcessedScene: number;
+    sceneTimer: number;
   }>({
     characters: new Map(),
     objects: [],
     particles: [],
     tick: 0,
-    timelineTime: 0,
-    timelineStep: 0,
+    currentProcessedScene: -1,
+    sceneTimer: 0,
   });
 
-  // Re-initialize and run the action sequence when scene changes
-  const startSceneSequence = useCallback(() => {
-    const chars = new Map<string, CharacterEntity>();
-    const objs: ObjectEntity[] = [];
-    const particles: Particle[] = [];
+  const currentScene = allScenes[activeSceneIndex] || allScenes[0];
 
-    setCountedTotal(0);
-    setIsPlayingSeq(true);
+  // Process scene actions without destroying existing world state
+  const applySceneActions = useCallback(
+    (sceneIdx: number) => {
+      const scene = allScenes[sceneIdx];
+      if (!scene) return;
 
-    // Look for characters in actions
-    for (const act of currentScene.actions) {
-      if (act.type === 'spawn_character' && act.characterId) {
-        const charDef = characters.find(c => c.id === act.characterId);
-        const finalX = act.position?.x ?? 220;
-        const finalY = act.position?.y ?? 330;
+      const state = gameStateRef.current;
+      state.currentProcessedScene = sceneIdx;
+      state.sceneTimer = 0;
 
-        // Animate walking in from offscreen or side!
-        const isBudi = act.characterId === 'budi';
-        const startX = isBudi ? (finalX > 300 ? 50 : 20) : (finalX < 500 ? 750 : 680);
-
-        chars.set(act.characterId, {
-          id: act.characterId,
-          name: charDef?.name || act.characterId,
-          asset: charDef?.asset || 'character_budi',
-          x: startX,
-          y: finalY,
-          targetX: finalX,
-          targetY: finalY,
-          isWalking: startX !== finalX,
-          walkSpeed: 2.8,
-          facing: finalX >= startX ? 'right' : 'left',
-          emotion: act.animation || 'walk',
-          speechBubble: undefined,
-          jumpOffset: 0,
-          stepCycle: 0,
-        });
+      // If resetting to scene 0, start completely fresh
+      if (sceneIdx === 0) {
+        state.characters.clear();
+        state.objects = [];
+        state.particles = [];
+        setCountedTotal(0);
       }
-    }
 
-    // Look for objects to spawn (apples, marbles, coins, etc.)
-    for (const act of currentScene.actions) {
-      if (act.type === 'spawn_object' && act.object && act.quantity) {
-        const count = act.quantity;
-        const baseX = act.position?.x ?? (act.owner === 'siti' ? 520 : 380);
-        const groundY = act.position?.y ?? 355;
+      // 1. Process Characters
+      for (const act of scene.actions) {
+        if (act.type === 'spawn_character' && act.characterId) {
+          const charDef = characters.find(c => c.id === act.characterId);
+          const finalX = act.position?.x ?? (act.characterId === 'siti' ? 550 : 220);
+          const finalY = act.position?.y ?? 330;
 
-        for (let i = 0; i < count; i++) {
-          const col = i % 5;
-          const row = Math.floor(i / 5);
-          const targetObjX = baseX + col * 36;
-          const targetObjY = groundY + row * 26;
+          if (!state.characters.has(act.characterId)) {
+            // New character entering the scene
+            const isBudi = act.characterId === 'budi';
+            const startX = isBudi ? (finalX > 300 ? 50 : 20) : (finalX < 500 ? 760 : 700);
 
-          objs.push({
-            id: `obj_${act.object}_${i}_${Date.now()}`,
-            type: act.object,
-            owner: act.owner,
-            x: targetObjX,
-            y: -30 - (i * 15), // Start above canvas and drop down!
-            targetX: targetObjX,
-            targetY: targetObjY,
-            groundY: targetObjY,
-            dropProgress: 0,
-            isTransferring: false,
-            transferProgress: 0,
-            fromX: targetObjX,
-            fromY: targetObjY,
-            toX: targetObjX,
-            toY: targetObjY,
-            colorIdx: i,
-            isCounted: false,
-            isHighlighted: false,
-            bounceOffset: 0,
-            scale: 1,
+            state.characters.set(act.characterId, {
+              id: act.characterId,
+              name: charDef?.name || act.characterId,
+              asset: charDef?.asset || 'character_budi',
+              x: startX,
+              y: finalY,
+              targetX: finalX,
+              targetY: finalY,
+              isWalking: startX !== finalX,
+              walkSpeed: 2.8,
+              facing: finalX >= startX ? 'right' : 'left',
+              emotion: act.animation || 'walk',
+              speechBubble: undefined,
+              stepCycle: 0,
+            });
+          } else {
+            // Existing character moves to new position if specified
+            const existing = state.characters.get(act.characterId)!;
+            if (act.position) {
+              existing.targetX = act.position.x;
+              existing.targetY = act.position.y;
+              existing.isWalking = existing.x !== act.position.x;
+              existing.facing = act.position.x >= existing.x ? 'right' : 'left';
+            }
+            if (act.animation) {
+              existing.emotion = act.animation;
+            }
+          }
+        }
+
+        if (act.type === 'move_character' && act.characterId && act.position) {
+          const c = state.characters.get(act.characterId);
+          if (c) {
+            c.targetX = act.position.x;
+            c.targetY = act.position.y;
+            c.isWalking = true;
+            c.facing = act.position.x >= c.x ? 'right' : 'left';
+          }
+        }
+
+        if (act.type === 'animate_character' && act.characterId && act.animation) {
+          const c = state.characters.get(act.characterId);
+          if (c) {
+            c.emotion = act.animation;
+          }
+        }
+
+        // 2. Process Objects
+        if (act.type === 'spawn_object' && act.object && act.quantity) {
+          const count = act.quantity;
+          const baseX = act.position?.x ?? (act.owner === 'siti' ? 520 : 380);
+          const groundY = act.position?.y ?? 355;
+
+          for (let i = 0; i < count; i++) {
+            const col = i % 5;
+            const row = Math.floor(i / 5);
+            const targetObjX = baseX + col * 36;
+            const targetObjY = groundY + row * 26;
+
+            state.objects.push({
+              id: `obj_${act.object}_${i}_${Date.now()}`,
+              type: act.object,
+              owner: act.owner,
+              x: targetObjX,
+              y: -30 - i * 15, // Drop from tree/sky with bounce
+              targetX: targetObjX,
+              targetY: targetObjY,
+              groundY: targetObjY,
+              isTransferring: false,
+              transferProgress: 0,
+              fromX: targetObjX,
+              fromY: targetObjY,
+              toX: targetObjX,
+              toY: targetObjY,
+              colorIdx: i,
+              isCounted: false,
+              isHighlighted: false,
+              bounceOffset: 0,
+            });
+          }
+        }
+
+        // 3. Object Transfers (e.g. Budi gives 4 marbles to Siti)
+        if (act.type === 'transfer_object' && act.from && act.to && act.quantity) {
+          let transferredCount = 0;
+          const targetBaseX = act.to === 'siti' ? 540 : 250;
+          const groundY = 355;
+
+          state.objects.forEach(obj => {
+            if (obj.owner === act.from && transferredCount < (act.quantity || 0) && !obj.isTransferring) {
+              const col = transferredCount % 5;
+              const row = Math.floor(transferredCount / 5);
+              obj.owner = act.to;
+              obj.fromX = obj.x;
+              obj.fromY = obj.y;
+              obj.toX = targetBaseX + col * 36;
+              obj.toY = groundY + row * 26;
+              obj.groundY = obj.toY;
+              obj.isTransferring = true;
+              obj.transferProgress = -transferredCount * 0.15; // Staggered parabolic flight
+              transferredCount++;
+            }
+          });
+
+          soundEngine.playSfx('transfer');
+
+          const receiver = state.characters.get(act.to);
+          if (receiver) receiver.emotion = 'celebrate';
+        }
+
+        // 4. Highlight objects (e.g. Budi's remaining marbles)
+        if (act.type === 'highlight_object') {
+          state.objects.forEach(obj => {
+            if (!act.owner || obj.owner === act.owner) {
+              obj.isHighlighted = true;
+            }
           });
         }
       }
-    }
 
-    gameStateRef.current = {
-      characters: chars,
-      objects: objs,
-      particles,
-      tick: 0,
-      timelineTime: 0,
-      timelineStep: 0,
-    };
-  }, [currentScene, characters]);
+      // Update Speech Bubble
+      state.characters.forEach(char => {
+        if (scene.dialogue && scene.dialogue.speaker === char.id) {
+          char.speechBubble = scene.dialogue.text;
+          char.emotion = 'talk';
+        } else {
+          char.speechBubble = undefined;
+        }
+      });
+    },
+    [allScenes, characters]
+  );
 
   useEffect(() => {
-    startSceneSequence();
-  }, [startSceneSequence]);
+    applySceneActions(activeSceneIndex);
+  }, [activeSceneIndex, applySceneActions]);
 
-  // Main 60 FPS Game Loop
+  // Main 60 FPS Render Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -201,18 +276,16 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       const state = gameStateRef.current;
       if (!isPaused) {
         state.tick++;
-        state.timelineTime += 1 / 60;
+        state.sceneTimer += 1 / 60;
       }
 
       const w = canvas.width;
       const h = canvas.height;
 
-      // 1. Draw Environment
       ctx.imageSmoothingEnabled = false;
       drawEnvironment(ctx, w, h, currentScene.background, state.tick);
 
-      // 2. Timeline and Action Progress
-      // Character walking logic
+      // Character Movement Physics
       state.characters.forEach(char => {
         if (char.x !== char.targetX) {
           const diff = char.targetX - char.x;
@@ -229,23 +302,15 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         } else {
           char.isWalking = false;
         }
-
-        // Attach dialogue after walking
-        if (!char.isWalking && currentScene.dialogue && currentScene.dialogue.speaker === char.id) {
-          char.speechBubble = currentScene.dialogue.text;
-          char.emotion = 'talk';
-        }
       });
 
-      // Object falling & physics logic
+      // Object Drop and Transfer Physics
       state.objects.forEach(obj => {
-        // Drop into scene
         if (obj.y < obj.groundY && !obj.isTransferring) {
           obj.y += 6.5;
           if (obj.y >= obj.groundY) {
             obj.y = obj.groundY;
             soundEngine.playSfx('pickup');
-            // Spawn little impact sparkle particles
             for (let p = 0; p < 4; p++) {
               state.particles.push({
                 x: obj.x,
@@ -262,16 +327,15 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
           }
         }
 
-        // Object Transfer (e.g. Budi to Siti transfer action)
         if (obj.isTransferring) {
           obj.transferProgress += 0.022;
-          const p = Math.min(1, obj.transferProgress);
+          const p = Math.min(1, Math.max(0, obj.transferProgress));
           obj.x = obj.fromX + (obj.toX - obj.fromX) * p;
           const linearY = obj.fromY + (obj.toY - obj.fromY) * p;
           const arcHeight = Math.sin(p * Math.PI) * 80;
           obj.y = linearY - arcHeight;
 
-          if (p >= 1) {
+          if (obj.transferProgress >= 1) {
             obj.isTransferring = false;
             obj.y = obj.groundY;
             obj.x = obj.toX;
@@ -280,56 +344,12 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         }
       });
 
-      // Handle Transfer actions in scene if time reached
-      for (const act of currentScene.actions) {
-        if (act.type === 'transfer_object' && act.from && act.to && act.quantity) {
-          if (state.timelineTime > 1.8 && state.timelineStep === 0) {
-            state.timelineStep = 1;
-            let transferredCount = 0;
-            const targetBaseX = act.to === 'siti' ? 540 : 250;
-            const groundY = 355;
-
-            state.objects.forEach(obj => {
-              if (obj.owner === act.from && transferredCount < (act.quantity || 0) && !obj.isTransferring) {
-                const col = transferredCount % 5;
-                const row = Math.floor(transferredCount / 5);
-                obj.owner = act.to;
-                obj.fromX = obj.x;
-                obj.fromY = obj.y;
-                obj.toX = targetBaseX + col * 36;
-                obj.toY = groundY + row * 26;
-                obj.groundY = obj.toY;
-                obj.isTransferring = true;
-                obj.transferProgress = -transferredCount * 0.15; // Staggered leaps!
-                transferredCount++;
-              }
-            });
-
-            soundEngine.playSfx('transfer');
-
-            // Celebrate character receiver
-            const receiver = state.characters.get(act.to);
-            if (receiver) receiver.emotion = 'celebrate';
-          }
-        }
-
-        if (act.type === 'highlight_object') {
-          if (state.timelineTime > 1.5) {
-            state.objects.forEach(obj => {
-              if (!act.owner || obj.owner === act.owner) {
-                obj.isHighlighted = true;
-              }
-            });
-          }
-        }
-      }
-
-      // 3. Render Objects
+      // Render Objects
       state.objects.forEach(obj => {
         drawPixelObjectSprite(ctx, obj, state.tick);
       });
 
-      // 4. Render Characters
+      // Render Characters
       state.characters.forEach(char => {
         drawPixelCharacterSprite(ctx, char, state.tick);
         if (char.speechBubble) {
@@ -337,12 +357,12 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         }
       });
 
-      // 5. Render Particles
+      // Render Particles
       for (let i = state.particles.length - 1; i >= 0; i--) {
         const pt = state.particles[i];
         pt.x += pt.vx;
         pt.y += pt.vy;
-        pt.vy += 0.12; // gravity
+        pt.vy += 0.12;
         pt.life++;
         pt.alpha = 1 - pt.life / pt.maxLife;
 
@@ -366,7 +386,6 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
     };
   }, [currentScene, isPaused]);
 
-  // Click handler to interact and count objects directly
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -388,11 +407,10 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         obj.isCounted = true;
         obj.countNumber = newCount;
         obj.isHighlighted = true;
-        obj.bounceOffset = -18; // Joyful jump on touch!
+        obj.bounceOffset = -18;
 
         soundEngine.playSfx('count');
 
-        // Sparkle burst
         for (let p = 0; p < 8; p++) {
           state.particles.push({
             x: obj.x,
@@ -417,7 +435,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
 
   return (
     <div className="relative w-full flex flex-col items-center select-none font-fun">
-      {/* Handheld Kid Console Frame */}
+      {/* Handheld Toy Console Frame */}
       <div className="w-full max-w-4xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 rounded-[2.5rem] p-4 sm:p-5 shadow-[0_16px_36px_rgba(245,158,11,0.3)] border-4 border-amber-200 relative">
         {/* Top Console Notch */}
         <div className="flex items-center justify-between px-4 pb-2 text-amber-900 font-extrabold text-xs sm:text-sm">
@@ -431,12 +449,13 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
             <button
               onClick={() => {
                 soundEngine.playSfx('click');
-                startSceneSequence();
+                applySceneActions(0);
+                onSceneComplete?.(-1); // Reset story from start
               }}
-              className="bg-white/80 hover:bg-white text-amber-900 font-black text-xs px-3 py-1 rounded-full flex items-center gap-1 shadow-sm active:scale-95 transition-all"
+              className="bg-white/80 hover:bg-white text-amber-900 font-black text-xs px-3.5 py-1 rounded-full flex items-center gap-1 shadow-sm active:scale-95 transition-all"
             >
               <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
-              <span>Putar Ulang Animasi</span>
+              <span>Putar Dari Awal</span>
             </button>
           </div>
         </div>
@@ -470,7 +489,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
             <span className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-emerald-300 shadow" />
           </div>
           <div className="text-amber-950/70 text-xs font-black tracking-widest uppercase">
-            Ketuk Objek di Layar untuk Menghitung
+            Cerita Berjalan Otomatis Dari Awal Sampai Akhir
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-amber-700/60" />
@@ -496,7 +515,6 @@ function drawEnvironment(
 ) {
   switch (env) {
     case 'forest': {
-      // 1. Lush Green Canopy & Gradient Sky
       const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
       skyGrad.addColorStop(0, '#15803d');
       skyGrad.addColorStop(0.4, '#166534');
@@ -504,7 +522,6 @@ function drawEnvironment(
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, w, h);
 
-      // Sunlight rays
       ctx.fillStyle = 'rgba(254, 240, 138, 0.08)';
       ctx.beginPath();
       ctx.moveTo(100, 0);
@@ -513,13 +530,11 @@ function drawEnvironment(
       ctx.lineTo(250, h);
       ctx.fill();
 
-      // Big Apple Tree on the Right
-      ctx.fillStyle = '#78350f'; // Trunk
+      ctx.fillStyle = '#78350f';
       ctx.fillRect(w - 240, 60, 90, h - 60);
       ctx.fillStyle = '#451a03';
       ctx.fillRect(w - 200, 60, 24, h - 60);
 
-      // Big Tree Canopy
       ctx.fillStyle = '#15803d';
       ctx.beginPath();
       ctx.arc(w - 195, 120, 150, 0, Math.PI * 2);
@@ -529,7 +544,6 @@ function drawEnvironment(
       ctx.arc(w - 170, 100, 120, 0, Math.PI * 2);
       ctx.fill();
 
-      // Apples hanging in the tree
       const treeApples = [
         { x: w - 260, y: 120 },
         { x: w - 190, y: 80 },
@@ -545,13 +559,11 @@ function drawEnvironment(
         ctx.fillRect(app.x, app.y - 12, 4, 3);
       });
 
-      // Ground Lawn
       ctx.fillStyle = '#1e3a1e';
       ctx.fillRect(0, h * 0.72, w, h * 0.28);
       ctx.fillStyle = '#15803d';
       ctx.fillRect(0, h * 0.72, w, 12);
 
-      // Mushrooms & Ferns
       ctx.fillStyle = '#ef4444';
       ctx.fillRect(90, h * 0.76, 20, 14);
       ctx.fillStyle = '#ffffff';
@@ -563,25 +575,21 @@ function drawEnvironment(
     }
 
     case 'park': {
-      // Sky
       const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.7);
       skyGrad.addColorStop(0, '#38bdf8');
       skyGrad.addColorStop(1, '#bae6fd');
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, w, h);
 
-      // Sun
       ctx.fillStyle = '#fde047';
       ctx.fillRect(w - 110, 30, 52, 52);
       ctx.fillStyle = '#fef08a';
       ctx.fillRect(w - 104, 36, 40, 40);
 
-      // Clouds
       const cloudX = (tick * 0.5) % (w + 140) - 100;
       drawPixelCloud(ctx, cloudX, 45);
       drawPixelCloud(ctx, ((tick * 0.3) + 360) % (w + 140) - 100, 75);
 
-      // Distant Hills
       ctx.fillStyle = '#4ade80';
       ctx.beginPath();
       ctx.ellipse(220, h * 0.74, 280, 100, 0, 0, Math.PI * 2);
@@ -591,13 +599,11 @@ function drawEnvironment(
       ctx.ellipse(640, h * 0.75, 300, 90, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Park Grass Lawn
       ctx.fillStyle = '#16a34a';
       ctx.fillRect(0, h * 0.72, w, h * 0.28);
       ctx.fillStyle = '#15803d';
       ctx.fillRect(0, h * 0.72, w, 10);
 
-      // Wooden fence
       ctx.fillStyle = '#92400e';
       for (let x = 20; x < w; x += 50) {
         ctx.fillRect(x, h * 0.64, 10, 38);
@@ -605,7 +611,6 @@ function drawEnvironment(
       }
       ctx.fillRect(10, h * 0.67, w - 20, 8);
 
-      // Colorful flowers
       for (let i = 0; i < 14; i++) {
         const fx = 35 + i * 55;
         const fy = h * 0.78 + (i % 3) * 16;
@@ -621,7 +626,6 @@ function drawEnvironment(
       ctx.fillStyle = '#fef3c7';
       ctx.fillRect(0, 0, w, h * 0.72);
 
-      // Blackboard
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(140, 35, w - 280, 175);
       ctx.fillStyle = '#b45309';
@@ -634,7 +638,6 @@ function drawEnvironment(
       ctx.font = 'bold 32px "Fredoka", sans-serif';
       ctx.fillText('10 - 4 = ?', w / 2 - 80, 135);
 
-      // Floor
       ctx.fillStyle = '#d97706';
       ctx.fillRect(0, h * 0.72, w, h * 0.28);
       ctx.fillStyle = '#b45309';
@@ -648,11 +651,9 @@ function drawEnvironment(
       ctx.fillStyle = '#bae6fd';
       ctx.fillRect(0, 0, w, h * 0.72);
 
-      // Cobblestone
       ctx.fillStyle = '#64748b';
       ctx.fillRect(0, h * 0.72, w, h * 0.28);
 
-      // Canopy
       for (let x = 40; x < w - 40; x += 45) {
         ctx.fillStyle = (x / 45) % 2 === 0 ? '#ef4444' : '#ffffff';
         ctx.fillRect(x, 40, 45, 65);
@@ -678,12 +679,10 @@ function drawEnvironment(
         }
       }
 
-      // Torches
       const flicker = (tick % 6 > 3 ? 3 : 0);
       drawPixelTorch(ctx, 120, 140, flicker);
       drawPixelTorch(ctx, w - 140, 140, flicker);
 
-      // Gate
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(w / 2 - 95, 120, 190, h * 0.72 - 120);
       ctx.fillStyle = '#eab308';
@@ -721,7 +720,6 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
   const cx = Math.round(char.x);
   const cy = Math.round(char.y);
 
-  // Animated Walk / Jump Cycle
   let stepOffset = 0;
   let bobY = 0;
   let armSwing = 0;
@@ -732,39 +730,33 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
     bobY = Math.abs(Math.sin(char.stepCycle)) * 6;
   } else if (char.emotion === 'celebrate' || char.emotion === 'happy') {
     bobY = Math.abs(Math.sin(tick * 0.25)) * 16;
-    armSwing = -14; // Arms raised high!
+    armSwing = -14;
   } else if (char.emotion === 'idle') {
     bobY = Math.sin(tick * 0.08) * 3;
   }
 
   const baseCy = cy - bobY;
 
-  // Soft Elliptical Ground Shadow
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   ctx.beginPath();
   ctx.ellipse(cx, cy + 32, 22, 7, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 1. Shoes & Pants (Animated stepping legs!)
-  ctx.fillStyle = '#f8fafc'; // White sneakers
+  ctx.fillStyle = '#f8fafc';
   ctx.fillRect(cx - 12 - stepOffset, baseCy + 24, 10, 10);
   ctx.fillRect(cx + 2 + stepOffset, baseCy + 24, 10, 10);
 
-  // Pants (Blue for Budi, Magenta for Siti)
   ctx.fillStyle = isBudi ? '#1e3a8a' : '#be185d';
-  ctx.fillRect(cx - 12 - (stepOffset * 0.6), baseCy + 14, 10, 12);
-  ctx.fillRect(cx + 2 + (stepOffset * 0.6), baseCy + 14, 10, 12);
+  ctx.fillRect(cx - 12 - stepOffset * 0.6, baseCy + 14, 10, 12);
+  ctx.fillRect(cx + 2 + stepOffset * 0.6, baseCy + 14, 10, 12);
 
-  // 2. Torso / Shirt
   ctx.fillStyle = isBudi ? '#2563eb' : '#f43f5e';
   ctx.fillRect(cx - 16, baseCy - 10, 32, 26);
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(cx - 5, baseCy - 10, 10, 8); // White collar
+  ctx.fillRect(cx - 5, baseCy - 10, 10, 8);
 
-  // 3. Arms
-  ctx.fillStyle = '#fed7aa'; // Skin
+  ctx.fillStyle = '#fed7aa';
   if (armSwing < -5) {
-    // Arms up celebrating!
     ctx.fillRect(cx - 24, baseCy - 18, 8, 20);
     ctx.fillRect(cx + 16, baseCy - 18, 8, 20);
   } else {
@@ -772,11 +764,9 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
     ctx.fillRect(cx + 15 - armSwing, baseCy - 6, 7, 20);
   }
 
-  // 4. Head & Face
   ctx.fillStyle = '#fed7aa';
   ctx.fillRect(cx - 18, baseCy - 44, 36, 34);
 
-  // 5. Hair
   if (isBudi) {
     ctx.fillStyle = '#1c1917';
     ctx.fillRect(cx - 20, baseCy - 52, 40, 14);
@@ -785,17 +775,14 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
   } else {
     ctx.fillStyle = '#292524';
     ctx.fillRect(cx - 20, baseCy - 52, 40, 14);
-    ctx.fillRect(cx - 24, baseCy - 44, 8, 24); // Twin-tails!
+    ctx.fillRect(cx - 24, baseCy - 44, 8, 24);
     ctx.fillRect(cx + 16, baseCy - 44, 8, 24);
-    // Ribbon
     ctx.fillStyle = '#ec4899';
     ctx.fillRect(cx - 8, baseCy - 56, 16, 8);
   }
 
-  // 6. Eyes (Expressive)
   ctx.fillStyle = '#0f172a';
   if (char.emotion === 'happy' || char.emotion === 'celebrate') {
-    // Joyful crescent eyes ^ ^
     ctx.fillRect(cx - 10, baseCy - 30, 6, 3);
     ctx.fillRect(cx + 4, baseCy - 30, 6, 3);
   } else {
@@ -806,7 +793,6 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
     ctx.fillRect(cx + 6, baseCy - 32, 3, 3);
   }
 
-  // 7. Mouth
   if (char.emotion === 'talk') {
     const mouthOpen = Math.sin(tick * 0.4) > 0;
     ctx.fillStyle = '#dc2626';
@@ -815,7 +801,6 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
     ctx.fillStyle = '#dc2626';
     ctx.fillRect(cx - 5, baseCy - 18, 10, 5);
   } else if (char.emotion === 'think') {
-    // Thoughtful expression
     ctx.fillStyle = '#334155';
     ctx.fillRect(cx - 3, baseCy - 17, 7, 3);
   } else {
@@ -823,7 +808,6 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
     ctx.fillRect(cx - 4, baseCy - 17, 8, 3);
   }
 
-  // 8. Name Tag Badge
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#0f172a';
   ctx.lineWidth = 2;
@@ -839,19 +823,17 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
 }
 
 // ----------------------------------------------------
-// HIGH-VISIBILITY 32PX PIXEL OBJECT SPRITES
+// 32PX PIXEL OBJECT SPRITES
 // ----------------------------------------------------
 
 function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity, tick: number) {
   const ox = Math.round(obj.x);
   const oy = Math.round(obj.y + obj.bounceOffset);
 
-  // Return bounce back to 0
   if (obj.bounceOffset < 0) {
     obj.bounceOffset += 1.5;
   }
 
-  // Pulsing highlight glow
   if (obj.isHighlighted) {
     const pulse = Math.sin(tick * 0.15) * 6;
     ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';
@@ -860,7 +842,6 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
     ctx.fill();
   }
 
-  // Soft shadow on ground
   ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
   ctx.beginPath();
   ctx.ellipse(ox, obj.groundY + 12, 16, 5, 0, 0, Math.PI * 2);
@@ -868,27 +849,23 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
 
   switch (obj.type) {
     case 'apple': {
-      // Big, vibrant, luscious red pixel apple (32x32)
-      ctx.fillStyle = '#dc2626'; // Deep red
+      ctx.fillStyle = '#dc2626';
       ctx.beginPath();
       ctx.arc(ox - 5, oy, 11, 0, Math.PI * 2);
       ctx.arc(ox + 5, oy, 11, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#ef4444'; // Bright red body
+      ctx.fillStyle = '#ef4444';
       ctx.beginPath();
       ctx.arc(ox, oy, 12, 0, Math.PI * 2);
       ctx.fill();
 
-      // White gloss reflection
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(ox - 6, oy - 7, 4, 4);
 
-      // Brown Stem
       ctx.fillStyle = '#78350f';
       ctx.fillRect(ox - 1.5, oy - 18, 3, 7);
 
-      // Green Leaf
       ctx.fillStyle = '#22c55e';
       ctx.beginPath();
       ctx.ellipse(ox + 5, oy - 16, 6, 3, Math.PI / 4, 0, Math.PI * 2);
@@ -897,7 +874,6 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
     }
 
     case 'marble': {
-      // 3D Glass Marble with Specular Highlight (28x28)
       const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
       const baseColor = colors[obj.colorIdx % colors.length];
 
@@ -906,20 +882,17 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
       ctx.arc(ox, oy, 13, 0, Math.PI * 2);
       ctx.fill();
 
-      // Inner swirl
       ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
       ctx.beginPath();
       ctx.arc(ox - 2, oy - 2, 7, 0, Math.PI * 2);
       ctx.fill();
 
-      // Sharp white highlight
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(ox - 6, oy - 6, 5, 5);
       break;
     }
 
     case 'coin': {
-      // Golden Coin
       ctx.fillStyle = '#d97706';
       ctx.beginPath();
       ctx.arc(ox, oy, 14, 0, Math.PI * 2);
@@ -939,7 +912,6 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
     }
 
     case 'star': {
-      // Glowing 5-point star
       ctx.fillStyle = '#fbbf24';
       ctx.beginPath();
       for (let i = 0; i < 5; i++) {
@@ -964,7 +936,7 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
       ctx.fillRect(ox - 14, oy - 8, 28, 18);
       ctx.fillStyle = '#fb7185';
       ctx.fillRect(ox - 14, oy - 2, 28, 6);
-      ctx.fillStyle = '#ef4444'; // Strawberry
+      ctx.fillStyle = '#ef4444';
       ctx.beginPath();
       ctx.arc(ox, oy - 12, 6, 0, Math.PI * 2);
       ctx.fill();
@@ -972,7 +944,6 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
     }
   }
 
-  // Draw floating counted number badge if counted!
   if (obj.countNumber !== undefined) {
     ctx.fillStyle = '#ef4444';
     ctx.strokeStyle = '#ffffff';
@@ -990,7 +961,6 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
   }
 }
 
-// Draw Comic Speech Bubble
 function drawComicSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string) {
   const maxWidth = 260;
   const padding = 14;
@@ -1010,7 +980,6 @@ function drawComicSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: numb
   ctx.fill();
   ctx.stroke();
 
-  // Pointer
   ctx.beginPath();
   ctx.moveTo(x - 8, y + boxH / 2);
   ctx.lineTo(x + 8, y + boxH / 2);
