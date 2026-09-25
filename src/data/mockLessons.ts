@@ -1126,7 +1126,7 @@ export const mockMathLevels: LevelDef[] = [
     subtitle: '5 Petualangan Berhitung di Alam Ceria',
     topic: 'counting',
     environment: 'forest',
-    icon: '🍎',
+    icon: '🔢',
     requiredXp: 0,
     description: 'Kenali angka 1 sampai 10 melalui 5 kisah seru: apel merah, balon warna-warni, cupcake lezat, bunga matahari, dan bintang malam!',
     lessons: [
@@ -1143,7 +1143,7 @@ export const mockMathLevels: LevelDef[] = [
     subtitle: '5 Petualangan Menjumlahkan Buah & Benda Ceria',
     topic: 'addition',
     environment: 'market',
-    icon: '🍓',
+    icon: '➕',
     requiredXp: 50,
     description: 'Gabungkan buah stroberi, balon, buku, bunga, dan cupcake lezat bersama Budi dan Siti dalam 5 kisah penjumlahan seru.',
     lessons: [
@@ -1160,7 +1160,7 @@ export const mockMathLevels: LevelDef[] = [
     subtitle: '5 Kisah Pengurangan Kelereng, Apel & Balon',
     topic: 'subtraction',
     environment: 'park',
-    icon: '🔮',
+    icon: '➖',
     requiredXp: 100,
     description: 'Bantu Budi dan Siti menghitung sisa kelereng, buah apel, balon terbang, donat, dan koin bintang ajaib dalam 5 petualangan seru.',
     lessons: [
@@ -1177,7 +1177,7 @@ export const mockMathLevels: LevelDef[] = [
     subtitle: '5 Tantangan Membandingkan Koleksi Benda',
     topic: 'comparison',
     environment: 'classroom',
-    icon: '⭐',
+    icon: '⚖️',
     requiredXp: 160,
     description: 'Bandingkan jumlah bintang emas, buku cerita, balon festival, buah apel, dan kelereng berkilau untuk menemukan yang lebih banyak atau sama banyak.',
     lessons: [
@@ -1194,7 +1194,7 @@ export const mockMathLevels: LevelDef[] = [
     subtitle: '5 Petualangan Menghitung Kelompok Perkalian',
     topic: 'multiplication',
     environment: 'market',
-    icon: '🧺',
+    icon: '✖️',
     requiredXp: 220,
     description: 'Pelajari konsep perkalian sebagai penjumlahan berulang melalui keranjang apel, piring cupcake, ikat bunga matahari, krayon, dan bintang keberuntungan.',
     lessons: [
@@ -1211,7 +1211,7 @@ export const mockMathLevels: LevelDef[] = [
     subtitle: '5 Kisah Membagi Makanan & Benda Sama Rata',
     topic: 'division',
     environment: 'park',
-    icon: '🍰',
+    icon: '➗',
     requiredXp: 280,
     description: 'Belajar membagi makanan, buah segar, kelereng toples, permen pelangi, dan bunga secara adil dan sama rata untuk sahabat-sahabat.',
     lessons: [
@@ -1491,7 +1491,7 @@ export const mockScienceLevels: LevelDef[] = [
     subtitle: '5 Kisah Ciri, Makanan & Siklus Hewan',
     topic: 'science_animals',
     environment: 'forest',
-    icon: '🐦',
+    icon: '🐾',
     requiredXp: 0,
     description: 'Kenali burung bersayap, ikan perenang, hewan herbivora pemakan rumput, metamorfosis kupu-kupu, dan hewan bertelur bersama Budi & Siti.',
     lessons: [
@@ -1542,7 +1542,7 @@ export const mockScienceLevels: LevelDef[] = [
     subtitle: '5 Ekspedisi Matahari, Bulan & Planet Bumi',
     topic: 'science_space',
     environment: 'castle',
-    icon: '☀️',
+    icon: '🚀',
     requiredXp: 150,
     description: 'Jelajahi matahari sumber cahaya, kilau lembut bulan purnama, rotasi bumi penyebab siang-malam, planet bumi biru, dan roket astronot.',
     lessons: [
@@ -1593,7 +1593,7 @@ export const mockScienceLevels: LevelDef[] = [
     subtitle: '5 Misi Magnet, Cahaya, Bayangan & Kelestarian Bumi',
     topic: 'science_nature',
     environment: 'castle',
-    icon: '🧲',
+    icon: '🔬',
     requiredXp: 400,
     description: 'Tantangan akhir sains: daya tarik magnet pada besi, sumber cahaya senter, pembentukan bayangan gelap, panas matahari pengering baju, dan menjaga bumi lestari!',
     lessons: [
@@ -1856,7 +1856,7 @@ export const mockLanguageLevels: LevelDef[] = [
     subtitle: '5 Pasang Lawan Kata Ukuran, Suhu & Waktu',
     topic: 'language_antonyms',
     environment: 'park',
-    icon: '🐘',
+    icon: '🔄',
     requiredXp: 90,
     description: 'Pahami pasangan antonim: Besar vs Kecil, Tinggi vs Pendek, Panas vs Dingin, Cepat vs Lambat, dan Siang vs Malam.',
     lessons: [
@@ -2541,7 +2541,7 @@ export const mockLogicLevels: LevelDef[] = [
     subtitle: 'Mengenal bentuk geometri di sekitar kita',
     topic: 'logic_shapes',
     environment: 'castle',
-    icon: '⭕',
+    icon: '📐',
     requiredXp: 150,
     description: 'Pecahkan teka-teki bentuk lingkaran, segitiga, persegi, dan siluet bayangan.',
     lessons: [
@@ -2592,7 +2592,7 @@ export const mockLogicLevels: LevelDef[] = [
     subtitle: 'Pemecahan masalah dan tebak-tebakan logika',
     topic: 'logic_riddles',
     environment: 'castle',
-    icon: '👑',
+    icon: '🧩',
     requiredXp: 400,
     description: 'Selesaikan teka-teki benda, pencocokan kunci, dan tantangan logika pamungkas!',
     lessons: [
