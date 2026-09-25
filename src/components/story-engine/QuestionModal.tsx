@@ -116,11 +116,16 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         {question.question}
       </h3>
 
-      {/* Options Grid (1-column on mobile for readable text, 2-column if options are short numbers) */}
+      {/* Options Layout: Ke Bawah (1 kolom / vertikal) jika jawaban panjang, atau Tetap 2 Kolom jika jawaban sedikit/pendek */}
       {(() => {
-        const isAllShortOptions = question.options.every(opt => (opt.label || String(opt.value)).length <= 6);
+        const isLongAnswers = question.options.some(opt => {
+          const text = (opt.label || String(opt.value)).trim();
+          const words = text.split(/\s+/);
+          return text.length > 12 || words.length > 2;
+        });
+
         return (
-          <div className={`${isAllShortOptions ? 'grid grid-cols-2' : 'grid grid-cols-1 sm:grid-cols-2'} gap-2 sm:gap-3 mb-2.5 sm:mb-4`}>
+          <div className={isLongAnswers ? 'flex flex-col gap-2 sm:gap-2.5 w-full mb-2.5 sm:mb-4' : 'grid grid-cols-2 gap-2 sm:gap-3 mb-2.5 sm:mb-4 w-full'}>
             {question.options.map((opt, idx) => {
               const isSelected = selectedOption === opt.id;
               const isCorrectAnswer = feedbackState === 'correct' && opt.id === question.correctAnswer;
@@ -132,7 +137,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
                   key={opt.id}
                   onClick={() => handleSelect(opt.id)}
                   disabled={feedbackState === 'correct'}
-                  className={`flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border-2 sm:border-3 font-extrabold text-xs sm:text-base transition-all text-left shadow-xs active:translate-y-0.5
+                  className={`flex items-center gap-2.5 sm:gap-3 ${isLongAnswers ? 'w-full p-2.5 sm:p-3.5' : 'p-2.5 sm:p-3'} rounded-xl sm:rounded-2xl border-2 sm:border-3 font-extrabold text-xs sm:text-base transition-all text-left shadow-xs active:translate-y-0.5
                     ${isCorrectAnswer
                       ? 'bg-emerald-500 border-emerald-600 text-white shadow-md border-b-3 sm:border-b-4 scale-[1.01]'
                       : isWrongSelected
@@ -142,12 +147,12 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
                       : `${colorTheme.bg} ${colorTheme.hover} border-b-2 sm:border-b-3`
                     }`}
                 >
-                  <span className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center font-black text-xs sm:text-sm shrink-0 shadow-inner
+                  <span className={`${isLongAnswers ? 'w-7 h-7 sm:w-8 sm:h-8' : 'w-6 h-6 sm:w-8 sm:h-8'} rounded-lg sm:rounded-xl flex items-center justify-center font-black text-xs sm:text-sm shrink-0 shadow-inner
                     ${isSelected ? 'bg-amber-900 text-amber-100' : colorTheme.badge}`}>
                     {opt.id}
                   </span>
-                  <span className="leading-snug break-words flex-1 font-extrabold text-xs sm:text-base">{opt.label || String(opt.value)}</span>
-                  {isCorrectAnswer && <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6 text-white shrink-0 ml-1" />}
+                  <span className="leading-snug break-words flex-1 font-extrabold text-xs sm:text-sm md:text-base">{opt.label || String(opt.value)}</span>
+                  {isCorrectAnswer && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-white shrink-0 ml-1" />}
                 </button>
               );
             })}
