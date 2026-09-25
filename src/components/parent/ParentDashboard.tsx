@@ -45,103 +45,105 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-fun pb-16">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-2 border-slate-200 px-4 py-3.5 shadow-sm">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-2 border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3.5 shadow-sm">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
           <button
             onClick={onBackToApp}
-            className="candy-btn candy-btn-yellow flex items-center gap-2 px-4 py-2 rounded-2xl font-black text-sm"
+            className="candy-btn candy-btn-yellow flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm shrink-0"
           >
             <ArrowLeft className="w-4 h-4 stroke-[3]" />
-            <span>Kembali ke Belajar</span>
+            <span className="hidden sm:inline">Kembali ke Belajar</span>
+            <span className="sm:hidden">Kembali</span>
           </button>
 
-          <div className="flex items-center gap-2 text-indigo-700 font-black text-sm uppercase tracking-wide">
-            <ShieldCheck className="w-5 h-5 text-indigo-600" />
-            <span>Dashboard Orang Tua</span>
+          <div className="flex items-center gap-1.5 text-indigo-700 font-black text-xs sm:text-sm uppercase tracking-wide truncate">
+            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 shrink-0" />
+            <span className="hidden xs:inline">Dashboard Orang Tua</span>
+            <span className="xs:hidden">Orang Tua</span>
           </div>
 
-          <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-2xl">
-            <span className="text-2xl">{activeChild.avatar}</span>
-            <span className="font-extrabold text-sm text-indigo-950">{activeChild.name}</span>
+          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 px-2 sm:px-3 py-1 rounded-xl sm:rounded-2xl shrink-0">
+            <span className="text-xl sm:text-2xl">{activeChild.avatar}</span>
+            <span className="font-extrabold text-xs sm:text-sm text-indigo-950 truncate max-w-[70px] sm:max-w-none">{activeChild.name}</span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 pt-6 space-y-6">
+      <main className="max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
         {/* Child Summary Hero */}
-        <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 text-white rounded-[2rem] p-6 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 text-white rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="bg-white/20 backdrop-blur-sm text-white text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full uppercase tracking-wider">
                 Laporan Mingguan
               </span>
-              <span className="text-xs text-indigo-200 font-bold">
+              <span className="text-[11px] sm:text-xs text-indigo-200 font-bold">
                 Aktivitas Terakhir: {new Date(activeChild.lastActive).toLocaleDateString('id-ID', { dateStyle: 'medium' })}
               </span>
             </div>
-            <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
+            <h2 className="text-xl sm:text-4xl font-black tracking-tight">
               Perkembangan Belajar {activeChild.name}
             </h2>
-            <p className="text-indigo-100 text-sm sm:text-base font-medium mt-1 max-w-xl">
+            <p className="text-indigo-100 text-xs sm:text-base font-medium mt-1 max-w-xl">
               Pantau pemahaman materi, durasi belajar, dan materi yang membutuhkan pendampingan lebih lanjut.
             </p>
           </div>
 
-          <div className="flex items-center gap-5 bg-white/10 backdrop-blur-md p-4 rounded-3xl border border-white/20 shadow-inner">
+          <div className="flex items-center justify-around sm:justify-center gap-3 sm:gap-5 bg-white/10 backdrop-blur-md p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-white/20 shadow-inner">
             <div className="text-center">
-              <span className="block text-3xl font-black text-amber-300">{activeChild.level}</span>
-              <span className="text-xs text-indigo-200 font-bold uppercase">Level</span>
+              <span className="block text-2xl sm:text-3xl font-black text-amber-300">{activeChild.level}</span>
+              <span className="text-[10px] sm:text-xs text-indigo-200 font-bold uppercase">Level</span>
             </div>
-            <div className="w-px h-10 bg-white/20" />
+            <div className="w-px h-8 sm:h-10 bg-white/20" />
             <div className="text-center">
-              <span className="block text-3xl font-black text-yellow-300">{activeChild.xp}</span>
-              <span className="text-xs text-indigo-200 font-bold uppercase">Total XP</span>
+              <span className="block text-2xl sm:text-3xl font-black text-yellow-300">{activeChild.xp}</span>
+              <span className="text-[10px] sm:text-xs text-indigo-200 font-bold uppercase">Total XP</span>
             </div>
-            <div className="w-px h-10 bg-white/20" />
+            <div className="w-px h-8 sm:h-10 bg-white/20" />
             <div className="text-center">
-              <span className="block text-3xl font-black text-emerald-300">{activeChild.stars}</span>
-              <span className="text-xs text-indigo-200 font-bold uppercase">Bintang</span>
+              <span className="block text-2xl sm:text-3xl font-black text-emerald-300">{activeChild.stars}</span>
+              <span className="text-[10px] sm:text-xs text-indigo-200 font-bold uppercase">Bintang</span>
             </div>
           </div>
         </div>
 
         {/* 4 Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white border-2 border-slate-200/80 p-5 rounded-3xl shadow-sm">
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-xs font-extrabold uppercase">Waktu Belajar</span>
-              <Clock className="w-5 h-5 text-blue-500" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="bg-white border-2 border-slate-200/80 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm">
+            <div className="flex items-center justify-between text-slate-500 mb-1 sm:mb-2">
+              <span className="text-[10px] sm:text-xs font-extrabold uppercase">Waktu Belajar</span>
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
             </div>
-            <div className="text-3xl font-black text-slate-800">{totalMinutes} mnt</div>
-            <p className="text-xs text-slate-500 font-bold mt-1">Total durasi sesi belajar</p>
+            <div className="text-2xl sm:text-3xl font-black text-slate-800">{totalMinutes} mnt</div>
+            <p className="text-[10px] sm:text-xs text-slate-500 font-bold mt-0.5 sm:mt-1">Total durasi sesi</p>
           </div>
 
-          <div className="bg-white border-2 border-slate-200/80 p-5 rounded-3xl shadow-sm">
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-xs font-extrabold uppercase">Cerita Selesai</span>
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
+          <div className="bg-white border-2 border-slate-200/80 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm">
+            <div className="flex items-center justify-between text-slate-500 mb-1 sm:mb-2">
+              <span className="text-[10px] sm:text-xs font-extrabold uppercase">Cerita Selesai</span>
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
             </div>
-            <div className="text-3xl font-black text-slate-800">{activeChild.completedLessons.length}</div>
-            <p className="text-xs text-slate-500 font-bold mt-1">Dari 7 cerita kurikulum</p>
+            <div className="text-2xl sm:text-3xl font-black text-slate-800">{activeChild.completedLessons.length}</div>
+            <p className="text-[10px] sm:text-xs text-slate-500 font-bold mt-0.5 sm:mt-1">Dari kurikulum aktif</p>
           </div>
 
-          <div className="bg-white border-2 border-slate-200/80 p-5 rounded-3xl shadow-sm">
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-xs font-extrabold uppercase">Soal Dijawab</span>
-              <Target className="w-5 h-5 text-purple-500" />
+          <div className="bg-white border-2 border-slate-200/80 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm">
+            <div className="flex items-center justify-between text-slate-500 mb-1 sm:mb-2">
+              <span className="text-[10px] sm:text-xs font-extrabold uppercase">Soal Dijawab</span>
+              <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
             </div>
-            <div className="text-3xl font-black text-slate-800">{totalQuestions}</div>
-            <p className="text-xs text-slate-500 font-bold mt-1">{correctCount} jawaban benar</p>
+            <div className="text-2xl sm:text-3xl font-black text-slate-800">{totalQuestions}</div>
+            <p className="text-[10px] sm:text-xs text-slate-500 font-bold mt-0.5 sm:mt-1">{correctCount} jawaban benar</p>
           </div>
 
-          <div className="bg-white border-2 border-slate-200/80 p-5 rounded-3xl shadow-sm">
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-xs font-extrabold uppercase">Akurasi</span>
-              <TrendingUp className="w-5 h-5 text-amber-500" />
+          <div className="bg-white border-2 border-slate-200/80 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm">
+            <div className="flex items-center justify-between text-slate-500 mb-1 sm:mb-2">
+              <span className="text-[10px] sm:text-xs font-extrabold uppercase">Akurasi</span>
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
             </div>
-            <div className="text-3xl font-black text-slate-800">{accuracy}%</div>
-            <p className="text-xs text-slate-500 font-bold mt-1">
-              {accuracy >= 80 ? 'Sangat Baik 🌟' : 'Perlu Didampingi 📖'}
+            <div className="text-2xl sm:text-3xl font-black text-slate-800">{accuracy}%</div>
+            <p className="text-[10px] sm:text-xs text-slate-500 font-bold mt-0.5 sm:mt-1">
+              {accuracy >= 80 ? 'Sangat Baik 🌟' : 'Perlu Pendampingan 📖'}
             </p>
           </div>
         </div>
@@ -247,31 +249,32 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
         </div>
 
         {/* Screen Time & Controls */}
-        <div className="bg-white border-2 border-slate-200/80 rounded-[2rem] p-6 shadow-sm">
-          <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+        <div className="bg-white border-2 border-slate-200/80 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-sm">
+          <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
             <Settings className="w-5 h-5 text-indigo-600" />
             <span>Pengaturan Waktu Layar Anak</span>
           </h3>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-            <div>
-              <h4 className="font-black text-slate-900 text-base">Batas Waktu Belajar Harian</h4>
-              <p className="text-xs text-slate-500 font-bold">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div className="min-w-0">
+              <h4 className="font-black text-slate-900 text-sm sm:text-base">Batas Waktu Belajar Harian</h4>
+              <p className="text-xs text-slate-500 font-bold leading-relaxed">
                 Aplikasi akan memunculkan pesan pengingat istirahat saat batas waktu harian tercapai.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0">
               {[15, 30, 45, 60].map(mins => (
                 <button
                   key={mins}
                   onClick={() => setScreenTimeLimit(mins)}
-                  className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${
+                  className={`py-2 px-1 sm:px-3.5 rounded-xl font-black text-center transition-all active:scale-95 ${
                     screenTimeLimit === mins
                       ? 'bg-indigo-600 text-white shadow-md'
                       : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  {mins} menit
+                  <span className="block leading-none text-xs sm:text-sm">{mins}</span>
+                  <span className="block text-[9px] sm:text-[10px] font-bold opacity-80 mt-0.5">menit</span>
                 </button>
               ))}
             </div>
@@ -279,8 +282,8 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
         </div>
 
         {/* Recent Activity Log */}
-        <div className="bg-white border-2 border-slate-200/80 rounded-[2rem] p-6 shadow-sm">
-          <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+        <div className="bg-white border-2 border-slate-200/80 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-sm">
+          <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-600" />
             <span>Riwayat Aktivitas Belajar Terbaru</span>
           </h3>
@@ -290,20 +293,20 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
               attempts.map(att => (
                 <div
                   key={att.attemptId}
-                  className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm"
+                  className="flex items-center justify-between gap-2 p-3 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{att.correct ? '✅' : '❌'}</span>
-                    <div>
-                      <h5 className="font-black text-slate-900">{att.lessonId}</h5>
-                      <span className="text-xs text-slate-500 font-bold">
-                        {new Date(att.timestamp).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })} • Percobaan: {att.attemptsCount} {att.hintUsed ? '(Menggunakan Petunjuk)' : ''}
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                    <span className="text-xl sm:text-2xl shrink-0">{att.correct ? '✅' : '❌'}</span>
+                    <div className="min-w-0 flex-1">
+                      <h5 className="font-black text-slate-900 text-xs sm:text-sm truncate">{att.lessonId}</h5>
+                      <span className="text-[11px] sm:text-xs text-slate-500 font-bold block truncate">
+                        {new Date(att.timestamp).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })} • Percobaan: {att.attemptsCount} {att.hintUsed ? '(Petunjuk)' : ''}
                       </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="font-black text-amber-600 text-sm block">{att.score} Poin</span>
-                    <span className="text-xs text-slate-500 font-bold">{att.timeSpentSeconds} detik</span>
+                  <div className="text-right shrink-0">
+                    <span className="font-black text-amber-600 text-xs sm:text-sm block">{att.score} Poin</span>
+                    <span className="text-[10px] sm:text-xs text-slate-500 font-bold">{att.timeSpentSeconds} detik</span>
                   </div>
                 </div>
               ))

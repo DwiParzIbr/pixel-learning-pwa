@@ -116,39 +116,44 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         {question.question}
       </h3>
 
-      {/* Options Grid (2 columns on mobile for compact layout) */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-2.5 sm:mb-4">
-        {question.options.map((opt, idx) => {
-          const isSelected = selectedOption === opt.id;
-          const isCorrectAnswer = feedbackState === 'correct' && opt.id === question.correctAnswer;
-          const isWrongSelected = feedbackState === 'wrong' && isSelected;
-          const colorTheme = optionColorStyles[idx % optionColorStyles.length];
+      {/* Options Grid (1-column on mobile for readable text, 2-column if options are short numbers) */}
+      {(() => {
+        const isAllShortOptions = question.options.every(opt => (opt.label || String(opt.value)).length <= 6);
+        return (
+          <div className={`${isAllShortOptions ? 'grid grid-cols-2' : 'grid grid-cols-1 sm:grid-cols-2'} gap-2 sm:gap-3 mb-2.5 sm:mb-4`}>
+            {question.options.map((opt, idx) => {
+              const isSelected = selectedOption === opt.id;
+              const isCorrectAnswer = feedbackState === 'correct' && opt.id === question.correctAnswer;
+              const isWrongSelected = feedbackState === 'wrong' && isSelected;
+              const colorTheme = optionColorStyles[idx % optionColorStyles.length];
 
-          return (
-            <button
-              key={opt.id}
-              onClick={() => handleSelect(opt.id)}
-              disabled={feedbackState === 'correct'}
-              className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl sm:rounded-2xl border-2 sm:border-3 font-extrabold text-xs sm:text-base transition-all text-left shadow-xs active:translate-y-0.5
-                ${isCorrectAnswer
-                  ? 'bg-emerald-500 border-emerald-600 text-white shadow-md border-b-3 sm:border-b-4 scale-[1.01]'
-                  : isWrongSelected
-                  ? 'bg-rose-100 border-rose-400 text-rose-800 animate-shake border-b-2 sm:border-b-3'
-                  : isSelected
-                  ? 'bg-amber-300 border-amber-500 text-amber-950 shadow-sm border-b-3 sm:border-b-4 scale-[1.01]'
-                  : `${colorTheme.bg} ${colorTheme.hover} border-b-2 sm:border-b-3`
-                }`}
-            >
-              <span className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center font-black text-xs sm:text-sm shrink-0 shadow-inner
-                ${isSelected ? 'bg-amber-900 text-amber-100' : colorTheme.badge}`}>
-                {opt.id}
-              </span>
-              <span className="leading-tight truncate flex-1 font-bold">{opt.label || String(opt.value)}</span>
-              {isCorrectAnswer && <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6 text-white shrink-0" />}
-            </button>
-          );
-        })}
-      </div>
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => handleSelect(opt.id)}
+                  disabled={feedbackState === 'correct'}
+                  className={`flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border-2 sm:border-3 font-extrabold text-xs sm:text-base transition-all text-left shadow-xs active:translate-y-0.5
+                    ${isCorrectAnswer
+                      ? 'bg-emerald-500 border-emerald-600 text-white shadow-md border-b-3 sm:border-b-4 scale-[1.01]'
+                      : isWrongSelected
+                      ? 'bg-rose-100 border-rose-400 text-rose-800 animate-shake border-b-2 sm:border-b-3'
+                      : isSelected
+                      ? 'bg-amber-300 border-amber-500 text-amber-950 shadow-sm border-b-3 sm:border-b-4 scale-[1.01]'
+                      : `${colorTheme.bg} ${colorTheme.hover} border-b-2 sm:border-b-3`
+                    }`}
+                >
+                  <span className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center font-black text-xs sm:text-sm shrink-0 shadow-inner
+                    ${isSelected ? 'bg-amber-900 text-amber-100' : colorTheme.badge}`}>
+                    {opt.id}
+                  </span>
+                  <span className="leading-snug break-words flex-1 font-extrabold text-xs sm:text-base">{opt.label || String(opt.value)}</span>
+                  {isCorrectAnswer && <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6 text-white shrink-0 ml-1" />}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Feedback Alert Banner */}
       {feedbackState !== 'idle' && (
