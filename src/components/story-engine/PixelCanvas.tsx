@@ -102,176 +102,185 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
 
   const currentScene = allScenes[activeSceneIndex] || allScenes[0];
 
+  const lastProcessedSceneRef = useRef<number>(-1);
+  const lastScenesRef = useRef<SceneDef[] | null>(null);
+
+  const resetCanvas = useCallback(() => {
+    lastProcessedSceneRef.current = -1;
+    const state = gameStateRef.current;
+    state.characters.clear();
+    state.objects = [];
+    state.particles = [];
+    setCountedTotal(0);
+  }, []);
+
   // Process scene actions without destroying existing world state
-  const applySceneActions = useCallback(
-    (sceneIdx: number) => {
-      const scene = allScenes[sceneIdx];
-      if (!scene) return;
-
-      const state = gameStateRef.current;
-      state.currentProcessedScene = sceneIdx;
-      state.sceneTimer = 0;
-
-      // If resetting to scene 0, start completely fresh
-      if (sceneIdx === 0) {
-        state.characters.clear();
-        state.objects = [];
-        state.particles = [];
-        setCountedTotal(0);
-      }
-
-      // 1. Process Characters
-      for (const act of scene.actions) {
-        if (act.type === 'spawn_character' && act.characterId) {
-          const charDef = characters.find(c => c.id === act.characterId);
-          const finalX = act.position?.x ?? (act.characterId === 'siti' ? 550 : 220);
-          const finalY = act.position?.y ?? 330;
-
-          if (!state.characters.has(act.characterId)) {
-            // New character entering the scene
-            const isBudi = act.characterId === 'budi';
-            const startX = isBudi ? (finalX > 300 ? 50 : 20) : (finalX < 500 ? 760 : 700);
-
-            state.characters.set(act.characterId, {
-              id: act.characterId,
-              name: charDef?.name || act.characterId,
-              asset: charDef?.asset || 'character_budi',
-              x: startX,
-              y: finalY,
-              targetX: finalX,
-              targetY: finalY,
-              isWalking: startX !== finalX,
-              walkSpeed: 2.8,
-              facing: finalX >= startX ? 'right' : 'left',
-              emotion: act.animation || 'walk',
-              speechBubble: undefined,
-              stepCycle: 0,
-            });
-          } else {
-            // Existing character moves to new position if specified
-            const existing = state.characters.get(act.characterId)!;
-            if (act.position) {
-              existing.targetX = act.position.x;
-              existing.targetY = act.position.y;
-              existing.isWalking = existing.x !== act.position.x;
-              existing.facing = act.position.x >= existing.x ? 'right' : 'left';
-            }
-            if (act.animation) {
-              existing.emotion = act.animation;
-            }
-          }
-        }
-
-        if (act.type === 'move_character' && act.characterId && act.position) {
-          const c = state.characters.get(act.characterId);
-          if (c) {
-            c.targetX = act.position.x;
-            c.targetY = act.position.y;
-            c.isWalking = true;
-            c.facing = act.position.x >= c.x ? 'right' : 'left';
-          }
-        }
-
-        if (act.type === 'animate_character' && act.characterId && act.animation) {
-          const c = state.characters.get(act.characterId);
-          if (c) {
-            c.emotion = act.animation;
-          }
-        }
-
-        // 2. Process Objects
-        if (act.type === 'spawn_object' && act.object && act.quantity) {
-          const count = act.quantity;
-          const baseX = act.position?.x ?? (act.owner === 'siti' ? 520 : 380);
-          const groundY = act.position?.y ?? 355;
-
-          for (let i = 0; i < count; i++) {
-            const col = i % 5;
-            const row = Math.floor(i / 5);
-            const targetObjX = baseX + col * 36;
-            const targetObjY = groundY + row * 26;
-
-            state.objects.push({
-              id: `obj_${act.object}_${i}_${Date.now()}`,
-              type: act.object,
-              owner: act.owner,
-              x: targetObjX,
-              y: -30 - i * 15, // Drop from tree/sky with bounce
-              targetX: targetObjX,
-              targetY: targetObjY,
-              groundY: targetObjY,
-              isTransferring: false,
-              transferProgress: 0,
-              fromX: targetObjX,
-              fromY: targetObjY,
-              toX: targetObjX,
-              toY: targetObjY,
-              colorIdx: i,
-              isCounted: false,
-              isHighlighted: false,
-              bounceOffset: 0,
-            });
-          }
-        }
-
-        // 3. Object Transfers (e.g. Budi gives 4 marbles to Siti)
-        if (act.type === 'transfer_object' && act.from && act.to && act.quantity) {
-          let transferredCount = 0;
-          const targetBaseX = act.to === 'siti' ? 540 : 250;
-          const groundY = 355;
-
-          state.objects.forEach(obj => {
-            if (obj.owner === act.from && transferredCount < (act.quantity || 0) && !obj.isTransferring) {
-              const col = transferredCount % 5;
-              const row = Math.floor(transferredCount / 5);
-              obj.owner = act.to;
-              obj.fromX = obj.x;
-              obj.fromY = obj.y;
-              obj.toX = targetBaseX + col * 36;
-              obj.toY = groundY + row * 26;
-              obj.groundY = obj.toY;
-              obj.isTransferring = true;
-              obj.transferProgress = -transferredCount * 0.15; // Staggered parabolic flight
-              transferredCount++;
-            }
-          });
-
-          soundEngine.playSfx('transfer');
-
-          const receiver = state.characters.get(act.to);
-          if (receiver) receiver.emotion = 'celebrate';
-        }
-
-        // 4. Highlight objects (e.g. Budi's remaining marbles)
-        if (act.type === 'highlight_object') {
-          state.objects.forEach(obj => {
-            if (!act.owner || obj.owner === act.owner) {
-              obj.isHighlighted = true;
-            }
-          });
-        }
-      }
-
-      // Update Speech Bubble only when this character is the active speaker
-      state.characters.forEach(char => {
-        if (activeSpeaker && scene.dialogue && scene.dialogue.speaker === char.id && activeSpeaker === char.id) {
-          const bubbleText = voiceLang === 'en' ? translateStoryToEnglish(scene.dialogue.text) : scene.dialogue.text;
-          char.speechBubble = bubbleText;
-          char.emotion = 'talk';
-        } else {
-          char.speechBubble = undefined;
-          if (char.emotion === 'talk') {
-            char.emotion = 'idle';
-          }
-        }
-      });
-    },
-    [allScenes, characters, activeSpeaker, voiceLang]
-  );
-
   useEffect(() => {
-    applySceneActions(activeSceneIndex);
-  }, [activeSceneIndex, applySceneActions]);
+    const isNewLesson = lastScenesRef.current !== allScenes;
+    const isRestart = activeSceneIndex === 0 && lastProcessedSceneRef.current > 0;
+    const isSceneChanged = lastProcessedSceneRef.current !== activeSceneIndex;
+
+    // Guard: Only process when scene actually changed, on a new lesson, or on explicit restart
+    if (!isNewLesson && !isRestart && !isSceneChanged) {
+      return;
+    }
+
+    lastScenesRef.current = allScenes;
+    lastProcessedSceneRef.current = activeSceneIndex;
+
+    const scene = allScenes[activeSceneIndex];
+    if (!scene) return;
+
+    const state = gameStateRef.current;
+    state.currentProcessedScene = activeSceneIndex;
+    state.sceneTimer = 0;
+
+    // Reset world state ONLY on a new lesson or explicit restart back to Scene 0
+    if (activeSceneIndex === 0 && (isNewLesson || isRestart || state.characters.size === 0)) {
+      state.characters.clear();
+      state.objects = [];
+      state.particles = [];
+      setCountedTotal(0);
+    }
+
+    // 1. Process Characters
+    for (const act of scene.actions) {
+      if (act.type === 'spawn_character' && act.characterId) {
+        const charDef = characters.find(c => c.id === act.characterId);
+        const finalX = act.position?.x ?? (act.characterId === 'siti' ? 550 : 220);
+        const finalY = act.position?.y ?? 330;
+
+        if (!state.characters.has(act.characterId)) {
+          // New character entering the scene from off-screen
+          const isBudi = act.characterId === 'budi';
+          const startX = isBudi ? (finalX > 300 ? 50 : 20) : (finalX < 500 ? 760 : 700);
+
+          state.characters.set(act.characterId, {
+            id: act.characterId,
+            name: charDef?.name || act.characterId,
+            asset: charDef?.asset || 'character_budi',
+            x: startX,
+            y: finalY,
+            targetX: finalX,
+            targetY: finalY,
+            isWalking: startX !== finalX,
+            walkSpeed: 2.8,
+            facing: finalX >= startX ? 'right' : 'left',
+            emotion: act.animation || 'walk',
+            speechBubble: undefined,
+            stepCycle: 0,
+          });
+        } else {
+          // Existing character already on stage: KEEP THEM IN FRAME!
+          const existing = state.characters.get(act.characterId)!;
+          if (act.position && (Math.abs(existing.x - act.position.x) > 5 || Math.abs(existing.y - act.position.y) > 5)) {
+            existing.targetX = act.position.x;
+            existing.targetY = act.position.y;
+            existing.isWalking = true;
+            existing.facing = act.position.x >= existing.x ? 'right' : 'left';
+          } else {
+            existing.isWalking = false;
+          }
+          if (act.animation) {
+            existing.emotion = existing.isWalking ? 'walk' : (act.animation === 'walk' ? 'idle' : act.animation);
+          }
+        }
+      }
+
+      if (act.type === 'move_character' && act.characterId && act.position) {
+        const c = state.characters.get(act.characterId);
+        if (c) {
+          c.targetX = act.position.x;
+          c.targetY = act.position.y;
+          c.isWalking = true;
+          c.facing = act.position.x >= c.x ? 'right' : 'left';
+        }
+      }
+
+      if (act.type === 'animate_character' && act.characterId && act.animation) {
+        const c = state.characters.get(act.characterId);
+        if (c) {
+          c.emotion = act.animation;
+        }
+      }
+
+      // 2. Process Objects
+      if (act.type === 'spawn_object' && act.object && act.quantity) {
+        const count = act.quantity;
+        const baseX = act.position?.x ?? (act.owner === 'siti' ? 520 : 380);
+        const groundY = act.position?.y ?? 355;
+
+        // Prevent duplicate object spawning if objects already exist for this owner
+        const existingCount = state.objects.filter(o => o.type === act.object && o.owner === act.owner).length;
+        const itemsToSpawn = Math.max(0, count - existingCount);
+
+        for (let i = 0; i < itemsToSpawn; i++) {
+          const col = (existingCount + i) % 5;
+          const row = Math.floor((existingCount + i) / 5);
+          const targetObjX = baseX + col * 36;
+          const targetObjY = groundY + row * 26;
+
+          state.objects.push({
+            id: `obj_${act.object}_${existingCount + i}_${Date.now()}`,
+            type: act.object,
+            owner: act.owner,
+            x: targetObjX,
+            y: -30 - i * 15,
+            targetX: targetObjX,
+            targetY: targetObjY,
+            groundY: targetObjY,
+            isTransferring: false,
+            transferProgress: 0,
+            fromX: targetObjX,
+            fromY: targetObjY,
+            toX: targetObjX,
+            toY: targetObjY,
+            colorIdx: existingCount + i,
+            isCounted: false,
+            isHighlighted: false,
+            bounceOffset: 0,
+          });
+        }
+      }
+
+      // 3. Object Transfers
+      if (act.type === 'transfer_object' && act.from && act.to && act.quantity) {
+        let transferredCount = 0;
+        const targetBaseX = act.to === 'siti' ? 540 : 250;
+        const groundY = 355;
+
+        state.objects.forEach(obj => {
+          if (obj.owner === act.from && transferredCount < (act.quantity || 0) && !obj.isTransferring) {
+            const col = transferredCount % 5;
+            const row = Math.floor(transferredCount / 5);
+            obj.owner = act.to;
+            obj.fromX = obj.x;
+            obj.fromY = obj.y;
+            obj.toX = targetBaseX + col * 36;
+            obj.toY = groundY + row * 26;
+            obj.groundY = obj.toY;
+            obj.isTransferring = true;
+            obj.transferProgress = -transferredCount * 0.15;
+            transferredCount++;
+          }
+        });
+
+        soundEngine.playSfx('transfer');
+
+        const receiver = state.characters.get(act.to);
+        if (receiver) receiver.emotion = 'celebrate';
+      }
+
+      // 4. Highlight objects
+      if (act.type === 'highlight_object') {
+        state.objects.forEach(obj => {
+          if (!act.owner || obj.owner === act.owner) {
+            obj.isHighlighted = true;
+          }
+        });
+      }
+    }
+  }, [activeSceneIndex, allScenes, characters]);
 
   // Dynamically update speech bubbles and character talk animation when activeSpeaker changes
   useEffect(() => {
@@ -286,7 +295,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       } else {
         char.speechBubble = undefined;
         if (char.emotion === 'talk') {
-          char.emotion = 'idle';
+          char.emotion = char.isWalking ? 'walk' : 'idle';
         }
       }
     });
@@ -489,7 +498,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
             <button
               onClick={() => {
                 soundEngine.playSfx('click');
-                applySceneActions(0);
+                resetCanvas();
                 onSceneComplete?.(-1); // Reset story from start
               }}
               className="bg-white/90 hover:bg-white text-amber-900 font-black text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1 rounded-full flex items-center gap-1 shadow-sm active:scale-95 transition-all"
