@@ -8,6 +8,7 @@ import { StoryPlayer } from '@/components/story-engine/StoryPlayer';
 import { ParentDashboard } from '@/components/parent/ParentDashboard';
 import { ParentalGateModal } from '@/components/parent/ParentalGateModal';
 import { AdminContentStudio } from '@/components/admin/AdminContentStudio';
+import { PwaInstallPrompt } from '@/components/ui/PwaInstallPrompt';
 
 export default function HomePage() {
   const [currentMode, setCurrentMode] = useState<'map' | 'story' | 'parent' | 'admin'>('map');
@@ -77,6 +78,9 @@ export default function HomePage() {
           onCancel={() => setShowParentGate(false)}
         />
       )}
+
+      {/* PWA Install Banner */}
+      <PwaInstallPrompt />
     </main>
   );
 }
