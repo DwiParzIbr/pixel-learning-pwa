@@ -159,9 +159,9 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({ lesson, onExit, onComp
   const storyProgressPercent = Math.round(((currentSceneIndex + 1) / scenes.length) * 100);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100 text-slate-800 flex flex-col items-center justify-between p-3 sm:p-6 select-none font-fun">
+    <div className="min-h-screen bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100 text-slate-800 flex flex-col items-center justify-start p-2 sm:p-6 select-none font-fun">
       {/* Top Navbar */}
-      <header className="w-full max-w-4xl flex items-center justify-between gap-1.5 sm:gap-3 bg-white/95 backdrop-blur-md px-2.5 sm:px-6 py-2 sm:py-3 rounded-2xl sm:rounded-3xl shadow-[0_8px_20px_rgba(0,0,0,0.06)] border-3 border-amber-300 mb-3">
+      <header className="w-full max-w-4xl flex items-center justify-between gap-1.5 sm:gap-3 bg-white/95 backdrop-blur-md px-2.5 sm:px-6 py-1.5 sm:py-3 rounded-2xl sm:rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.06)] border-3 border-amber-300 mb-2 sm:mb-3">
         <button
           onClick={onExit}
           className="candy-btn candy-btn-yellow flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-xs sm:text-base active:scale-95 shrink-0"
@@ -218,7 +218,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({ lesson, onExit, onComp
       </header>
 
       {/* Main Interactive Stage */}
-      <main className="w-full max-w-4xl flex-1 flex flex-col items-center justify-center">
+      <main className="w-full max-w-4xl flex-1 flex flex-col items-center justify-start gap-1.5 sm:gap-3">
         {/* Continuous Pixel Canvas Screen */}
         <PixelCanvas
           allScenes={scenes}
@@ -235,7 +235,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({ lesson, onExit, onComp
 
         {/* Comic Storybook Dialogue Box with Smooth Subtitle Updating */}
         {!showQuestion && (
-          <div className="w-full max-w-4xl bg-white rounded-3xl p-5 sm:p-6 mt-4 shadow-[0_12px_28px_rgba(0,0,0,0.08)] border-4 border-amber-300 relative animate-pop-in">
+          <div className="w-full max-w-4xl bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 mt-1 sm:mt-3 shadow-[0_8px_24px_rgba(0,0,0,0.06)] border-3 sm:border-4 border-amber-300 relative animate-pop-in">
             {/* Story Progress Bar */}
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200 mb-4 shadow-inner">
               <div

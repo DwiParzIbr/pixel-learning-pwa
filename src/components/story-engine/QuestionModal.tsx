@@ -96,28 +96,28 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
   ];
 
   return (
-    <div className="w-full max-w-2xl bg-white border-3 sm:border-4 border-amber-300 rounded-2xl sm:rounded-[2.5rem] p-3.5 sm:p-8 shadow-[0_12px_32px_rgba(0,0,0,0.08)] text-slate-800 my-2 sm:my-4 animate-pop-in font-fun relative">
+    <div className="w-full max-w-2xl bg-white border-3 sm:border-4 border-amber-300 rounded-2xl sm:rounded-[2.5rem] p-3 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.06)] text-slate-800 my-1 sm:my-3 animate-pop-in font-fun relative">
       {/* Question Header Badge */}
-      <div className="flex items-center justify-between mb-3 sm:mb-4 border-b-2 border-amber-100 pb-2 sm:pb-3">
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-amber-100 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-amber-300">
-          <span className="text-base sm:text-xl">🌟</span>
-          <span className="font-extrabold text-[11px] sm:text-sm text-amber-900 uppercase tracking-wide">
+      <div className="flex items-center justify-between mb-2 sm:mb-3 border-b-2 border-amber-100 pb-1.5 sm:pb-2">
+        <div className="flex items-center gap-1 bg-amber-100 px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-full border border-amber-300">
+          <span className="text-xs sm:text-base">🌟</span>
+          <span className="font-extrabold text-[10px] sm:text-xs text-amber-900 uppercase tracking-wide">
             Tantangan Seru!
           </span>
         </div>
 
-        <div className="bg-sky-100 text-sky-800 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold border border-sky-300">
+        <div className="bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold border border-sky-300">
           Percobaan ke-{attempts + 1}
         </div>
       </div>
 
-      {/* Main Question Text */}
-      <h3 className="text-base sm:text-2xl font-black text-center text-slate-800 mb-3 sm:mb-6 leading-snug">
+      {/* Main Question Text (Compact font size as requested) */}
+      <h3 className="text-sm sm:text-lg md:text-xl font-black text-center text-slate-800 mb-2.5 sm:mb-4 leading-snug px-1">
         {question.question}
       </h3>
 
       {/* Options Grid (2 columns on mobile for compact layout) */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3.5 mb-3 sm:mb-6">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-2.5 sm:mb-4">
         {question.options.map((opt, idx) => {
           const isSelected = selectedOption === opt.id;
           const isCorrectAnswer = feedbackState === 'correct' && opt.id === question.correctAnswer;
@@ -129,22 +129,22 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
               key={opt.id}
               onClick={() => handleSelect(opt.id)}
               disabled={feedbackState === 'correct'}
-              className={`flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 rounded-2xl sm:rounded-3xl border-2 sm:border-3 font-extrabold text-xs sm:text-xl transition-all text-left shadow-sm active:translate-y-1
+              className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl sm:rounded-2xl border-2 sm:border-3 font-extrabold text-xs sm:text-base transition-all text-left shadow-xs active:translate-y-0.5
                 ${isCorrectAnswer
-                  ? 'bg-emerald-500 border-emerald-600 text-white shadow-lg scale-[1.02] border-b-4 sm:border-b-6'
+                  ? 'bg-emerald-500 border-emerald-600 text-white shadow-md border-b-3 sm:border-b-4 scale-[1.01]'
                   : isWrongSelected
-                  ? 'bg-rose-100 border-rose-400 text-rose-800 animate-shake border-b-3 sm:border-b-4'
+                  ? 'bg-rose-100 border-rose-400 text-rose-800 animate-shake border-b-2 sm:border-b-3'
                   : isSelected
-                  ? 'bg-amber-300 border-amber-500 text-amber-950 shadow-md border-b-4 sm:border-b-6 scale-[1.01]'
-                  : `${colorTheme.bg} ${colorTheme.hover} border-b-3 sm:border-b-4`
+                  ? 'bg-amber-300 border-amber-500 text-amber-950 shadow-sm border-b-3 sm:border-b-4 scale-[1.01]'
+                  : `${colorTheme.bg} ${colorTheme.hover} border-b-2 sm:border-b-3`
                 }`}
             >
-              <span className={`w-7 h-7 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center font-black text-xs sm:text-lg shrink-0 shadow-inner
+              <span className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center font-black text-xs sm:text-sm shrink-0 shadow-inner
                 ${isSelected ? 'bg-amber-900 text-amber-100' : colorTheme.badge}`}>
                 {opt.id}
               </span>
-              <span className="leading-tight truncate flex-1">{opt.label || String(opt.value)}</span>
-              {isCorrectAnswer && <CheckCircle2 className="w-5 h-5 sm:w-8 sm:h-8 text-white shrink-0" />}
+              <span className="leading-tight truncate flex-1 font-bold">{opt.label || String(opt.value)}</span>
+              {isCorrectAnswer && <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6 text-white shrink-0" />}
             </button>
           );
         })}
@@ -227,7 +227,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+      <div className="flex items-center justify-between gap-2 pt-1 sm:pt-2">
         <div>
           {!showHint && attempts >= 1 && (
             <button
@@ -236,28 +236,28 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
                 setHintUsed(true);
                 soundEngine.playSfx('click');
               }}
-              className="candy-btn candy-btn-yellow flex items-center gap-2 px-4 py-2 rounded-2xl font-extrabold text-sm"
+              className="candy-btn candy-btn-yellow flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm"
             >
-              <Lightbulb className="w-5 h-5 text-amber-800" />
-              <span>Buka Petunjuk</span>
+              <Lightbulb className="w-4 h-4 text-amber-800" />
+              <span>Petunjuk</span>
             </button>
           )}
         </div>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex-1 sm:flex-initial flex justify-end">
           {feedbackState === 'correct' ? (
             <button
               onClick={onProceedNext}
-              className="candy-btn candy-btn-green flex items-center gap-2 px-8 py-3.5 rounded-2xl font-black text-xl animate-wiggle"
+              className="w-full sm:w-auto candy-btn candy-btn-green flex items-center justify-center gap-2 px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl font-black text-sm sm:text-xl animate-wiggle"
             >
               <span>Lanjut Petualangan!</span>
-              <ArrowRight className="w-6 h-6 stroke-[3]" />
+              <ArrowRight className="w-4 h-4 sm:w-6 sm:h-6 stroke-[3]" />
             </button>
           ) : (
             <button
               onClick={handleCheckAnswer}
               disabled={!selectedOption}
-              className={`candy-btn px-8 py-3.5 rounded-2xl font-black text-lg transition-all ${
+              className={`w-full sm:w-auto candy-btn px-5 sm:px-8 py-2 sm:py-3.5 rounded-xl sm:rounded-2xl font-black text-xs sm:text-lg transition-all ${
                 selectedOption
                   ? 'candy-btn-blue cursor-pointer'
                   : 'bg-slate-200 text-slate-400 border-b-4 border-slate-300 cursor-not-allowed shadow-none'
