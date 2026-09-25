@@ -17,6 +17,7 @@ interface PixelCanvasProps {
   activeSpeaker?: string | null;
   voiceLang?: 'id' | 'en';
   boardText?: string;
+  restartNonce?: number;
 }
 
 interface CharacterEntity {
@@ -81,6 +82,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   activeSpeaker = null,
   voiceLang = 'id',
   boardText,
+  restartNonce = 0,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [countedTotal, setCountedTotal] = useState<number>(0);
@@ -107,38 +109,18 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   const lastProcessedSceneRef = useRef<number>(-1);
   const lastScenesRef = useRef<SceneDef[] | null>(null);
 
-  const resetCanvas = useCallback(() => {
-    lastProcessedSceneRef.current = -1;
-    const state = gameStateRef.current;
-    state.characters.clear();
-    state.objects = [];
-    state.particles = [];
-    setCountedTotal(0);
-  }, []);
-
-  // Process scene actions without destroying existing world state
-  useEffect(() => {
-    const isNewLesson = lastScenesRef.current !== allScenes;
-    const isRestart = activeSceneIndex === 0 && lastProcessedSceneRef.current > 0;
-    const isSceneChanged = lastProcessedSceneRef.current !== activeSceneIndex;
-
-    // Guard: Only process when scene actually changed, on a new lesson, or on explicit restart
-    if (!isNewLesson && !isRestart && !isSceneChanged) {
-      return;
-    }
-
-    lastScenesRef.current = allScenes;
-    lastProcessedSceneRef.current = activeSceneIndex;
-
-    const scene = allScenes[activeSceneIndex];
+  // Unified scene action processor that handles spawning, movement, and animations
+  const processSceneActions = useCallback((sceneIdx: number, forceReset = false) => {
+    const scene = allScenes[sceneIdx] || allScenes[0];
     if (!scene) return;
 
+    lastProcessedSceneRef.current = sceneIdx;
     const state = gameStateRef.current;
-    state.currentProcessedScene = activeSceneIndex;
+    state.currentProcessedScene = sceneIdx;
     state.sceneTimer = 0;
 
-    // Reset world state ONLY on a new lesson or explicit restart back to Scene 0
-    if (activeSceneIndex === 0 && (isNewLesson || isRestart || state.characters.size === 0)) {
+    // Reset world state ONLY on explicit reset or when scene 0 has no characters
+    if (forceReset || (sceneIdx === 0 && (forceReset || state.characters.size === 0))) {
       state.characters.clear();
       state.objects = [];
       state.particles = [];
@@ -153,9 +135,9 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         const finalY = act.position?.y ?? 330;
 
         if (!state.characters.has(act.characterId)) {
-          // New character entering the scene from off-screen
+          // If starting or restarting, spawn at start position or directly at final position
           const isBudi = act.characterId === 'budi';
-          const startX = isBudi ? (finalX > 300 ? 50 : 20) : (finalX < 500 ? 760 : 700);
+          const startX = forceReset ? finalX : (isBudi ? (finalX > 300 ? 50 : 20) : (finalX < 500 ? 760 : 700));
 
           state.characters.set(act.characterId, {
             id: act.characterId,
@@ -223,11 +205,11 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
           const targetObjY = groundY + row * 26;
 
           state.objects.push({
-            id: `obj_${act.object}_${existingCount + i}_${Date.now()}`,
+            id: `obj_${act.object}_${existingCount + i}_${Date.now()}_${Math.random()}`,
             type: act.object,
             owner: act.owner,
             x: targetObjX,
-            y: -30 - i * 15,
+            y: forceReset ? targetObjY : (-30 - i * 15),
             targetX: targetObjX,
             targetY: targetObjY,
             groundY: targetObjY,
@@ -282,7 +264,30 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         });
       }
     }
-  }, [activeSceneIndex, allScenes, characters]);
+  }, [allScenes, characters]);
+
+  const resetCanvas = useCallback(() => {
+    processSceneActions(0, true);
+  }, [processSceneActions]);
+
+  // Process scene actions without destroying existing world state
+  useEffect(() => {
+    const isNewLesson = lastScenesRef.current !== allScenes;
+    const isRestart = activeSceneIndex === 0 && (lastProcessedSceneRef.current > 0 || lastProcessedSceneRef.current === -1);
+    const isSceneChanged = lastProcessedSceneRef.current !== activeSceneIndex;
+
+    lastScenesRef.current = allScenes;
+
+    if (isNewLesson) {
+      processSceneActions(activeSceneIndex, true);
+      return;
+    }
+
+    if (isRestart || isSceneChanged || restartNonce > 0) {
+      processSceneActions(activeSceneIndex, isRestart || restartNonce > 0);
+      return;
+    }
+  }, [activeSceneIndex, allScenes, characters, restartNonce, processSceneActions]);
 
   // Dynamically update speech bubbles and character talk animation when activeSpeaker changes
   useEffect(() => {
@@ -323,7 +328,12 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       const h = canvas.height;
 
       ctx.imageSmoothingEnabled = false;
-      drawEnvironment(ctx, w, h, currentScene.background, state.tick, boardText);
+      drawEnvironment(ctx, w, h, currentScene.background, state.tick, boardText, voiceLang);
+
+      // Auto-recovery: If characters map is empty but scene specifies spawn_character, immediately restore characters!
+      if (state.characters.size === 0 && currentScene && currentScene.actions.some(a => a.type === 'spawn_character')) {
+        processSceneActions(activeSceneIndex, false);
+      }
 
       // Character Movement Physics & Emotion State
       state.characters.forEach(char => {
@@ -565,7 +575,8 @@ function drawEnvironment(
   h: number,
   env: EnvironmentType,
   tick: number,
-  boardText?: string
+  boardText?: string,
+  voiceLang: 'id' | 'en' = 'id'
 ) {
   switch (env) {
     case 'forest': {
@@ -723,12 +734,113 @@ function drawEnvironment(
 
       // Chalkboard writing synced with the active question / subject
       const textToDisplay = boardText || '⭐ Belajar Ceria Bersama ⭐';
-      ctx.fillStyle = '#f8fafc';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const fontSize = textToDisplay.length > 22 ? 18 : textToDisplay.length > 14 ? 22 : 30;
-      ctx.font = `bold ${fontSize}px "Fredoka", sans-serif`;
-      ctx.fillText(textToDisplay, w / 2, 122);
+
+      const isShapePattern =
+        textToDisplay === '__PATTERN_CIRCLE_SQUARE_TRIANGLE__' ||
+        textToDisplay.includes('__PATTERN_CIRCLE_SQUARE_TRIANGLE__') ||
+        (textToDisplay.toLowerCase().includes('lingkaran') && textToDisplay.toLowerCase().includes('kotak'));
+
+      if (isShapePattern) {
+        // Draw subtitle on chalkboard
+        ctx.fillStyle = '#cbd5e1';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 15px "Fredoka", sans-serif';
+        ctx.fillText(voiceLang === 'en' ? 'Pattern: Circle • Square • Triangle' : 'Pola: Lingkaran • Kotak • Segitiga', w / 2, 72);
+
+        // Draw 6 pattern slots centered on the chalkboard
+        const startX = w / 2 - 155;
+        const centerY = 135;
+        const spacing = 62;
+
+        const drawCircle = (cx: number, cy: number) => {
+          ctx.beginPath();
+          ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+          ctx.fillStyle = '#facc15'; // Golden yellow
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = '#fef08a';
+          ctx.stroke();
+          // Specular highlight
+          ctx.beginPath();
+          ctx.arc(cx - 5, cy - 6, 4, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        };
+
+        const drawSquare = (cx: number, cy: number) => {
+          const size = 34;
+          const half = size / 2;
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(cx - half, cy - half, size, size, 6);
+          else ctx.rect(cx - half, cy - half, size, size);
+          ctx.fillStyle = '#38bdf8'; // Sky blue
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = '#bae6fd';
+          ctx.stroke();
+          // Corner highlight
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(cx - half + 4, cy - half + 4, 5, 5);
+        };
+
+        const drawTriangle = (cx: number, cy: number) => {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - 19);
+          ctx.lineTo(cx + 18, cy + 15);
+          ctx.lineTo(cx - 18, cy + 15);
+          ctx.closePath();
+          ctx.fillStyle = '#f43f5e'; // Rose pink
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = '#fecdd3';
+          ctx.stroke();
+          // Specular highlight
+          ctx.beginPath();
+          ctx.arc(cx, cy - 6, 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        };
+
+        const drawMysteryBox = (cx: number, cy: number) => {
+          const size = 36;
+          const half = size / 2;
+          ctx.save();
+          ctx.strokeStyle = '#f8fafc';
+          ctx.lineWidth = 3;
+          ctx.setLineDash([5, 4]);
+          if (ctx.roundRect) ctx.roundRect(cx - half, cy - half, size, size, 6);
+          else ctx.strokeRect(cx - half, cy - half, size, size);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.fillStyle = '#facc15';
+          ctx.font = 'bold 24px "Fredoka", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('?', cx, cy);
+        };
+
+        // 1: Lingkaran
+        drawCircle(startX + 0 * spacing, centerY);
+        // 2: Kotak
+        drawSquare(startX + 1 * spacing, centerY);
+        // 3: Segitiga
+        drawTriangle(startX + 2 * spacing, centerY);
+        // 4: Lingkaran
+        drawCircle(startX + 3 * spacing, centerY);
+        // 5: Kotak
+        drawSquare(startX + 4 * spacing, centerY);
+        // 6: [ ? ]
+        drawMysteryBox(startX + 5 * spacing, centerY);
+      } else {
+        ctx.fillStyle = '#f8fafc';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const fontSize = textToDisplay.length > 22 ? 18 : textToDisplay.length > 14 ? 22 : 30;
+        ctx.font = `bold ${fontSize}px "Fredoka", sans-serif`;
+        ctx.fillText(textToDisplay, w / 2, 122);
+      }
       ctx.textAlign = 'start';
       ctx.textBaseline = 'alphabetic';
 

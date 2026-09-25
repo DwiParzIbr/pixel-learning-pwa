@@ -48,6 +48,8 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
   const [voiceLang, setVoiceLang] = useState<'id' | 'en'>(voiceEngine.getLanguage());
 
+  const [storyRestartNonce, setStoryRestartNonce] = useState<number>(0);
+
   useEffect(() => {
     setActiveLesson(lesson);
     setCurrentSceneIndex(0);
@@ -70,6 +72,11 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
 
   // Dynamically compute chalkboard text that matches the active subject, formula, or topic
   const boardText = useMemo(() => {
+    // 0. Explicit custom chalkboard text if defined in lesson metadata
+    if (activeLesson.metadata?.chalkboardText) {
+      return activeLesson.metadata.chalkboardText;
+    }
+
     // 1. Mathematics with formula: display the exact arithmetic equation
     if (activeLesson.subject === 'mathematics') {
       if (activeLesson.metadata?.mathFormula) {
@@ -107,6 +114,21 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
 
     // 5. Logic: Brain riddles & puzzles
     if (activeLesson.subject === 'logic') {
+      // Shape pattern: Lingkaran, Kotak, Segitiga
+      const fullLessonText = `${activeLesson.title} ${activeLesson.scenes[0]?.narration || ''} ${activeLesson.question?.question || ''}`.toLowerCase();
+      if (
+        activeLesson.lessonId === 'log-pattern-003' ||
+        (fullLessonText.includes('lingkaran') && fullLessonText.includes('kotak')) ||
+        (fullLessonText.includes('segitiga') && fullLessonText.includes('lingkaran'))
+      ) {
+        return '__PATTERN_CIRCLE_SQUARE_TRIANGLE__';
+      }
+      if (activeLesson.lessonId === 'log-pattern-002' || fullLessonText.includes('pisang')) {
+        return '🍎 🍌 🍎 🍌 ... ?';
+      }
+      if (activeLesson.lessonId === 'log-pattern-004' || fullLessonText.includes('beruang')) {
+        return '🐻 🧸 🐻 🧸 ... ?';
+      }
       if (activeLesson.topic === 'logic_patterns') return '🔴 🔵 🔴 🔵 ... ?';
       if (activeLesson.topic === 'logic_shapes') return '⭕ ⬛ 🔺 ⭐';
       if (activeLesson.topic === 'logic_riddles') return voiceLang === 'en' ? '🧩 Brain Riddle 💡' : '🧩 Teka-Teki Cerdik 💡';
@@ -215,6 +237,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
     setActiveSpeaker(null);
     setShowQuestion(false);
     setCurrentSceneIndex(0);
+    setStoryRestartNonce(prev => prev + 1);
   };
 
   const handleSkipToQuestion = () => {
@@ -377,6 +400,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           activeSpeaker={activeSpeaker}
           voiceLang={voiceLang}
           boardText={boardText}
+          restartNonce={storyRestartNonce}
           onSceneComplete={idx => {
             if (idx === -1) {
               handleRestartFullStory();

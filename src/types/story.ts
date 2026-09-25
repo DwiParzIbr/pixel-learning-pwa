@@ -166,6 +166,7 @@ export interface LessonMetadata {
     operandB: number;
     result: number;
   };
+  chalkboardText?: string;
 }
 
 export interface StoryLesson {

@@ -358,6 +358,14 @@ export const AdminContentStudio: React.FC<AdminContentStudioProps> = ({
       const f = currentLesson.metadata.mathFormula;
       return `${f.operandA} ${f.operator} ${f.operandB} = ?`;
     }
+    if (
+      currentLesson.lessonId === 'log-pattern-003' ||
+      currentLesson.metadata?.chalkboardText === '__PATTERN_CIRCLE_SQUARE_TRIANGLE__' ||
+      (currentLesson.title && currentLesson.title.toLowerCase().includes('geometri')) ||
+      (currentLesson.scenes[0]?.narration && currentLesson.scenes[0].narration.includes('Lingkaran') && currentLesson.scenes[0].narration.includes('Kotak'))
+    ) {
+      return '__PATTERN_CIRCLE_SQUARE_TRIANGLE__';
+    }
     if (currentLesson.subject === 'mathematics') return '1 2 3 4 5';
     if (currentLesson.subject === 'language') return 'A B C D E';
     if (currentLesson.subject === 'science') return '🔬 Sains Cilik 🌿';

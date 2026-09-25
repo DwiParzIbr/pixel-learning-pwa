@@ -82,6 +82,7 @@ export const logicPatternsLesson3: StoryLesson = {
     ageGroup: '5-8',
     grade: 'SD Kelas 1',
     theme: 'Kertas Gambar Stempel',
+    chalkboardText: '__PATTERN_CIRCLE_SQUARE_TRIANGLE__',
   },
   learningObjective: [
     'Mengenali pola urutan tiga bentuk geometri ABC-ABC',
