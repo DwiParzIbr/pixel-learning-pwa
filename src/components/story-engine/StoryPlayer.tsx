@@ -21,11 +21,19 @@ import {
 
 interface StoryPlayerProps {
   lesson: StoryLesson;
+  levelLessons?: StoryLesson[];
   onExit: () => void;
   onComplete: () => void;
+  onNextLesson?: (nextLesson: StoryLesson) => void;
 }
 
-export const StoryPlayer: React.FC<StoryPlayerProps> = ({ lesson, onExit, onComplete }) => {
+export const StoryPlayer: React.FC<StoryPlayerProps> = ({
+  lesson,
+  levelLessons,
+  onExit,
+  onComplete,
+  onNextLesson,
+}) => {
   const [currentSceneIndex, setCurrentSceneIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
@@ -33,6 +41,19 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({ lesson, onExit, onComp
   const [showQuestion, setShowQuestion] = useState<boolean>(false);
   const [isRemedialMode, setIsRemedialMode] = useState<boolean>(false);
   const [activeLesson, setActiveLesson] = useState<StoryLesson>(lesson);
+
+  useEffect(() => {
+    setActiveLesson(lesson);
+    setCurrentSceneIndex(0);
+    setShowQuestion(false);
+    setIsRemedialMode(false);
+  }, [lesson]);
+
+  const currentLessonIdx = levelLessons && levelLessons.length > 1
+    ? levelLessons.findIndex(l => l.lessonId === activeLesson.lessonId)
+    : -1;
+  const hasNextLesson = currentLessonIdx >= 0 && levelLessons && currentLessonIdx < levelLessons.length - 1;
+  const totalLessonsInLevel = levelLessons ? levelLessons.length : 1;
 
   const scenes = isRemedialMode && activeLesson.remedialStory
     ? activeLesson.remedialStory.scenes
@@ -158,6 +179,20 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({ lesson, onExit, onComp
 
   const storyProgressPercent = Math.round(((currentSceneIndex + 1) / scenes.length) * 100);
 
+  const handleProceedNext = () => {
+    if (hasNextLesson && levelLessons && onNextLesson) {
+      soundEngine.playSfx('star');
+      const nextL = levelLessons[currentLessonIdx + 1];
+      setActiveLesson(nextL);
+      setCurrentSceneIndex(0);
+      setShowQuestion(false);
+      setIsRemedialMode(false);
+      onNextLesson(nextL);
+    } else {
+      onComplete();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100 text-slate-800 flex flex-col items-center justify-start p-2 sm:p-6 select-none font-fun">
       {/* Top Navbar */}
@@ -175,8 +210,12 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({ lesson, onExit, onComp
         <div className="flex flex-col items-center min-w-0">
           <div className="bg-amber-100 border border-amber-300 px-2.5 sm:px-4 py-0.5 sm:py-1 rounded-full flex items-center gap-1 shadow-sm max-w-full">
             <span className="text-xs sm:text-base">🎬</span>
-            <span className="font-black text-xs sm:text-sm text-amber-950 truncate max-w-[110px] xs:max-w-[160px] sm:max-w-xs">
-              {isRemedialMode ? 'Cerita Remedial' : activeLesson.title}
+            <span className="font-black text-xs sm:text-sm text-amber-950 truncate max-w-[130px] xs:max-w-[190px] sm:max-w-xs">
+              {isRemedialMode
+                ? 'Cerita Remedial'
+                : currentLessonIdx >= 0
+                ? `Soal ${currentLessonIdx + 1}/${totalLessonsInLevel}: ${activeLesson.title.replace(/^Soal \d+:\s*/, '')}`
+                : activeLesson.title}
             </span>
           </div>
           <span className="text-[10px] sm:text-xs font-black text-amber-800 mt-0.5 sm:mt-1 flex items-center gap-1">
@@ -303,7 +342,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({ lesson, onExit, onComp
             question={isRemedialMode && activeLesson.remedialStory ? activeLesson.remedialStory.question : activeLesson.question}
             remedialStory={activeLesson.remedialStory}
             onAnswerSubmit={handleAnswerSubmit}
-            onProceedNext={onComplete}
+            onProceedNext={handleProceedNext}
             onLaunchRemedial={handleLaunchRemedial}
           />
         )}

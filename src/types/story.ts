@@ -50,7 +50,8 @@ export type ObjectType =
   | 'star'
   | 'cake'
   | 'flower'
-  | 'letter';
+  | 'letter'
+  | 'balloon';
 
 export interface SubjectDef {
   id: SubjectType;

@@ -168,7 +168,7 @@ export const canonicalSubtractionLesson: StoryLesson = {
 export const countingLesson: StoryLesson = {
   lessonId: 'math-counting-001',
   levelId: 1,
-  title: 'Petualangan Menghitung Apel Hutan',
+  title: 'Soal 1: Memetik Apel Merah di Hutan',
   subject: 'mathematics',
   topic: 'counting',
   difficulty: 1,
@@ -201,14 +201,14 @@ export const countingLesson: StoryLesson = {
       id: 'count_scene_1',
       title: 'Pohon Apel Ajaib',
       background: 'forest',
-      narration: 'Budi sedang berjalan-jalan di Hutan Ajaib. Di bawah pohon yang rindang, jatuhlah apel-apel merah yang segar!',
+      narration: 'Budi sedang berjalan-jalan di Hutan Ajaib. Di bawah pohon yang rindang, jatuhlah lima buah apel merah segar!',
       actions: [
         { type: 'spawn_character', characterId: 'budi', position: { x: 220, y: 320 }, animation: 'walk' },
         { type: 'spawn_object', object: 'apple', owner: 'budi', quantity: 5, position: { x: 380, y: 330 } },
       ],
       dialogue: {
         speaker: 'budi',
-        text: 'Nyam! Apel-apel ini kelihatan manis sekali. Ada berapa ya semuanya?',
+        text: 'Nyam! Apel-apel merah ini kelihatan manis sekali. Ada berapa ya semuanya?',
       },
     },
     {
@@ -224,7 +224,7 @@ export const countingLesson: StoryLesson = {
   ],
   question: {
     type: 'object_counting',
-    question: 'Berapa banyak buah apel yang ada di hadapan Budi?',
+    question: 'Berapa banyak buah apel merah yang ada di hadapan Budi?',
     options: [
       { id: 'A', value: 3, label: '3 Apel' },
       { id: 'B', value: 4, label: '4 Apel' },
@@ -244,17 +244,379 @@ export const countingLesson: StoryLesson = {
   rewardXp: 50,
 };
 
+export const countingLesson2: StoryLesson = {
+  lessonId: 'math-counting-002',
+  levelId: 1,
+  title: 'Soal 2: Balon Pesta Warna-Warni di Taman',
+  subject: 'mathematics',
+  topic: 'counting',
+  difficulty: 1,
+  metadata: {
+    ageGroup: '5-7',
+    grade: 'TK-B / SD 1',
+    theme: 'Taman Bermain',
+    mathFormula: {
+      operandA: 4,
+      operator: '=',
+      operandB: 4,
+      result: 4,
+    },
+  },
+  learningObjective: [
+    'Mengenal jumlah 4 objek konkret',
+    'Menghubungkan benda melayang dengan lambang bilangan',
+  ],
+  characters: [
+    {
+      id: 'siti',
+      name: 'Siti',
+      asset: 'character_siti',
+      color: '#ec4899',
+      voiceProfile: { pitch: 1.35, rate: 0.95 },
+    },
+    {
+      id: 'budi',
+      name: 'Budi',
+      asset: 'character_budi',
+      color: '#3b82f6',
+      voiceProfile: { pitch: 1.25, rate: 0.95 },
+    },
+  ],
+  scenes: [
+    {
+      id: 'balloon_scene_1',
+      title: 'Balon Terbang di Taman',
+      background: 'park',
+      narration: 'Siti membawa empat balon warna-warni yang ceria ke Taman Bermain. Angin sepoi-sepoi membuat balon melayang gembira!',
+      actions: [
+        { type: 'spawn_character', characterId: 'siti', position: { x: 260, y: 320 }, animation: 'happy' },
+        { type: 'spawn_object', object: 'balloon', owner: 'siti', quantity: 4, position: { x: 380, y: 280 } },
+      ],
+      dialogue: {
+        speaker: 'siti',
+        text: 'Lihat balon-balonku yang indah melayang ditiup angin sepoi-sepoi!',
+      },
+    },
+    {
+      id: 'balloon_scene_2',
+      title: 'Budi Ikut Menghitung',
+      background: 'park',
+      narration: 'Budi datang menghampiri dengan wajah riang gembira melihat balon-balon Siti.',
+      actions: [
+        { type: 'spawn_character', characterId: 'budi', position: { x: 540, y: 320 }, animation: 'walk' },
+        { type: 'highlight_object', object: 'balloon' },
+      ],
+      dialogue: {
+        speaker: 'budi',
+        text: 'Wah, indah sekali Siti! Ayo kita hitung ada berapa balon yang terbang!',
+      },
+    },
+  ],
+  question: {
+    type: 'object_counting',
+    question: 'Berapa banyak balon warna-warni yang dibawa Siti di taman?',
+    options: [
+      { id: 'A', value: 3, label: '3 Balon' },
+      { id: 'B', value: 4, label: '4 Balon' },
+      { id: 'C', value: 5, label: '5 Balon' },
+      { id: 'D', value: 6, label: '6 Balon' },
+    ],
+    correctAnswer: 'B',
+    explanation: 'Hebat! Ada 4 balon warna-warni: satu, dua, tiga, empat!',
+    hint: 'Perhatikan balon yang melayang di dekat Siti, hitung satu per satu ya!',
+    visualHint: {
+      formula: 'Jumlah = 4',
+      initialCount: 4,
+      remainingCount: 4,
+      itemType: 'balloon',
+    },
+  },
+  rewardXp: 50,
+};
+
+export const countingLesson3: StoryLesson = {
+  lessonId: 'math-counting-003',
+  levelId: 1,
+  title: 'Soal 3: Cupcake Lezat di Toko Roti',
+  subject: 'mathematics',
+  topic: 'counting',
+  difficulty: 1,
+  metadata: {
+    ageGroup: '5-7',
+    grade: 'TK-B / SD 1',
+    theme: 'Toko Roti Manis',
+    mathFormula: {
+      operandA: 6,
+      operator: '=',
+      operandB: 6,
+      result: 6,
+    },
+  },
+  learningObjective: [
+    'Mengenal jumlah 6 objek berurutan',
+    'Menghitung kue cupcake di atas nampan',
+  ],
+  characters: [
+    {
+      id: 'budi',
+      name: 'Budi',
+      asset: 'character_budi',
+      color: '#3b82f6',
+      voiceProfile: { pitch: 1.25, rate: 0.95 },
+    },
+    {
+      id: 'siti',
+      name: 'Siti',
+      asset: 'character_siti',
+      color: '#ec4899',
+      voiceProfile: { pitch: 1.35, rate: 0.95 },
+    },
+  ],
+  scenes: [
+    {
+      id: 'cake_scene_1',
+      title: 'Aroma Harum Toko Roti',
+      background: 'market',
+      narration: 'Budi dan Siti berkunjung ke Toko Roti Manis. Di atas nampan piring saji, tersusun enam kue cupcake cokelat berhias krim stroberi!',
+      actions: [
+        { type: 'spawn_character', characterId: 'budi', position: { x: 220, y: 320 }, animation: 'walk' },
+        { type: 'spawn_character', characterId: 'siti', position: { x: 520, y: 320 }, animation: 'idle' },
+        { type: 'spawn_object', object: 'cake', quantity: 6, position: { x: 370, y: 340 } },
+      ],
+      dialogue: {
+        speaker: 'budi',
+        text: 'Aroma kuenya enak sekali! Ada deretan cupcake cokelat di atas nampan.',
+      },
+    },
+    {
+      id: 'cake_scene_2',
+      title: 'Menghitung Kue Cupcake',
+      background: 'market',
+      narration: 'Siti ingin tahu berapa banyak cupcake manis yang siap disantap bersama!',
+      actions: [
+        { type: 'animate_character', characterId: 'siti', animation: 'happy' },
+        { type: 'highlight_object', object: 'cake' },
+      ],
+      dialogue: {
+        speaker: 'siti',
+        text: 'Bantu kami menghitung ada berapa cupcake manis di atas meja ya!',
+      },
+    },
+  ],
+  question: {
+    type: 'object_counting',
+    question: 'Ada berapa jumlah kue cupcake lezat di atas meja toko roti?',
+    options: [
+      { id: 'A', value: 5, label: '5 Kue' },
+      { id: 'B', value: 6, label: '6 Kue' },
+      { id: 'C', value: 7, label: '7 Kue' },
+      { id: 'D', value: 8, label: '8 Kue' },
+    ],
+    correctAnswer: 'B',
+    explanation: 'Tepat sekali! Ada 6 kue cupcake lezat: 1, 2, 3, 4, 5, 6!',
+    hint: 'Hitung cupcake dari piring kiri hingga ke kanan!',
+    visualHint: {
+      formula: 'Jumlah = 6',
+      initialCount: 6,
+      remainingCount: 6,
+      itemType: 'cake',
+    },
+  },
+  rewardXp: 50,
+};
+
+export const countingLesson4: StoryLesson = {
+  lessonId: 'math-counting-004',
+  levelId: 1,
+  title: 'Soal 4: Bunga Matahari Mekar di Kebun Ceria',
+  subject: 'mathematics',
+  topic: 'counting',
+  difficulty: 1,
+  metadata: {
+    ageGroup: '5-7',
+    grade: 'TK-B / SD 1',
+    theme: 'Kebun Bunga Ceria',
+    mathFormula: {
+      operandA: 7,
+      operator: '=',
+      operandB: 7,
+      result: 7,
+    },
+  },
+  learningObjective: [
+    'Mengenal jumlah 7 objek alami',
+    'Melatih ketelitian berhitung kelompok bunga',
+  ],
+  characters: [
+    {
+      id: 'siti',
+      name: 'Siti',
+      asset: 'character_siti',
+      color: '#ec4899',
+      voiceProfile: { pitch: 1.35, rate: 0.95 },
+    },
+    {
+      id: 'budi',
+      name: 'Budi',
+      asset: 'character_budi',
+      color: '#3b82f6',
+      voiceProfile: { pitch: 1.25, rate: 0.95 },
+    },
+  ],
+  scenes: [
+    {
+      id: 'flower_scene_1',
+      title: 'Kebun Bunga Matahari',
+      background: 'park',
+      narration: 'Matahari pagi bersinar hangat di Kebun Ceria. Tujuh kuntum bunga cantik bermekaran menyambut pagi dengan ceria!',
+      actions: [
+        { type: 'spawn_character', characterId: 'siti', position: { x: 200, y: 320 }, animation: 'walk' },
+        { type: 'spawn_object', object: 'flower', quantity: 7, position: { x: 380, y: 340 } },
+      ],
+      dialogue: {
+        speaker: 'siti',
+        text: 'Bunga-bunga di kebun ini mekar sangat indah dan berwarna-warni!',
+      },
+    },
+    {
+      id: 'flower_scene_2',
+      title: 'Budi Mengagumi Bunga',
+      background: 'park',
+      narration: 'Budi tersenyum bahagia melihat kebun yang asri dan penuh warna.',
+      actions: [
+        { type: 'spawn_character', characterId: 'budi', position: { x: 550, y: 320 }, animation: 'celebrate' },
+        { type: 'highlight_object', object: 'flower' },
+      ],
+      dialogue: {
+        speaker: 'budi',
+        text: 'Ayo teman-teman, kita hitung berapa kuntum bunga yang sedang bermekaran!',
+      },
+    },
+  ],
+  question: {
+    type: 'object_counting',
+    question: 'Berapa banyak bunga cantik yang sedang bermekaran di kebun?',
+    options: [
+      { id: 'A', value: 6, label: '6 Bunga' },
+      { id: 'B', value: 7, label: '7 Bunga' },
+      { id: 'C', value: 8, label: '8 Bunga' },
+      { id: 'D', value: 9, label: '9 Bunga' },
+    ],
+    correctAnswer: 'B',
+    explanation: 'Pintar sekali! Ada 7 kuntum bunga cantik yang sedang bermekaran!',
+    hint: 'Sentuh setiap bunga perlahan dan sebut angkanya secara berurutan!',
+    visualHint: {
+      formula: 'Jumlah = 7',
+      initialCount: 7,
+      remainingCount: 7,
+      itemType: 'flower',
+    },
+  },
+  rewardXp: 50,
+};
+
+export const countingLesson5: StoryLesson = {
+  lessonId: 'math-counting-005',
+  levelId: 1,
+  title: 'Soal 5: Bintang Ajaib di Langit Malam',
+  subject: 'mathematics',
+  topic: 'counting',
+  difficulty: 1,
+  metadata: {
+    ageGroup: '5-7',
+    grade: 'TK-B / SD 1',
+    theme: 'Langit Malam Hutan',
+    mathFormula: {
+      operandA: 8,
+      operator: '=',
+      operandB: 8,
+      result: 8,
+    },
+  },
+  learningObjective: [
+    'Mengenal jumlah 8 objek berkilauan',
+    'Menghitung bintang di angkasa secara fokus',
+  ],
+  characters: [
+    {
+      id: 'budi',
+      name: 'Budi',
+      asset: 'character_budi',
+      color: '#3b82f6',
+      voiceProfile: { pitch: 1.25, rate: 0.95 },
+    },
+    {
+      id: 'siti',
+      name: 'Siti',
+      asset: 'character_siti',
+      color: '#ec4899',
+      voiceProfile: { pitch: 1.35, rate: 0.95 },
+    },
+  ],
+  scenes: [
+    {
+      id: 'star_scene_1',
+      title: 'Malam Berbintang',
+      background: 'forest',
+      narration: 'Malam yang tenang tiba di Hutan Ajaib. Di langit biru gelap, bertaburan delapan bintang ajaib yang berkilau keemasan!',
+      actions: [
+        { type: 'spawn_character', characterId: 'budi', position: { x: 220, y: 320 }, animation: 'idle' },
+        { type: 'spawn_character', characterId: 'siti', position: { x: 520, y: 320 }, animation: 'idle' },
+        { type: 'spawn_object', object: 'star', quantity: 8, position: { x: 370, y: 260 } },
+      ],
+      dialogue: {
+        speaker: 'budi',
+        text: 'Bintang-bintang di angkasa bersinar terang seperti permata emas!',
+      },
+    },
+    {
+      id: 'star_scene_2',
+      title: 'Menatap Bintang',
+      background: 'forest',
+      narration: 'Siti mengajak kita menghitung bintang sebelum waktu tidur tiba.',
+      actions: [
+        { type: 'animate_character', characterId: 'siti', animation: 'happy' },
+        { type: 'highlight_object', object: 'star' },
+      ],
+      dialogue: {
+        speaker: 'siti',
+        text: 'Yuk kita hitung bintang-bintang yang berkilau sebelum kita beristirahat!',
+      },
+    },
+  ],
+  question: {
+    type: 'object_counting',
+    question: 'Berapa banyak bintang ajaib yang berkelap-kelip terang di langit malam?',
+    options: [
+      { id: 'A', value: 7, label: '7 Bintang' },
+      { id: 'B', value: 8, label: '8 Bintang' },
+      { id: 'C', value: 9, label: '9 Bintang' },
+      { id: 'D', value: 10, label: '10 Bintang' },
+    ],
+    correctAnswer: 'B',
+    explanation: 'Luar biasa! Ada 8 bintang ajaib yang bersinar gemerlap di langit malam!',
+    hint: 'Hitung bintang-bintang yang berkelap-kelip keemasan di langit!',
+    visualHint: {
+      formula: 'Jumlah = 8',
+      initialCount: 8,
+      remainingCount: 8,
+      itemType: 'star',
+    },
+  },
+  rewardXp: 50,
+};
+
 export const additionLesson: StoryLesson = {
   lessonId: 'math-addition-001',
   levelId: 2,
-  title: 'Koin Bintang Persahabatan',
+  title: 'Pesta Buah Stroberi & Jeruk Segar',
   subject: 'mathematics',
   topic: 'addition',
   difficulty: 1,
   metadata: {
     ageGroup: '6-8',
     grade: 'SD Kelas 1',
-    theme: 'Pasar Ceria',
+    theme: 'Kebun Ceria',
     mathFormula: {
       operandA: 3,
       operator: '+',
@@ -285,52 +647,52 @@ export const additionLesson: StoryLesson = {
   scenes: [
     {
       id: 'add_scene_1',
-      title: 'Koin Emas di Pasar',
+      title: 'Stroberi Manis di Keranjang',
       background: 'market',
-      narration: 'Budi dan Siti sedang mengunjungi Pasar Ceria. Budi memiliki tiga koin emas berkilauan.',
+      narration: 'Budi dan Siti sedang memanen buah di Kebun Ceria. Budi memetik tiga buah stroberi merah yang manis.',
       actions: [
         { type: 'spawn_character', characterId: 'budi', position: { x: 220, y: 320 }, animation: 'idle' },
-        { type: 'spawn_object', object: 'coin', owner: 'budi', quantity: 3, position: { x: 280, y: 340 } },
+        { type: 'spawn_object', object: 'apple', owner: 'budi', quantity: 3, position: { x: 280, y: 340 } },
       ],
       dialogue: {
         speaker: 'budi',
-        text: 'Aku punya 3 koin emas untuk membeli buku cerita!',
+        text: 'Aku punya 3 buah stroberi merah yang manis dan segar!',
       },
     },
     {
       id: 'add_scene_2',
-      title: 'Siti Menambahkan Koin',
+      title: 'Siti Menambahkan Jeruk',
       background: 'market',
-      narration: 'Siti membawa empat koin emas lagi dan menggabungkannya dengan koin Budi!',
+      narration: 'Siti membawakan empat buah jeruk manis dan menggabungkannya ke dalam keranjang Budi!',
       actions: [
         { type: 'spawn_character', characterId: 'siti', position: { x: 520, y: 320 }, animation: 'walk' },
-        { type: 'spawn_object', object: 'coin', owner: 'siti', quantity: 4, position: { x: 450, y: 340 } },
+        { type: 'spawn_object', object: 'apple', owner: 'siti', quantity: 4, position: { x: 450, y: 340 } },
         { type: 'animate_character', characterId: 'budi', animation: 'celebrate' },
       ],
       dialogue: {
         speaker: 'siti',
-        text: 'Aku tambahkan 4 koin lagi ya Budi, sekarang koin kita terkumpul!',
+        text: 'Aku tambahkan 4 buah jeruk segar ya Budi, sekarang buah kita terkumpul!',
       },
     },
   ],
   question: {
     type: 'multiple_choice',
-    question: 'Berapakah total koin emas Budi dan Siti jika digabungkan?',
+    question: 'Berapakah total buah segar Budi dan Siti jika digabungkan di keranjang?',
     options: [
-      { id: 'A', value: 6, label: '6 Koin' },
-      { id: 'B', value: 7, label: '7 Koin' },
-      { id: 'C', value: 8, label: '8 Koin' },
-      { id: 'D', value: 9, label: '9 Koin' },
+      { id: 'A', value: 6, label: '6 Buah' },
+      { id: 'B', value: 7, label: '7 Buah' },
+      { id: 'C', value: 8, label: '8 Buah' },
+      { id: 'D', value: 9, label: '9 Buah' },
     ],
     correctAnswer: 'B',
-    explanation: '3 koin ditambah 4 koin sama dengan 7 koin: 3 + 4 = 7!',
-    hint: 'Mulai dari 3, lalu lanjutkan hitung maju 4 kali: 4, 5, 6, 7!',
+    explanation: '3 stroberi ditambah 4 jeruk sama dengan 7 buah segar: 3 + 4 = 7!',
+    hint: 'Mulai dari 3, lalu lanjutkan hitung maju 4 langkah: 4, 5, 6, 7!',
     visualHint: {
       formula: '3 + 4 = 7',
       initialCount: 3,
       transferCount: 4,
       remainingCount: 7,
-      itemType: 'coin',
+      itemType: 'apple',
     },
   },
   rewardXp: 50,
@@ -603,23 +965,29 @@ export const mockMathLevels: LevelDef[] = [
   {
     id: 1,
     title: 'Level 1 — Mengenal Angka',
-    subtitle: 'Belajar berhitung buah di Hutan Ajaib',
+    subtitle: '5 Petualangan Berhitung di Alam Ceria',
     topic: 'counting',
     environment: 'forest',
     icon: '🍎',
     requiredXp: 0,
-    description: 'Kenali angka 1 sampai 10 sambil memetik buah apel segar bersama Budi.',
-    lessons: [countingLesson],
+    description: 'Kenali angka 1 sampai 10 melalui 5 kisah seru: apel merah, balon warna-warni, cupcake lezat, bunga matahari, dan bintang malam!',
+    lessons: [
+      countingLesson,
+      countingLesson2,
+      countingLesson3,
+      countingLesson4,
+      countingLesson5,
+    ],
   },
   {
     id: 2,
     title: 'Level 2 — Penjumlahan',
-    subtitle: 'Menggabungkan koin emas di Pasar Ceria',
+    subtitle: 'Pesta Buah Stroberi & Jeruk di Kebun Ceria',
     topic: 'addition',
     environment: 'market',
-    icon: '🪙',
+    icon: '🍓',
     requiredXp: 50,
-    description: 'Gabungkan koin-koin emas berkilauan bersama Budi dan Siti.',
+    description: 'Gabungkan buah stroberi dan jeruk manis segar bersama Budi dan Siti.',
     lessons: [additionLesson],
   },
   {
@@ -1673,11 +2041,11 @@ export const logicMazeLesson: StoryLesson = {
       actions: [
         { type: 'spawn_character', characterId: 'budi', position: { x: 220, y: 320 }, animation: 'idle' },
         { type: 'spawn_character', characterId: 'siti', position: { x: 340, y: 320 }, animation: 'idle' },
-        { type: 'spawn_object', object: 'coin', quantity: 3, position: { x: 480, y: 320 } },
+        { type: 'spawn_object', object: 'cake', quantity: 3, position: { x: 480, y: 320 } },
       ],
       dialogue: {
         speaker: 'budi',
-        text: 'Benda yang bundar bulat seperti roda... apakah koin uang logam?',
+        text: 'Benda yang bundar bulat tanpa sudut... seperti donat manis atau roda sepeda!',
       },
     },
   ],
@@ -1686,12 +2054,12 @@ export const logicMazeLesson: StoryLesson = {
     question: 'Benda manakah yang memiliki bentuk dasar LINGKARAN (Bulat melingkar tanpa sudut)?',
     options: [
       { id: 'A', value: 'Buku', label: 'Buku Catatan Kotak' },
-      { id: 'B', value: 'Koin', label: 'Uang Koin Logam' },
+      { id: 'B', value: 'Donat', label: 'Donat Manis / Roda Sepeda' },
       { id: 'C', value: 'Pintu', label: 'Daun Pintu Persegi' },
     ],
     correctAnswer: 'B',
-    explanation: 'Uang koin logam berbentuk lingkaran bulat melingkar sempurna tanpa sudut lancip!',
-    hint: 'Bentuknya bulat bundar seperti roda sepeda.',
+    explanation: 'Donat manis dan roda sepeda berbentuk lingkaran bulat melingkar sempurna tanpa sudut!',
+    hint: 'Bentuknya bundar melingkar seperti donat atau roda sepeda.',
   },
   rewardXp: 70,
 };

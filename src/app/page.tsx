@@ -13,11 +13,21 @@ import { PwaInstallPrompt } from '@/components/ui/PwaInstallPrompt';
 export default function HomePage() {
   const [currentMode, setCurrentMode] = useState<'map' | 'story' | 'parent' | 'admin'>('map');
   const [selectedLesson, setSelectedLesson] = useState<StoryLesson>(canonicalSubtractionLesson);
+  const [levelLessons, setLevelLessons] = useState<StoryLesson[]>([]);
   const [showParentGate, setShowParentGate] = useState<boolean>(false);
 
-  const handleSelectLesson = (lesson: StoryLesson) => {
+  const handleSelectLesson = (lesson: StoryLesson, inLevelLessons?: StoryLesson[]) => {
     setSelectedLesson(lesson);
+    if (inLevelLessons && inLevelLessons.length > 0) {
+      setLevelLessons(inLevelLessons);
+    } else {
+      setLevelLessons([lesson]);
+    }
     setCurrentMode('story');
+  };
+
+  const handleNextLesson = (nextLesson: StoryLesson) => {
+    setSelectedLesson(nextLesson);
   };
 
   const handleOpenParentDashboard = () => {
@@ -54,8 +64,10 @@ export default function HomePage() {
       {currentMode === 'story' && (
         <StoryPlayer
           lesson={selectedLesson}
+          levelLessons={levelLessons}
           onExit={handleBackToMap}
           onComplete={handleLessonComplete}
+          onNextLesson={handleNextLesson}
         />
       )}
 

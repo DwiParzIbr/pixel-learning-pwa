@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 interface WorldMapProps {
-  onSelectLesson: (lesson: StoryLesson) => void;
+  onSelectLesson: (lesson: StoryLesson, inLevelLessons?: StoryLesson[]) => void;
   onOpenParentDashboard: () => void;
   onOpenAdminStudio: () => void;
 }
@@ -37,6 +37,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
   const [showBadgesModal, setShowBadgesModal] = useState<boolean>(false);
   const [showSubjectModal, setShowSubjectModal] = useState<boolean>(false);
+  const [selectedLevelForModal, setSelectedLevelForModal] = useState<LevelDef | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<SubjectType>('mathematics');
   const [newChildName, setNewChildName] = useState<string>('');
   const [selectedAvatar, setSelectedAvatar] = useState<string>('👦');
@@ -60,8 +61,12 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       return;
     }
     soundEngine.playSfx('click');
-    const lessonToPlay = level.lessons[0] || canonicalSubtractionLesson;
-    onSelectLesson(lessonToPlay);
+    if (level.lessons.length > 1) {
+      setSelectedLevelForModal(level);
+    } else {
+      const lessonToPlay = level.lessons[0] || canonicalSubtractionLesson;
+      onSelectLesson(lessonToPlay, level.lessons);
+    }
   };
 
   const handleCreateProfile = (e: React.FormEvent) => {
@@ -348,6 +353,15 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                         {lvl.subtitle}
                       </p>
 
+                      {lvl.lessons.length > 1 && (
+                        <div className="flex items-center gap-1.5 mt-2 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg w-fit">
+                          <span className="text-xs">📚</span>
+                          <span className="text-[10px] sm:text-xs font-black text-amber-900">
+                            {lvl.lessons.filter(l => activeChild.completedLessons.includes(l.lessonId)).length}/{lvl.lessons.length} Soal Selesai
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between mt-3 pt-2.5 border-t-2 border-slate-100">
                         <div className="flex items-center gap-1 text-yellow-400">
                           {isCompleted ? (
@@ -590,6 +604,105 @@ export const WorldMap: React.FC<WorldMapProps> = ({
             >
               Mulai Petualangan Sekarang!
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Level Questions Picker Modal (e.g. 5 Soal di Level 1) */}
+      {selectedLevelForModal && (
+        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-pop-in font-fun">
+          <div className="bg-white border-4 border-amber-300 rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 max-w-lg w-full shadow-2xl text-slate-800 relative">
+            <button
+              onClick={() => setSelectedLevelForModal(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-black text-lg p-2 leading-none"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-center gap-3 mb-2.5">
+              <span className="w-12 h-12 rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-3xl shadow-sm shrink-0">
+                {selectedLevelForModal.icon}
+              </span>
+              <div className="min-w-0 pr-8">
+                <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight truncate">
+                  {selectedLevelForModal.title}
+                </h3>
+                <p className="text-xs text-slate-500 font-bold mt-0.5 truncate">
+                  Tersedia {selectedLevelForModal.lessons.length} Soal Petualangan Cerita
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 p-2.5 rounded-xl font-bold mb-3 leading-relaxed">
+              ⭐ Pilih soal cerita yang ingin kamu selesaikan, atau mainkan secara berurutan:
+            </p>
+
+            <div className="space-y-2 max-h-64 sm:max-h-72 overflow-y-auto pr-1">
+              {selectedLevelForModal.lessons.map((lesson, idx) => {
+                const isCompleted = activeChild.completedLessons.includes(lesson.lessonId);
+                return (
+                  <div
+                    key={lesson.lessonId}
+                    onClick={() => {
+                      soundEngine.playSfx('click');
+                      const inLevelLessons = selectedLevelForModal.lessons;
+                      setSelectedLevelForModal(null);
+                      onSelectLesson(lesson, inLevelLessons);
+                    }}
+                    className={`p-3 rounded-2xl border-2 flex items-center justify-between gap-2.5 cursor-pointer transition-all active:scale-[0.98] ${
+                      isCompleted
+                        ? 'bg-emerald-50 border-emerald-300 hover:bg-emerald-100 shadow-xs'
+                        : 'bg-slate-50 hover:bg-white border-slate-200 hover:border-amber-400 shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 shadow-inner ${
+                        isCompleted ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-amber-950'
+                      }`}>
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-black text-slate-900 text-xs sm:text-sm truncate">
+                          {lesson.title}
+                        </h4>
+                        <span className="text-[10px] text-slate-500 font-bold block truncate">
+                          Tema: {lesson.metadata?.theme || 'Petualangan'} • +{lesson.rewardXp || 50} XP
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      {isCompleted ? (
+                        <span className="bg-emerald-100 text-emerald-800 text-[11px] font-black px-2.5 py-1 rounded-full flex items-center gap-1 border border-emerald-300">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Selesai</span>
+                        </span>
+                      ) : (
+                        <span className="candy-btn candy-btn-yellow text-xs font-black px-3 py-1 rounded-xl flex items-center gap-1 shadow-sm">
+                          <Play className="w-3 h-3 fill-current" />
+                          <span>Main</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-3.5 pt-3 border-t-2 border-slate-100">
+              <button
+                onClick={() => {
+                  soundEngine.playSfx('click');
+                  const inLevelLessons = selectedLevelForModal.lessons;
+                  const firstUncompleted = inLevelLessons.find(l => !activeChild.completedLessons.includes(l.lessonId)) || inLevelLessons[0];
+                  setSelectedLevelForModal(null);
+                  onSelectLesson(firstUncompleted, inLevelLessons);
+                }}
+                className="w-full candy-btn candy-btn-green py-2.5 sm:py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md"
+              >
+                <span>Mulai Petualangan Level 🚀</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1039,6 +1039,41 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
       ctx.fillText(letters[obj.colorIdx % letters.length], ox, oy);
       break;
     }
+
+    case 'balloon': {
+      const balloonColors = ['#f43f5e', '#38bdf8', '#facc15', '#a855f7', '#4ade80'];
+      const color = balloonColors[obj.colorIdx % balloonColors.length];
+
+      // Balloon body (oval)
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(ox, oy - 4, 12, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Highlight sheen
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(ox - 4, oy - 9, 4, 7, -Math.PI / 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Balloon knot
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(ox - 3, oy + 12);
+      ctx.lineTo(ox + 3, oy + 12);
+      ctx.lineTo(ox, oy + 15);
+      ctx.closePath();
+      ctx.fill();
+
+      // Balloon string
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(ox, oy + 15);
+      ctx.quadraticCurveTo(ox + 4, oy + 22, ox - 2, oy + 30);
+      ctx.stroke();
+      break;
+    }
   }
 
   if (obj.countNumber !== undefined) {
