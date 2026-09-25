@@ -1,4 +1,4 @@
-// Bilingual Indonesian -> English translation engine for kids story narration, dialogues, and questions
+import { NARRATION_TRANSLATIONS } from './narrationTranslations';
 
 export const DICTIONARY_MAP: Record<string, string> = {
   // Common Characters & Words
@@ -274,7 +274,12 @@ export function translateStoryToEnglish(text: string): string {
   if (!text) return '';
   const trimmed = text.trim();
 
-  // 1. Direct dictionary match
+  // 1. Narration translations match (100% curriculum coverage)
+  if (NARRATION_TRANSLATIONS[trimmed]) {
+    return NARRATION_TRANSLATIONS[trimmed];
+  }
+
+  // 2. Direct dictionary match (dialogues, vocabulary, etc.)
   if (DICTIONARY_MAP[trimmed]) {
     return DICTIONARY_MAP[trimmed];
   }

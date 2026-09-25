@@ -354,24 +354,12 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                     ? 'bg-gradient-to-br from-amber-400 to-orange-500 ring-4 ring-amber-300 scale-105 animate-bounceSubtle'
                     : activeSpeaker === 'siti'
                     ? 'bg-gradient-to-br from-pink-400 to-rose-500 ring-4 ring-pink-300 scale-105 animate-bounceSubtle'
-                    : activeSpeaker === 'narrator'
-                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 ring-4 ring-purple-300 scale-105'
-                    : currentScene.dialogue?.speaker === 'siti'
-                    ? 'bg-gradient-to-br from-pink-300 to-rose-400'
-                    : currentScene.dialogue?.speaker === 'budi'
-                    ? 'bg-gradient-to-br from-amber-300 to-orange-400'
-                    : 'bg-gradient-to-br from-indigo-400 to-purple-500'
+                    : 'bg-gradient-to-br from-indigo-500 to-purple-600 ring-4 ring-purple-300 scale-105'
                 }`}
               >
                 {activeSpeaker === 'siti'
                   ? '👧'
                   : activeSpeaker === 'budi'
-                  ? '👦'
-                  : activeSpeaker === 'narrator'
-                  ? '📖'
-                  : currentScene.dialogue?.speaker === 'siti'
-                  ? '👧'
-                  : currentScene.dialogue?.speaker === 'budi'
                   ? '👦'
                   : '📖'}
               </div>
@@ -386,25 +374,21 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                         ? 'bg-pink-100 text-pink-900 border border-pink-300 shadow-xs'
                         : activeSpeaker === 'narrator'
                         ? 'bg-indigo-100 text-indigo-900 border border-indigo-200 shadow-xs'
-                        : 'bg-slate-100 text-slate-700 border border-slate-200'
+                        : 'bg-indigo-50/80 text-indigo-800 border border-indigo-200/80'
                     }`}
                   >
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        activeSpeaker ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                        activeSpeaker ? 'bg-emerald-500 animate-pulse' : 'bg-indigo-400'
                       }`}
                     />
                     {activeSpeaker === 'budi'
-                      ? '👦 Karakter Budi Berbicara'
+                      ? (voiceLang === 'en' ? '👦 Budi is Speaking' : '👦 Karakter Budi Berbicara')
                       : activeSpeaker === 'siti'
-                      ? '👧 Karakter Siti Berbicara'
+                      ? (voiceLang === 'en' ? '👧 Siti is Speaking' : '👧 Karakter Siti Berbicara')
                       : activeSpeaker === 'narrator'
-                      ? '📖 Narator Membaca Cerita'
-                      : currentScene.dialogue?.speaker === 'siti'
-                      ? 'Karakter: Siti'
-                      : currentScene.dialogue?.speaker === 'budi'
-                      ? 'Karakter: Budi'
-                      : 'Narator Cerita'}
+                      ? (voiceLang === 'en' ? '📖 Narrator Reading Story' : '📖 Narator Membaca Cerita')
+                      : (voiceLang === 'en' ? '📖 Story Narration' : '📖 Narasi Cerita')}
                   </span>
 
                   <span className="text-xs font-black text-slate-500">
