@@ -26,7 +26,10 @@ export type MathTopicType =
   | 'character_leadership'
   | 'logic_patterns'
   | 'logic_sorting'
-  | 'logic_shapes';
+  | 'logic_shapes'
+  | 'logic_cause_effect'
+  | 'logic_spatial'
+  | 'logic_riddles';
 
 export type CharacterEmotion =
   | 'idle'
