@@ -21,6 +21,9 @@ export type MathTopicType =
   | 'character_sharing'
   | 'character_cleanliness'
   | 'character_healthy'
+  | 'character_honesty'
+  | 'character_tolerance'
+  | 'character_leadership'
   | 'logic_patterns'
   | 'logic_sorting'
   | 'logic_shapes';
