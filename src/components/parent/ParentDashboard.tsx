@@ -14,7 +14,9 @@ import {
   Calendar,
   Settings,
   ShieldCheck,
+  Volume2,
 } from 'lucide-react';
+import { voiceEngine, PRESET_VOICES } from '@/lib/audio/voiceEngine';
 
 interface ParentDashboardProps {
   onBackToApp: () => void;
@@ -25,6 +27,8 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
   const [masteryScores, setMasteryScores] = useState<MasteryScore[]>([]);
   const [attempts, setAttempts] = useState<LessonAttempt[]>([]);
   const [screenTimeLimit, setScreenTimeLimit] = useState<number>(30);
+  const [activeVoiceId, setActiveVoiceId] = useState<string>(voiceEngine.getActivePersonaId());
+  const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
 
   useEffect(() => {
     const child = progressStore.getActiveChild();
@@ -278,6 +282,70 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Voice Persona Controls in Parent Dashboard */}
+        <div className="bg-white border-2 border-slate-200/80 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3 sm:mb-4">
+            <h3 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+              <Volume2 className="w-5 h-5 text-purple-600" />
+              <span>Pilihan Suara Cerita & Narasi</span>
+            </h3>
+            <span className="text-xs bg-purple-100 text-purple-800 font-bold px-3 py-1 rounded-full w-fit">
+              6 Karakter Suara Tersedia
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-500 font-bold mb-4 leading-relaxed">
+            Pilih karakter vokal yang paling disukai anak untuk membacakan alur cerita petualangan dan percakapan soal.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {PRESET_VOICES.map((p) => {
+              const isSelected = activeVoiceId === p.id;
+              const isPlaying = previewingVoice === p.id;
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => {
+                    setActiveVoiceId(p.id);
+                    voiceEngine.setPersona(p.id);
+                  }}
+                  className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all active:scale-[0.98] ${
+                    isSelected
+                      ? 'bg-purple-50 border-purple-400 shadow-sm ring-2 ring-purple-300'
+                      : 'bg-slate-50 border-slate-200 hover:border-purple-200 hover:bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-2xl">{p.icon}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviewingVoice(p.id);
+                        voiceEngine.speak(p.sampleText, {
+                          pitch: p.pitch,
+                          rate: p.rate,
+                          speaker: p.id,
+                          onEnd: () => setPreviewingVoice(null),
+                        });
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1 transition-all ${
+                        isPlaying ? 'bg-emerald-500 text-white animate-pulse' : 'bg-white border border-slate-300 text-slate-700 hover:bg-purple-100'
+                      }`}
+                      title="Tes Suara"
+                    >
+                      <span>{isPlaying ? '🔊' : '▶️'}</span>
+                      <span className="text-[10px]">{isPlaying ? 'Bicara...' : 'Tes'}</span>
+                    </button>
+                  </div>
+                  <h4 className="font-black text-sm text-slate-900">{p.name}</h4>
+                  <p className="text-[10px] text-purple-700 font-bold uppercase">{p.role}</p>
+                  <p className="text-[11px] text-slate-500 font-medium mt-1 line-clamp-2">{p.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
 

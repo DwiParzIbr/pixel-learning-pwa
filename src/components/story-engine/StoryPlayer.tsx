@@ -17,7 +17,9 @@ import {
   ArrowLeft,
   Sparkles,
   Music,
+  Mic,
 } from 'lucide-react';
+import { VoiceSettingsModal } from '@/components/audio/VoiceSettingsModal';
 
 interface StoryPlayerProps {
   lesson: StoryLesson;
@@ -40,6 +42,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
   const [isBgmActive, setIsBgmActive] = useState<boolean>(false);
   const [showQuestion, setShowQuestion] = useState<boolean>(false);
   const [isRemedialMode, setIsRemedialMode] = useState<boolean>(false);
+  const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
   const [activeLesson, setActiveLesson] = useState<StoryLesson>(lesson);
 
   useEffect(() => {
@@ -227,6 +230,14 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
         {/* Playful Top Controls */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
+            onClick={() => setShowVoiceModal(true)}
+            title="Pilih Suara Karakter & Narasi"
+            className="candy-btn candy-btn-purple p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center text-xs active:scale-95"
+          >
+            <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+
+          <button
             onClick={toggleBgm}
             title="Musik Ceria"
             className={`candy-btn p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center ${
@@ -347,6 +358,12 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           />
         )}
       </main>
+
+      {/* Voice Selection Modal */}
+      <VoiceSettingsModal
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+      />
     </div>
   );
 };

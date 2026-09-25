@@ -19,7 +19,9 @@ import {
   CheckCircle2,
   BookOpen,
   ChevronRight,
+  Mic,
 } from 'lucide-react';
+import { VoiceSettingsModal } from '@/components/audio/VoiceSettingsModal';
 
 interface WorldMapProps {
   onSelectLesson: (lesson: StoryLesson, inLevelLessons?: StoryLesson[]) => void;
@@ -37,6 +39,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
   const [showBadgesModal, setShowBadgesModal] = useState<boolean>(false);
   const [showSubjectModal, setShowSubjectModal] = useState<boolean>(false);
+  const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
   const [selectedLevelForModal, setSelectedLevelForModal] = useState<LevelDef | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<SubjectType>('mathematics');
   const [newChildName, setNewChildName] = useState<string>('');
@@ -155,6 +158,17 @@ export const WorldMap: React.FC<WorldMapProps> = ({
               <Flame className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-rose-500 fill-rose-400 shrink-0" />
               <span>{activeChild.streakDays}h</span>
             </div>
+
+            <button
+              onClick={() => {
+                soundEngine.playSfx('click');
+                setShowVoiceModal(true);
+              }}
+              className="candy-btn candy-btn-blue p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex items-center justify-center"
+              title="Pilih Suara Cerita"
+            >
+              <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
 
             <button
               onClick={() => {
@@ -706,6 +720,12 @@ export const WorldMap: React.FC<WorldMapProps> = ({
           </div>
         </div>
       )}
+
+      {/* Voice Selection Modal */}
+      <VoiceSettingsModal
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+      />
     </div>
   );
 };
