@@ -20,6 +20,7 @@ import {
   Mic,
 } from 'lucide-react';
 import { VoiceSettingsModal } from '@/components/audio/VoiceSettingsModal';
+import { translateStoryToEnglish } from '@/lib/i18n/storyTranslator';
 
 interface StoryPlayerProps {
   lesson: StoryLesson;
@@ -45,6 +46,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
   const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
   const [activeLesson, setActiveLesson] = useState<StoryLesson>(lesson);
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
+  const [voiceLang, setVoiceLang] = useState<'id' | 'en'>(voiceEngine.getLanguage());
 
   useEffect(() => {
     setActiveLesson(lesson);
@@ -277,9 +279,12 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           <button
             onClick={() => setShowVoiceModal(true)}
             title="Pilih Suara Karakter & Narasi"
-            className="candy-btn candy-btn-purple p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center text-xs active:scale-95"
+            className="candy-btn candy-btn-purple p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center text-xs active:scale-95 relative"
           >
             <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="absolute -top-1 -right-1 text-[9px] font-black bg-white px-1 py-0.2 rounded-full border border-purple-300 text-purple-900 shadow-xs leading-tight">
+              {voiceLang === 'en' ? '🇬🇧' : '🇮🇩'}
+            </span>
           </button>
 
           <button
@@ -321,6 +326,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           characters={activeLesson.characters}
           isPaused={isPaused}
           activeSpeaker={activeSpeaker}
+          voiceLang={voiceLang}
           onSceneComplete={idx => {
             if (idx === -1) {
               handleRestartFullStory();
@@ -413,6 +419,11 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                   }`}
                 >
                   {currentScene.narration}
+                  {voiceLang === 'en' && (
+                    <span className="block text-xs sm:text-base font-bold text-indigo-700 italic mt-1 bg-indigo-50/70 px-2.5 py-1 rounded-xl border border-indigo-200/60">
+                      🇬🇧 &ldquo;{translateStoryToEnglish(currentScene.narration)}&rdquo;
+                    </span>
+                  )}
                 </p>
 
                 {/* Character Dialogue Box */}
@@ -434,6 +445,11 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                         {currentScene.dialogue.speaker === 'siti' ? 'Siti Menjawab:' : 'Budi Berkata:'}
                       </span>
                       <span className="leading-snug">&ldquo;{currentScene.dialogue.text}&rdquo;</span>
+                      {voiceLang === 'en' && (
+                        <span className="block text-xs sm:text-sm font-bold text-slate-500 italic mt-0.5">
+                          🇬🇧 &ldquo;{translateStoryToEnglish(currentScene.dialogue.text)}&rdquo;
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
@@ -476,7 +492,10 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
       {/* Voice Selection Modal */}
       <VoiceSettingsModal
         isOpen={showVoiceModal}
-        onClose={() => setShowVoiceModal(false)}
+        onClose={() => {
+          setShowVoiceModal(false);
+          setVoiceLang(voiceEngine.getLanguage());
+        }}
       />
     </div>
   );

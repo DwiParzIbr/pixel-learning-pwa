@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { CharacterDef, CharacterEmotion, EnvironmentType, ObjectType, SceneDef } from '@/types/story';
 import { soundEngine } from '@/lib/audio/soundEngine';
 import { Hand, RotateCcw } from 'lucide-react';
+import { translateStoryToEnglish } from '@/lib/i18n/storyTranslator';
 
 interface PixelCanvasProps {
   allScenes: SceneDef[];
@@ -14,6 +15,7 @@ interface PixelCanvasProps {
   onObjectCounted?: (count: number) => void;
   interactiveCountMode?: boolean;
   activeSpeaker?: string | null;
+  voiceLang?: 'id' | 'en';
 }
 
 interface CharacterEntity {
@@ -75,6 +77,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   onObjectCounted,
   interactiveCountMode = false,
   activeSpeaker = null,
+  voiceLang = 'id',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [countedTotal, setCountedTotal] = useState<number>(0);
@@ -251,7 +254,8 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       // Update Speech Bubble only when this character is the active speaker
       state.characters.forEach(char => {
         if (activeSpeaker && scene.dialogue && scene.dialogue.speaker === char.id && activeSpeaker === char.id) {
-          char.speechBubble = scene.dialogue.text;
+          const bubbleText = voiceLang === 'en' ? translateStoryToEnglish(scene.dialogue.text) : scene.dialogue.text;
+          char.speechBubble = bubbleText;
           char.emotion = 'talk';
         } else {
           char.speechBubble = undefined;
@@ -261,7 +265,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         }
       });
     },
-    [allScenes, characters, activeSpeaker]
+    [allScenes, characters, activeSpeaker, voiceLang]
   );
 
   useEffect(() => {
@@ -275,7 +279,8 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
     const state = gameStateRef.current;
     state.characters.forEach(char => {
       if (activeSpeaker && scene.dialogue && scene.dialogue.speaker === char.id && activeSpeaker === char.id) {
-        char.speechBubble = scene.dialogue.text;
+        const bubbleText = voiceLang === 'en' ? translateStoryToEnglish(scene.dialogue.text) : scene.dialogue.text;
+        char.speechBubble = bubbleText;
         char.emotion = 'talk';
       } else {
         char.speechBubble = undefined;
@@ -284,7 +289,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         }
       }
     });
-  }, [activeSpeaker, activeSceneIndex, allScenes]);
+  }, [activeSpeaker, activeSceneIndex, allScenes, voiceLang]);
 
   // Main 60 FPS Render Loop
   useEffect(() => {

@@ -28,6 +28,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
   const [attempts, setAttempts] = useState<LessonAttempt[]>([]);
   const [screenTimeLimit, setScreenTimeLimit] = useState<number>(30);
   const [activeVoiceId, setActiveVoiceId] = useState<string>(voiceEngine.getActivePersonaId());
+  const [voiceLang, setVoiceLang] = useState<'id' | 'en'>(voiceEngine.getLanguage());
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -293,22 +294,64 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
               <span>Sistem Suara Terpisah (Narator & Karakter)</span>
             </h3>
             <span className="text-xs bg-purple-100 text-purple-800 font-bold px-3 py-1 rounded-full w-fit">
-              Suara Karakter & Narator Dibedakan
+              Tersedia Bahasa Indonesia & English
             </span>
           </div>
 
+          {/* Language Toggle in Parent Dashboard */}
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl mb-4 border border-slate-200 w-fit">
+            <button
+              type="button"
+              onClick={() => {
+                setVoiceLang('id');
+                voiceEngine.setLanguage('id');
+                const personas = voiceEngine.getNarratorPersonas('id');
+                setActiveVoiceId(personas[0].id);
+                voiceEngine.setPersona(personas[0].id);
+              }}
+              className={`py-1.5 px-3 rounded-xl font-black text-xs flex items-center gap-1.5 transition-all ${
+                voiceLang === 'id'
+                  ? 'bg-white text-slate-900 shadow-sm border border-slate-200 ring-2 ring-amber-300'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <span>🇮🇩</span>
+              <span>Bahasa Indonesia</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setVoiceLang('en');
+                voiceEngine.setLanguage('en');
+                const personas = voiceEngine.getNarratorPersonas('en');
+                setActiveVoiceId(personas[0].id);
+                voiceEngine.setPersona(personas[0].id);
+              }}
+              className={`py-1.5 px-3 rounded-xl font-black text-xs flex items-center gap-1.5 transition-all ${
+                voiceLang === 'en'
+                  ? 'bg-white text-indigo-900 shadow-sm border border-indigo-200 ring-2 ring-indigo-300'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <span>🇬🇧</span>
+              <span>English (Bahasa Inggris)</span>
+            </button>
+          </div>
+
           <p className="text-xs text-slate-500 font-bold mb-4 leading-relaxed">
-            Aplikasi secara otomatis membedakan suara Narator yang membacakan alur cerita dengan suara karakter anak (Budi & Siti) yang berbicara di dalam animasi.
+            {voiceLang === 'en'
+              ? 'Mode Suara Bahasa Inggris aktif. Cerita dan dialog akan dibacakan dalam bahasa Inggris dengan artikulasi native yang jelas.'
+              : 'Aplikasi secara otomatis membedakan suara Narator yang membacakan alur cerita dengan suara karakter anak (Budi & Siti) yang berbicara di dalam animasi.'}
           </p>
 
           {/* Sub-section: Animation Characters */}
           <div className="mb-5 bg-amber-50/50 p-4 rounded-2xl border border-amber-200">
             <h4 className="text-xs font-black text-amber-950 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <span>🎭</span>
-              <span>Suara Karakter Animasi (Otomatis & Terpisah)</span>
+              <span>{voiceLang === 'en' ? 'Animation Character Voices (English)' : 'Suara Karakter Animasi (Otomatis & Terpisah)'}</span>
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {CHARACTER_VOICES.slice(0, 2).map((c) => {
+              {voiceEngine.getCharacterVoices(voiceLang).slice(0, 2).map((c) => {
                 const isPlaying = previewingVoice === `char_${c.id}`;
                 return (
                   <div
@@ -325,7 +368,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
                     <button
                       onClick={() => {
                         setPreviewingVoice(`char_${c.id}`);
-                        voiceEngine.previewSpeaker(c.id as 'budi' | 'siti').finally(() => {
+                        voiceEngine.previewSpeaker(c.id as 'budi' | 'siti', voiceLang).finally(() => {
                           setPreviewingVoice(null);
                         });
                       }}
@@ -347,10 +390,10 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
           {/* Sub-section: Narrator Personas */}
           <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <span>📖</span>
-            <span>Pilihan Suara Narator (Pembaca Alur & Soal)</span>
+            <span>{voiceLang === 'en' ? 'Story Narrator Voice (English)' : 'Pilihan Suara Narator (Pembaca Alur & Soal)'}</span>
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-            {NARRATOR_PERSONAS.map((p) => {
+            {voiceEngine.getNarratorPersonas(voiceLang).map((p) => {
               const isSelected = activeVoiceId === p.id;
               const isPlaying = previewingVoice === `narrator_${p.id}`;
               return (
@@ -376,6 +419,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
                           pitch: p.pitch,
                           rate: p.rate,
                           speaker: 'narrator',
+                          lang: p.lang,
                           onEnd: () => setPreviewingVoice(null),
                         });
                       }}

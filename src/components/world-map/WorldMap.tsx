@@ -22,6 +22,7 @@ import {
   Mic,
 } from 'lucide-react';
 import { VoiceSettingsModal } from '@/components/audio/VoiceSettingsModal';
+import { voiceEngine, VoiceLanguage } from '@/lib/audio/voiceEngine';
 
 interface WorldMapProps {
   onSelectLesson: (lesson: StoryLesson, inLevelLessons?: StoryLesson[]) => void;
@@ -40,6 +41,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   const [showBadgesModal, setShowBadgesModal] = useState<boolean>(false);
   const [showSubjectModal, setShowSubjectModal] = useState<boolean>(false);
   const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
+  const [voiceLang, setVoiceLang] = useState<VoiceLanguage>(voiceEngine.getLanguage());
   const [selectedLevelForModal, setSelectedLevelForModal] = useState<LevelDef | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<SubjectType>('mathematics');
   const [newChildName, setNewChildName] = useState<string>('');
@@ -164,10 +166,13 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                 soundEngine.playSfx('click');
                 setShowVoiceModal(true);
               }}
-              className="candy-btn candy-btn-blue p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex items-center justify-center"
+              className="candy-btn candy-btn-blue p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex items-center justify-center relative"
               title="Pilih Suara Cerita"
             >
               <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="absolute -top-1 -right-1 text-[9px] font-black bg-white px-1 py-0.2 rounded-full border border-sky-300 text-sky-900 shadow-xs leading-tight">
+                {voiceLang === 'en' ? '🇬🇧' : '🇮🇩'}
+              </span>
             </button>
 
             <button
@@ -724,7 +729,10 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       {/* Voice Selection Modal */}
       <VoiceSettingsModal
         isOpen={showVoiceModal}
-        onClose={() => setShowVoiceModal(false)}
+        onClose={() => {
+          setShowVoiceModal(false);
+          setVoiceLang(voiceEngine.getLanguage());
+        }}
       />
     </div>
   );

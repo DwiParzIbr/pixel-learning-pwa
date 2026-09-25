@@ -4,11 +4,10 @@ import React, { useState, useEffect } from 'react';
 import {
   voiceEngine,
   VoicePersona,
-  NARRATOR_PERSONAS,
-  CHARACTER_VOICES,
+  VoiceLanguage,
 } from '@/lib/audio/voiceEngine';
 import { soundEngine } from '@/lib/audio/soundEngine';
-import { Volume2, Check, Sparkles, X, Play, Mic, UserCheck } from 'lucide-react';
+import { Volume2, Check, Sparkles, X, Play, Globe } from 'lucide-react';
 
 interface VoiceSettingsModalProps {
   isOpen: boolean;
@@ -16,6 +15,7 @@ interface VoiceSettingsModalProps {
 }
 
 export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, onClose }) => {
+  const [selectedLang, setSelectedLang] = useState<VoiceLanguage>(voiceEngine.getLanguage());
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>(voiceEngine.getActivePersonaId());
   const [isPlayingPreview, setIsPlayingPreview] = useState<string | null>(null);
   const [systemVoices, setSystemVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -23,15 +23,30 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
 
   useEffect(() => {
     if (isOpen) {
+      const currentLang = voiceEngine.getLanguage();
+      setSelectedLang(currentLang);
       setSelectedPersonaId(voiceEngine.getActivePersonaId());
       setSelectedVoiceURI(voiceEngine.getSelectedVoiceURI() || '');
-      const voices = voiceEngine.getAvailableSystemVoices();
-      const idVoices = voices.filter(v => v.lang.toLowerCase().includes('id'));
-      setSystemVoices(idVoices.length > 0 ? idVoices : voices.slice(0, 8));
+      loadSystemVoices(currentLang);
     }
   }, [isOpen]);
 
+  const loadSystemVoices = (lang: VoiceLanguage) => {
+    const voices = voiceEngine.getAvailableSystemVoices(lang);
+    setSystemVoices(voices.slice(0, 10));
+  };
+
   if (!isOpen) return null;
+
+  const handleLanguageChange = (lang: VoiceLanguage) => {
+    soundEngine.playSfx('click');
+    setSelectedLang(lang);
+    loadSystemVoices(lang);
+    const personas = voiceEngine.getNarratorPersonas(lang);
+    if (!personas.some(p => p.id === selectedPersonaId)) {
+      setSelectedPersonaId(personas[0].id);
+    }
+  };
 
   const handlePreviewNarrator = (persona: VoicePersona, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -41,6 +56,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
       pitch: persona.pitch,
       rate: persona.rate,
       speaker: 'narrator',
+      lang: persona.lang,
       onEnd: () => setIsPlayingPreview(null),
     });
   };
@@ -49,7 +65,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
     e.stopPropagation();
     soundEngine.playSfx('click');
     setIsPlayingPreview(`char_${role}`);
-    voiceEngine.previewSpeaker(role).finally(() => {
+    voiceEngine.previewSpeaker(role, selectedLang).finally(() => {
       setIsPlayingPreview(null);
     });
   };
@@ -61,10 +77,14 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
 
   const handleSave = () => {
     soundEngine.playSfx('celebrate');
+    voiceEngine.setLanguage(selectedLang);
     voiceEngine.setPersona(selectedPersonaId);
     voiceEngine.setSelectedVoiceURI(selectedVoiceURI || null);
     onClose();
   };
+
+  const currentCharacterVoices = voiceEngine.getCharacterVoices(selectedLang);
+  const currentNarratorPersonas = voiceEngine.getNarratorPersonas(selectedLang);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-pop-in font-fun">
@@ -78,7 +98,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center gap-3 mb-2 shrink-0">
+        <div className="flex items-center gap-3 mb-2.5 shrink-0">
           <span className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-2xl shadow-md shrink-0">
             🎙️
           </span>
@@ -87,16 +107,60 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
               Pilihan Suara Cerita & Karakter
             </h3>
             <p className="text-xs text-slate-500 font-bold mt-0.5">
-              Suara Narator & Karakter Animasi dibedakan agar petualangan lebih hidup!
+              Tersedia Bahasa Indonesia & Bahasa Inggris (English)
             </p>
           </div>
         </div>
 
+        {/* Language Mode Toggle Tabs */}
+        <div className="flex items-center gap-1.5 sm:gap-2 p-1 bg-slate-100 rounded-2xl mb-3 shrink-0 border border-slate-200">
+          <button
+            type="button"
+            onClick={() => handleLanguageChange('id')}
+            className={`flex-1 py-2 px-2.5 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
+              selectedLang === 'id'
+                ? 'bg-white text-slate-900 shadow-sm border border-slate-200 ring-2 ring-amber-300'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span className="text-base sm:text-lg">🇮🇩</span>
+            <span>Bahasa Indonesia</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleLanguageChange('en')}
+            className={`flex-1 py-2 px-2.5 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
+              selectedLang === 'en'
+                ? 'bg-white text-indigo-900 shadow-sm border border-indigo-200 ring-2 ring-indigo-300'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span className="text-base sm:text-lg">🇬🇧</span>
+            <span>English (Inggris)</span>
+          </button>
+        </div>
+
         {/* Info Banner */}
-        <div className="bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl text-xs text-amber-950 font-bold mb-3 flex items-start gap-2 shrink-0">
-          <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+        <div className={`border px-3 py-2 rounded-xl text-xs font-bold mb-3 flex items-start gap-2 shrink-0 ${
+          selectedLang === 'en'
+            ? 'bg-indigo-50 border-indigo-200 text-indigo-950'
+            : 'bg-amber-50 border-amber-200 text-amber-950'
+        }`}>
+          {selectedLang === 'en' ? (
+            <Globe className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+          ) : (
+            <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+          )}
           <span>
-            <strong>Sistem Suara Terpisah:</strong> 1 suara Narator untuk membacakan alur cerita & soal, serta suara khusus untuk karakter anak (Budi & Siti).
+            {selectedLang === 'en' ? (
+              <>
+                <strong>English Voice Mode:</strong> Narration and dialogues will be spoken in clear native English for bilingual immersion!
+              </>
+            ) : (
+              <>
+                <strong>Sistem Suara Terpisah:</strong> 1 suara Narator membacakan alur cerita & soal, serta suara khusus untuk karakter anak (Budi & Siti).
+              </>
+            )}
           </span>
         </div>
 
@@ -107,15 +171,15 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                 <span>🎭</span>
-                <span>Suara Karakter Animasi</span>
+                <span>{selectedLang === 'en' ? 'Animation Character Voices' : 'Suara Karakter Animasi'}</span>
               </h4>
               <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                Otomatis Aktif
+                {selectedLang === 'en' ? 'Active' : 'Otomatis Aktif'}
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {CHARACTER_VOICES.slice(0, 2).map((char) => {
+              {currentCharacterVoices.slice(0, 2).map((char) => {
                 const isPlaying = isPlayingPreview === `char_${char.id}`;
                 const isBudi = char.id === 'budi';
 
@@ -153,7 +217,13 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
                       }`}
                     >
                       {isPlaying ? <Volume2 className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-                      <span>{isPlaying ? 'Bicara...' : `Tes Suara ${isBudi ? 'Budi' : 'Siti'}`}</span>
+                      <span>
+                        {isPlaying
+                          ? 'Playing...'
+                          : selectedLang === 'en'
+                          ? `Test ${isBudi ? 'Budi' : 'Siti'} Voice`
+                          : `Tes Suara ${isBudi ? 'Budi' : 'Siti'}`}
+                      </span>
                     </button>
                   </div>
                 );
@@ -166,15 +236,15 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                 <span>📖</span>
-                <span>Pilih Karakter Suara Narator</span>
+                <span>{selectedLang === 'en' ? 'Select Story Narrator Voice' : 'Pilih Karakter Suara Narator'}</span>
               </h4>
               <span className="text-[10px] font-black text-slate-500">
-                (Pembaca Cerita & Soal)
+                ({selectedLang === 'en' ? 'Story & Questions' : 'Pembaca Cerita & Soal'})
               </span>
             </div>
 
             <div className="space-y-2">
-              {NARRATOR_PERSONAS.map((p) => {
+              {currentNarratorPersonas.map((p) => {
                 const isSelected = selectedPersonaId === p.id;
                 const isPlaying = isPlayingPreview === `narrator_${p.id}`;
 
@@ -242,14 +312,14 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
           {systemVoices.length > 1 && (
             <div className="pt-2 border-t border-slate-200">
               <label className="block text-[11px] font-black text-slate-600 mb-1">
-                ⚙️ Suara Sistem Perangkat (Opsional):
+                ⚙️ {selectedLang === 'en' ? 'Device System Voice (Optional):' : 'Suara Sistem Perangkat (Opsional):'}
               </label>
               <select
                 value={selectedVoiceURI}
                 onChange={(e) => setSelectedVoiceURI(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-purple-300"
               >
-                <option value="">Otomatis (Rekomendasi Terbaik)</option>
+                <option value="">{selectedLang === 'en' ? 'Automatic (Best Quality)' : 'Otomatis (Rekomendasi Terbaik)'}</option>
                 {systemVoices.map((v) => (
                   <option key={v.voiceURI} value={v.voiceURI}>
                     {v.name} ({v.lang})
@@ -266,7 +336,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
             onClick={handleSave}
             className="w-full candy-btn candy-btn-green py-3 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
           >
-            <span>Simpan & Terapkan Suara ✅</span>
+            <span>{selectedLang === 'en' ? 'Save & Apply English Voice ✅' : 'Simpan & Terapkan Suara ✅'}</span>
           </button>
         </div>
       </div>
