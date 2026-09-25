@@ -14,7 +14,6 @@ import {
   Calendar,
   Settings,
   ShieldCheck,
-  RefreshCw,
 } from 'lucide-react';
 
 interface ParentDashboardProps {
@@ -25,7 +24,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
   const [activeChild, setActiveChild] = useState<ChildProfile>(progressStore.getActiveChild());
   const [masteryScores, setMasteryScores] = useState<MasteryScore[]>([]);
   const [attempts, setAttempts] = useState<LessonAttempt[]>([]);
-  const [screenTimeLimit, setScreenTimeLimit] = useState<number>(30); // minutes
+  const [screenTimeLimit, setScreenTimeLimit] = useState<number>(30);
 
   useEffect(() => {
     const child = progressStore.getActiveChild();
@@ -40,118 +39,117 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
   const totalSeconds = attempts.reduce((acc, a) => acc + (a.timeSpentSeconds || 60), 0);
   const totalMinutes = Math.round(totalSeconds / 60);
 
-  // Weak and strong topics
   const strongTopics = masteryScores.filter(m => m.status === 'mastered' || m.status === 'good');
   const weakTopics = masteryScores.filter(m => m.status === 'needs_practice' || m.status === 'developing');
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-fun pb-12">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-fun pb-16">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b-2 border-slate-800 px-4 py-3.5 shadow-lg">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-2 border-slate-200 px-4 py-3.5 shadow-sm">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <button
             onClick={onBackToApp}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-1.5 rounded-xl font-bold text-sm transition-all"
+            className="candy-btn candy-btn-yellow flex items-center gap-2 px-4 py-2 rounded-2xl font-black text-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 stroke-[3]" />
             <span>Kembali ke Belajar</span>
           </button>
 
-          <div className="flex items-center gap-2 text-indigo-400 font-pixel text-xs">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>PARENT DASHBOARD</span>
+          <div className="flex items-center gap-2 text-indigo-700 font-black text-sm uppercase tracking-wide">
+            <ShieldCheck className="w-5 h-5 text-indigo-600" />
+            <span>Dashboard Orang Tua</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xl">{activeChild.avatar}</span>
-            <span className="font-bold text-sm text-slate-200">{activeChild.name}</span>
+          <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-2xl">
+            <span className="text-2xl">{activeChild.avatar}</span>
+            <span className="font-extrabold text-sm text-indigo-950">{activeChild.name}</span>
           </div>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 pt-6 space-y-6">
         {/* Child Summary Hero */}
-        <div className="bg-gradient-to-r from-indigo-900 to-slate-900 border-2 border-indigo-700/60 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 text-white rounded-[2rem] p-6 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="bg-indigo-500 text-white text-xs font-pixel px-2.5 py-0.5 rounded-full">
+              <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
                 Laporan Mingguan
               </span>
-              <span className="text-xs text-indigo-200">
+              <span className="text-xs text-indigo-200 font-bold">
                 Aktivitas Terakhir: {new Date(activeChild.lastActive).toLocaleDateString('id-ID', { dateStyle: 'medium' })}
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
               Perkembangan Belajar {activeChild.name}
             </h2>
-            <p className="text-slate-300 text-sm mt-1 max-w-xl">
-              Pantau pemahaman materi konsep, durasi belajar, dan materi yang membutuhkan pendampingan lebih lanjut.
+            <p className="text-indigo-100 text-sm sm:text-base font-medium mt-1 max-w-xl">
+              Pantau pemahaman materi, durasi belajar, dan materi yang membutuhkan pendampingan lebih lanjut.
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-slate-950/60 p-4 rounded-2xl border border-indigo-500/30">
+          <div className="flex items-center gap-5 bg-white/10 backdrop-blur-md p-4 rounded-3xl border border-white/20 shadow-inner">
             <div className="text-center">
-              <span className="block text-2xl font-pixel text-amber-400 font-bold">{activeChild.level}</span>
-              <span className="text-xs text-slate-400 uppercase">Level</span>
+              <span className="block text-3xl font-black text-amber-300">{activeChild.level}</span>
+              <span className="text-xs text-indigo-200 font-bold uppercase">Level</span>
             </div>
-            <div className="w-px h-8 bg-slate-800" />
+            <div className="w-px h-10 bg-white/20" />
             <div className="text-center">
-              <span className="block text-2xl font-pixel text-yellow-400 font-bold">{activeChild.xp}</span>
-              <span className="text-xs text-slate-400 uppercase">Total XP</span>
+              <span className="block text-3xl font-black text-yellow-300">{activeChild.xp}</span>
+              <span className="text-xs text-indigo-200 font-bold uppercase">Total XP</span>
             </div>
-            <div className="w-px h-8 bg-slate-800" />
+            <div className="w-px h-10 bg-white/20" />
             <div className="text-center">
-              <span className="block text-2xl font-pixel text-emerald-400 font-bold">{activeChild.stars}</span>
-              <span className="text-xs text-slate-400 uppercase">Bintang</span>
+              <span className="block text-3xl font-black text-emerald-300">{activeChild.stars}</span>
+              <span className="text-xs text-indigo-200 font-bold uppercase">Bintang</span>
             </div>
           </div>
         </div>
 
         {/* 4 Metric Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-slate-900 border-2 border-slate-800 p-5 rounded-2xl shadow">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase">Waktu Belajar</span>
-              <Clock className="w-5 h-5 text-blue-400" />
+          <div className="bg-white border-2 border-slate-200/80 p-5 rounded-3xl shadow-sm">
+            <div className="flex items-center justify-between text-slate-500 mb-2">
+              <span className="text-xs font-extrabold uppercase">Waktu Belajar</span>
+              <Clock className="w-5 h-5 text-blue-500" />
             </div>
-            <div className="text-2xl font-bold text-white font-pixel">{totalMinutes} mnt</div>
-            <p className="text-xs text-slate-400 mt-1">Total durasi sesi belajar</p>
+            <div className="text-3xl font-black text-slate-800">{totalMinutes} mnt</div>
+            <p className="text-xs text-slate-500 font-bold mt-1">Total durasi sesi belajar</p>
           </div>
 
-          <div className="bg-slate-900 border-2 border-slate-800 p-5 rounded-2xl shadow">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase">Cerita Selesai</span>
-              <CheckCircle className="w-5 h-5 text-emerald-400" />
+          <div className="bg-white border-2 border-slate-200/80 p-5 rounded-3xl shadow-sm">
+            <div className="flex items-center justify-between text-slate-500 mb-2">
+              <span className="text-xs font-extrabold uppercase">Cerita Selesai</span>
+              <CheckCircle className="w-5 h-5 text-emerald-500" />
             </div>
-            <div className="text-2xl font-bold text-white font-pixel">{activeChild.completedLessons.length}</div>
-            <p className="text-xs text-slate-400 mt-1">Dari 7 cerita kurikulum</p>
+            <div className="text-3xl font-black text-slate-800">{activeChild.completedLessons.length}</div>
+            <p className="text-xs text-slate-500 font-bold mt-1">Dari 7 cerita kurikulum</p>
           </div>
 
-          <div className="bg-slate-900 border-2 border-slate-800 p-5 rounded-2xl shadow">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase">Soal Dijawab</span>
-              <Target className="w-5 h-5 text-purple-400" />
+          <div className="bg-white border-2 border-slate-200/80 p-5 rounded-3xl shadow-sm">
+            <div className="flex items-center justify-between text-slate-500 mb-2">
+              <span className="text-xs font-extrabold uppercase">Soal Dijawab</span>
+              <Target className="w-5 h-5 text-purple-500" />
             </div>
-            <div className="text-2xl font-bold text-white font-pixel">{totalQuestions}</div>
-            <p className="text-xs text-slate-400 mt-1">{correctCount} jawaban benar</p>
+            <div className="text-3xl font-black text-slate-800">{totalQuestions}</div>
+            <p className="text-xs text-slate-500 font-bold mt-1">{correctCount} jawaban benar</p>
           </div>
 
-          <div className="bg-slate-900 border-2 border-slate-800 p-5 rounded-2xl shadow">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-bold uppercase">Rata-rata Akurasi</span>
-              <TrendingUp className="w-5 h-5 text-amber-400" />
+          <div className="bg-white border-2 border-slate-200/80 p-5 rounded-3xl shadow-sm">
+            <div className="flex items-center justify-between text-slate-500 mb-2">
+              <span className="text-xs font-extrabold uppercase">Akurasi</span>
+              <TrendingUp className="w-5 h-5 text-amber-500" />
             </div>
-            <div className="text-2xl font-bold text-white font-pixel">{accuracy}%</div>
-            <p className="text-xs text-slate-400 mt-1">
+            <div className="text-3xl font-black text-slate-800">{accuracy}%</div>
+            <p className="text-xs text-slate-500 font-bold mt-1">
               {accuracy >= 80 ? 'Sangat Baik 🌟' : 'Perlu Didampingi 📖'}
             </p>
           </div>
         </div>
 
         {/* Topic Mastery Progress Bars */}
-        <div className="bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 shadow-xl">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Award className="w-5 h-5 text-amber-400" />
+        <div className="bg-white border-2 border-slate-200/80 rounded-[2rem] p-6 sm:p-8 shadow-sm">
+          <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-2">
+            <Award className="w-6 h-6 text-amber-500" />
             <span>Tingkat Penguasaan Materi (Topic Mastery)</span>
           </h3>
 
@@ -176,21 +174,21 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
                   : 'Perlu Latihan (Needs Practice)';
 
               return (
-                <div key={m.topic} className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                <div key={m.topic} className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
                     <div>
-                      <h4 className="font-bold text-white text-base">{m.title}</h4>
-                      <span className="text-xs text-slate-400">
+                      <h4 className="font-black text-slate-900 text-base">{m.title}</h4>
+                      <span className="text-xs text-slate-500 font-bold">
                         {m.correctCount} benar dari {m.totalQuestions} percobaan
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-300">{statusText}</span>
-                      <span className="font-pixel text-xs text-amber-400">{m.score}%</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-extrabold text-slate-600">{statusText}</span>
+                      <span className="text-base font-black text-slate-900">{m.score}%</span>
                     </div>
                   </div>
 
-                  <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
+                  <div className="w-full bg-slate-200 h-3.5 rounded-full overflow-hidden shadow-inner">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${statusColor}`}
                       style={{ width: `${m.score}%` }}
@@ -202,66 +200,64 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
           </div>
         </div>
 
-        {/* Strength & Weakness Analysis with Parenting Tips */}
+        {/* Strength & Weakness with Parenting Tips */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Strong topics */}
-          <div className="bg-slate-900 border-2 border-emerald-900/50 p-6 rounded-3xl shadow">
-            <div className="flex items-center gap-2 text-emerald-400 font-bold mb-3">
-              <CheckCircle className="w-5 h-5" />
+          <div className="bg-emerald-50/60 border-2 border-emerald-200 p-6 rounded-[2rem]">
+            <div className="flex items-center gap-2 text-emerald-800 font-black text-lg mb-3">
+              <CheckCircle className="w-6 h-6 text-emerald-600" />
               <span>Materi Yang Dikuasai</span>
             </div>
             {strongTopics.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-2.5">
                 {strongTopics.map(t => (
-                  <li key={t.topic} className="flex items-center justify-between text-sm bg-slate-950/60 p-3 rounded-xl border border-emerald-500/20">
-                    <span className="text-slate-200">{t.title}</span>
-                    <span className="text-xs font-pixel text-emerald-400">{t.score}%</span>
+                  <li key={t.topic} className="flex items-center justify-between text-sm font-bold bg-white p-3.5 rounded-2xl border border-emerald-200 shadow-sm">
+                    <span className="text-slate-800">{t.title}</span>
+                    <span className="font-black text-emerald-600">{t.score}%</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-slate-400">Belum ada materi dengan skor tinggi. Terus beri semangat!</p>
+              <p className="text-sm text-slate-500 font-bold">Belum ada materi dengan skor tinggi. Terus beri semangat!</p>
             )}
           </div>
 
-          {/* Weak topics & tips */}
-          <div className="bg-slate-900 border-2 border-amber-900/50 p-6 rounded-3xl shadow">
-            <div className="flex items-center gap-2 text-amber-400 font-bold mb-3">
-              <AlertTriangle className="w-5 h-5" />
+          <div className="bg-amber-50/60 border-2 border-amber-200 p-6 rounded-[2rem]">
+            <div className="flex items-center gap-2 text-amber-800 font-black text-lg mb-3">
+              <AlertTriangle className="w-6 h-6 text-amber-600" />
               <span>Materi Perlu Latihan & Tips Pendampingan</span>
             </div>
             {weakTopics.length > 0 ? (
               <div className="space-y-3">
                 {weakTopics.slice(0, 2).map(t => (
-                  <div key={t.topic} className="bg-slate-950/60 p-3.5 rounded-xl border border-amber-500/20 text-sm">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-white">{t.title}</span>
-                      <span className="text-xs font-pixel text-amber-400">{t.score}%</span>
+                  <div key={t.topic} className="bg-white p-4 rounded-2xl border border-amber-200 shadow-sm text-sm">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-black text-slate-900">{t.title}</span>
+                      <span className="font-black text-amber-600">{t.score}%</span>
                     </div>
-                    <p className="text-xs text-slate-300">
-                      💡 <strong>Tips untuk Orang Tua:</strong> Saat di rumah, gunakan benda konkret (seperti buah atau mainan) untuk memperagakan konsep {t.title.toLowerCase()}.
+                    <p className="text-xs text-slate-600 font-bold leading-relaxed">
+                      💡 <strong>Tips Pendampingan:</strong> Saat di rumah, gunakan benda konkret (seperti buah atau mainan) untuk memperagakan konsep {t.title.toLowerCase()}.
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-emerald-400">Luar biasa! Semua materi yang dikerjakan menunjukkan pemahaman baik.</p>
+              <p className="text-sm text-emerald-600 font-bold">Luar biasa! Semua materi yang dikerjakan menunjukkan pemahaman baik.</p>
             )}
           </div>
         </div>
 
-        {/* Screen Time & Parent Controls */}
-        <div className="bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 shadow-xl">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-indigo-400" />
-            <span>Pengaturan Waktu & Keamanan</span>
+        {/* Screen Time & Controls */}
+        <div className="bg-white border-2 border-slate-200/80 rounded-[2rem] p-6 shadow-sm">
+          <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-indigo-600" />
+            <span>Pengaturan Waktu Layar Anak</span>
           </h3>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
             <div>
-              <h4 className="font-bold text-white text-base">Batas Waktu Belajar Harian</h4>
-              <p className="text-xs text-slate-400">
-                Aplikasi akan memunculkan pesan pengingat istirahat saat waktu habis.
+              <h4 className="font-black text-slate-900 text-base">Batas Waktu Belajar Harian</h4>
+              <p className="text-xs text-slate-500 font-bold">
+                Aplikasi akan memunculkan pesan pengingat istirahat saat batas waktu harian tercapai.
               </p>
             </div>
             <div className="flex gap-2">
@@ -269,13 +265,13 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
                 <button
                   key={mins}
                   onClick={() => setScreenTimeLimit(mins)}
-                  className={`px-3 py-1.5 rounded-xl font-pixel text-xs transition-all ${
+                  className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${
                     screenTimeLimit === mins
-                      ? 'bg-indigo-600 text-white font-bold'
-                      : 'bg-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  {mins} mnt
+                  {mins} menit
                 </button>
               ))}
             </div>
@@ -283,36 +279,36 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
         </div>
 
         {/* Recent Activity Log */}
-        <div className="bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 shadow-xl">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-400" />
+        <div className="bg-white border-2 border-slate-200/80 rounded-[2rem] p-6 shadow-sm">
+          <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-blue-600" />
             <span>Riwayat Aktivitas Belajar Terbaru</span>
           </h3>
 
-          <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {attempts.length > 0 ? (
               attempts.map(att => (
                 <div
                   key={att.attemptId}
-                  className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-sm"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{att.correct ? '✅' : '❌'}</span>
+                    <span className="text-2xl">{att.correct ? '✅' : '❌'}</span>
                     <div>
-                      <h5 className="font-bold text-white">{att.lessonId}</h5>
-                      <span className="text-xs text-slate-400">
-                        {new Date(att.timestamp).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })} • Percobaan: {att.attemptsCount} {att.hintUsed ? '(Pakai Hint)' : ''}
+                      <h5 className="font-black text-slate-900">{att.lessonId}</h5>
+                      <span className="text-xs text-slate-500 font-bold">
+                        {new Date(att.timestamp).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })} • Percobaan: {att.attemptsCount} {att.hintUsed ? '(Menggunakan Petunjuk)' : ''}
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="font-pixel text-xs text-amber-400 block">{att.score} Poin</span>
-                    <span className="text-[11px] text-slate-400">{att.timeSpentSeconds} detik</span>
+                    <span className="font-black text-amber-600 text-sm block">{att.score} Poin</span>
+                    <span className="text-xs text-slate-500 font-bold">{att.timeSpentSeconds} detik</span>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-400">Belum ada riwayat aktivitas terbaru.</p>
+              <p className="text-sm text-slate-400 font-bold">Belum ada riwayat aktivitas terbaru.</p>
             )}
           </div>
         </div>

@@ -4,35 +4,107 @@
 
 @layer base {
   body {
-    background-color: #0f172a;
-    color: #f8fafc;
-    font-family: 'Fredoka', system-ui, sans-serif;
+    background-color: #f0fdf4;
+    background-image: 
+      radial-gradient(#e0f2fe 1.5px, transparent 1.5px),
+      radial-gradient(#fef9c3 1.5px, #f0fdf4 1.5px);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    color: #1e293b;
+    font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-6px); }
-  40%, 80% { transform: translateX(6px); }
+/* 3D Candy Button Utility */
+.candy-btn {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+.candy-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.animate-shake {
-  animation: shake 0.4s ease-in-out;
+.candy-btn-yellow {
+  background: linear-gradient(180deg, #fde047 0%, #eab308 100%);
+  border-bottom: 5px solid #ca8a04;
+  color: #713f12;
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
+.candy-btn-green {
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+  border-bottom: 5px solid #16a34a;
+  color: #052e16;
 }
 
-/* Custom Pixel art canvas styles */
-canvas {
+.candy-btn-blue {
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+  border-bottom: 5px solid #2563eb;
+  color: #172554;
+}
+
+.candy-btn-purple {
+  background: linear-gradient(180deg, #c084fc 0%, #a855f7 100%);
+  border-bottom: 5px solid #9333ea;
+  color: #3b0764;
+}
+
+.candy-btn-pink {
+  background: linear-gradient(180deg, #f472b6 0%, #ec4899 100%);
+  border-bottom: 5px solid #db2777;
+  color: #831843;
+}
+
+.candy-btn-orange {
+  background: linear-gradient(180deg, #fb923c 0%, #f97316 100%);
+  border-bottom: 5px solid #ea580c;
+  color: #7c2d12;
+}
+
+/* Animations */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+@keyframes floatKid {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  70% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes softGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.6)); }
+  50% { filter: drop-shadow(0 0 16px rgba(250, 204, 21, 0.9)); }
+}
+
+.animate-wiggle {
+  animation: wiggle 1.2s ease-in-out infinite;
+}
+
+.animate-float-kid {
+  animation: floatKid 3s ease-in-out infinite;
+}
+
+.animate-pop-in {
+  animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-soft-glow {
+  animation: softGlow 2s ease-in-out infinite;
+}
+
+/* Crisp rendering specifically for game canvas */
+canvas.pixel-canvas {
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
@@ -41,16 +113,17 @@ canvas {
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #f1f5f9;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #94a3b8;
 }

@@ -5,7 +5,7 @@ import confetti from 'canvas-confetti';
 import { StoryQuestion, RemedialStory, BadgeDef } from '@/types/story';
 import { soundEngine } from '@/lib/audio/soundEngine';
 import { voiceEngine } from '@/lib/audio/voiceEngine';
-import { Lightbulb, RotateCcw, Sparkles, CheckCircle2, AlertCircle, ArrowRight, BookOpen } from 'lucide-react';
+import { Lightbulb, Sparkles, CheckCircle2, HeartHandshake, ArrowRight, BookOpen } from 'lucide-react';
 
 interface QuestionModalProps {
   question: StoryQuestion;
@@ -52,10 +52,10 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
       setFeedbackState('correct');
       soundEngine.playSfx('celebrate');
       confetti({
-        particleCount: 80,
-        spread: 70,
+        particleCount: 100,
+        spread: 80,
         origin: { y: 0.6 },
-        colors: ['#fbbf24', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6'],
+        colors: ['#fbbf24', '#38bdf8', '#4ade80', '#f472b6', '#a855f7'],
       });
 
       const congratulation = `Hebat sekali! Jawabanmu benar! ${question.explanation}`;
@@ -68,20 +68,18 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
       setFeedbackState('wrong');
       soundEngine.playSfx('wrong_gentle');
 
-      // Adaptive remedial logic
       if (currentAttempts === 1) {
-        const msg = 'Belum tepat. Tidak apa-apa, yuk coba hitung lagi pelan-pelan!';
+        const msg = 'Belum tepat. Tidak apa-apa, yuk coba hitung lagi ya!';
         setFeedbackMessage(msg);
         voiceEngine.speak(msg, { speaker: 'budi' });
       } else if (currentAttempts === 2) {
         setShowHint(true);
         setHintUsed(true);
-        const msg = 'Masih belum tepat. Kamu bisa membuka Petunjuk di bawah untuk membantu!';
+        const msg = 'Masih belum tepat. Buka Petunjuk di bawah untuk membantu kamu!';
         setFeedbackMessage(msg);
         voiceEngine.speak(msg, { speaker: 'siti' });
       } else {
-        // Attempt 3+
-        const msg = 'Yuk coba simak Cerita Remedial singkat agar konsepnya semakin jelas!';
+        const msg = 'Yuk coba kita lihat Cerita Remedial singkat bersama Budi!';
         setFeedbackMessage(msg);
         voiceEngine.speak(msg, { speaker: 'narrator' });
       }
@@ -90,127 +88,135 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
     }
   };
 
+  const optionColorStyles = [
+    { bg: 'bg-rose-50 border-rose-300 text-rose-900', badge: 'bg-rose-500 text-white', hover: 'hover:bg-rose-100' },
+    { bg: 'bg-sky-50 border-sky-300 text-sky-900', badge: 'bg-sky-500 text-white', hover: 'hover:bg-sky-100' },
+    { bg: 'bg-emerald-50 border-emerald-300 text-emerald-900', badge: 'bg-emerald-500 text-white', hover: 'hover:bg-emerald-100' },
+    { bg: 'bg-amber-50 border-amber-300 text-amber-900', badge: 'bg-amber-500 text-white', hover: 'hover:bg-amber-100' },
+  ];
+
   return (
-    <div className="w-full max-w-2xl bg-slate-900/95 border-4 border-amber-400 rounded-3xl p-6 shadow-2xl backdrop-blur-md text-white my-4 transition-all">
-      {/* Question Header */}
-      <div className="flex items-center justify-between gap-4 mb-4 border-b border-slate-700/80 pb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">❓</span>
-          <span className="font-pixel text-xs md:text-sm text-amber-400 uppercase tracking-wide">
-            Teka-Teki Cerita
+    <div className="w-full max-w-2xl bg-white border-4 border-amber-300 rounded-[2.5rem] p-6 sm:p-8 shadow-[0_16px_36px_rgba(0,0,0,0.1)] text-slate-800 my-4 animate-pop-in font-fun relative">
+      {/* Question Header Badge */}
+      <div className="flex items-center justify-between mb-4 border-b-2 border-amber-100 pb-3">
+        <div className="flex items-center gap-2 bg-amber-100 px-4 py-1.5 rounded-full border border-amber-300">
+          <span className="text-xl">🌟</span>
+          <span className="font-extrabold text-xs sm:text-sm text-amber-900 uppercase tracking-wide">
+            Tantangan Seru!
           </span>
         </div>
-        <div className="flex items-center gap-1.5 bg-slate-800 px-3 py-1 rounded-full text-xs font-pixel text-amber-300">
-          <span>Percobaan:</span>
-          <span className="font-bold">{attempts}</span>
+
+        <div className="bg-sky-100 text-sky-800 px-3 py-1 rounded-full text-xs font-bold border border-sky-300">
+          Percobaan ke-{attempts + 1}
         </div>
       </div>
 
       {/* Main Question Text */}
-      <h3 className="font-fun text-xl md:text-2xl font-bold text-center text-amber-100 mb-6 leading-relaxed">
+      <h3 className="text-2xl sm:text-3xl font-extrabold text-center text-slate-800 mb-6 leading-snug">
         {question.question}
       </h3>
 
-      {/* Options Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-        {question.options.map(opt => {
+      {/* Options Grid with 3D tactile buttons */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-6">
+        {question.options.map((opt, idx) => {
           const isSelected = selectedOption === opt.id;
           const isCorrectAnswer = feedbackState === 'correct' && opt.id === question.correctAnswer;
           const isWrongSelected = feedbackState === 'wrong' && isSelected;
+          const colorTheme = optionColorStyles[idx % optionColorStyles.length];
 
           return (
             <button
               key={opt.id}
               onClick={() => handleSelect(opt.id)}
               disabled={feedbackState === 'correct'}
-              className={`flex items-center gap-4 p-4 rounded-2xl border-4 font-fun text-lg md:text-xl font-bold transition-all text-left shadow-lg
+              className={`flex items-center gap-4 p-4 rounded-3xl border-3 font-extrabold text-xl sm:text-2xl transition-all text-left shadow-sm active:translate-y-1
                 ${isCorrectAnswer
-                  ? 'bg-emerald-600 border-emerald-300 text-white scale-[1.02]'
+                  ? 'bg-emerald-500 border-emerald-600 text-white shadow-lg scale-[1.02] border-b-6'
                   : isWrongSelected
-                  ? 'bg-rose-950 border-rose-500 text-rose-200 animate-shake'
+                  ? 'bg-rose-100 border-rose-400 text-rose-800 animate-shake border-b-4'
                   : isSelected
-                  ? 'bg-amber-500 border-amber-300 text-slate-950 shadow-amber-500/30'
-                  : 'bg-slate-800/90 border-slate-700 hover:border-amber-400/80 text-white active:scale-95'
+                  ? 'bg-amber-300 border-amber-500 text-amber-950 shadow-md border-b-6 scale-[1.01]'
+                  : `${colorTheme.bg} ${colorTheme.hover} border-b-4`
                 }`}
             >
-              <span className={`w-9 h-9 rounded-xl flex items-center justify-center font-pixel text-sm shrink-0
-                ${isSelected ? 'bg-slate-950 text-amber-400' : 'bg-slate-700 text-slate-200'}`}>
+              <span className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 shadow-inner
+                ${isSelected ? 'bg-amber-900 text-amber-100' : colorTheme.badge}`}>
                 {opt.id}
               </span>
-              <span className="flex-1">{opt.label || String(opt.value)}</span>
-              {isCorrectAnswer && <CheckCircle2 className="w-6 h-6 text-emerald-300 shrink-0" />}
+              <span className="flex-1 font-bold">{opt.label || String(opt.value)}</span>
+              {isCorrectAnswer && <CheckCircle2 className="w-8 h-8 text-white shrink-0" />}
             </button>
           );
         })}
       </div>
 
-      {/* Feedback Alert */}
+      {/* Feedback Alert Banner */}
       {feedbackState !== 'idle' && (
         <div
-          className={`p-4 rounded-2xl mb-5 flex items-start gap-3 border-2 ${
+          className={`p-4 rounded-2xl mb-5 flex items-start gap-3 border-2 animate-pop-in ${
             feedbackState === 'correct'
-              ? 'bg-emerald-950/80 border-emerald-400 text-emerald-200'
-              : 'bg-rose-950/80 border-rose-400 text-rose-200'
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+              : 'bg-amber-50 border-amber-300 text-amber-900'
           }`}
         >
           {feedbackState === 'correct' ? (
-            <Sparkles className="w-6 h-6 text-amber-400 shrink-0 mt-0.5" />
+            <Sparkles className="w-7 h-7 text-emerald-500 shrink-0 mt-0.5 animate-spin" />
           ) : (
-            <AlertCircle className="w-6 h-6 text-rose-400 shrink-0 mt-0.5" />
+            <HeartHandshake className="w-7 h-7 text-amber-500 shrink-0 mt-0.5" />
           )}
-          <div className="font-fun text-base">
-            <p className="font-bold">{feedbackMessage}</p>
+          <div className="text-base sm:text-lg">
+            <p className="font-extrabold">{feedbackMessage}</p>
           </div>
         </div>
       )}
 
       {/* Visual Hint Box */}
       {showHint && question.hint && (
-        <div className="p-4 rounded-2xl bg-amber-950/60 border-2 border-amber-500/80 text-amber-200 mb-5 animate-fadeIn">
-          <div className="flex items-center gap-2 mb-1.5 font-bold font-fun text-amber-300">
-            <Lightbulb className="w-5 h-5 text-yellow-400" />
-            <span>Petunjuk Bantuan:</span>
+        <div className="p-5 rounded-3xl bg-amber-50 border-2 border-amber-300 text-amber-950 mb-5 animate-pop-in">
+          <div className="flex items-center gap-2 mb-2 font-black text-amber-800 text-base">
+            <Lightbulb className="w-6 h-6 text-yellow-500" />
+            <span>Petunjuk Ramah:</span>
           </div>
-          <p className="text-sm md:text-base font-fun mb-2">{question.hint}</p>
+          <p className="text-base sm:text-lg font-bold mb-3">{question.hint}</p>
           {question.visualHint?.formula && (
-            <div className="bg-slate-950/80 px-3 py-2 rounded-xl font-pixel text-amber-400 text-center text-sm inline-block">
+            <div className="bg-white px-4 py-2 rounded-2xl border-2 border-amber-300 text-amber-900 font-black text-lg inline-block shadow-sm">
               {question.visualHint.formula}
             </div>
           )}
         </div>
       )}
 
-      {/* Remedial Story Trigger (Attempt >= 3) */}
+      {/* Remedial Story Trigger */}
       {attempts >= 3 && feedbackState === 'wrong' && remedialStory && (
-        <div className="p-4 rounded-2xl bg-indigo-950/70 border-2 border-indigo-400 text-indigo-200 mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-indigo-400 shrink-0" />
-            <div className="text-sm font-fun">
-              <span className="font-bold text-white block">Perlu bantuan cerita lain?</span>
-              <span>Buka cerita remedial sederhana untuk memahami konsep ini.</span>
+        <div className="p-4 rounded-3xl bg-indigo-50 border-2 border-indigo-300 text-indigo-950 mb-5 flex items-center justify-between gap-3 animate-pop-in">
+          <div className="flex items-center gap-3">
+            <BookOpen className="w-7 h-7 text-indigo-500 shrink-0" />
+            <div>
+              <span className="font-black text-indigo-950 block text-base sm:text-lg">Mau coba cerita lain?</span>
+              <span className="text-xs sm:text-sm text-indigo-700 font-bold">Yuk kita pelajari bersama cerita buah apel yang lezat!</span>
             </div>
           </div>
           <button
             onClick={onLaunchRemedial}
-            className="bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white font-fun font-bold px-4 py-2 rounded-xl text-sm shrink-0 shadow-lg"
+            className="candy-btn candy-btn-purple font-extrabold px-5 py-2.5 rounded-2xl text-sm shrink-0"
           >
-            Buka Remedial
+            Buka Cerita
           </button>
         </div>
       )}
 
       {/* Rewards / Badges celebration banner */}
       {rewardData && feedbackState === 'correct' && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-emerald-500/20 border-2 border-amber-400 mb-5 text-center">
-          <div className="flex items-center justify-center gap-2 font-pixel text-amber-400 text-sm mb-1">
-            <Sparkles className="w-4 h-4 text-yellow-300 animate-spin" />
-            <span>+ {rewardData.xpEarned} XP DIPEROLEH!</span>
+        <div className="p-5 rounded-3xl bg-gradient-to-r from-amber-100 via-yellow-100 to-emerald-100 border-2 border-amber-300 mb-5 text-center animate-pop-in">
+          <div className="flex items-center justify-center gap-2 font-black text-amber-900 text-xl mb-1">
+            <Sparkles className="w-6 h-6 text-yellow-500 animate-spin" />
+            <span>+ {rewardData.xpEarned} XP BERHASIL DIDAPATKAN!</span>
           </div>
           {rewardData.newBadges.length > 0 && (
-            <div className="mt-2 flex items-center justify-center gap-2">
-              <span className="text-xs font-fun text-slate-300">Lencana Baru:</span>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+              <span className="text-xs font-bold text-amber-800">Lencana Baru:</span>
               {rewardData.newBadges.map(b => (
-                <span key={b.id} className="bg-amber-400 text-slate-950 text-xs font-fun font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span key={b.id} className="bg-amber-400 text-amber-950 text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                   <span>{b.icon}</span>
                   <span>{b.title}</span>
                 </span>
@@ -221,8 +227,8 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <div>
           {!showHint && attempts >= 1 && (
             <button
               onClick={() => {
@@ -230,35 +236,34 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
                 setHintUsed(true);
                 soundEngine.playSfx('click');
               }}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-fun font-semibold text-sm transition-all"
+              className="candy-btn candy-btn-yellow flex items-center gap-2 px-4 py-2 rounded-2xl font-extrabold text-sm"
             >
-              <Lightbulb className="w-4 h-4" />
-              <span>Butuh Petunjuk?</span>
+              <Lightbulb className="w-5 h-5 text-amber-800" />
+              <span>Buka Petunjuk</span>
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="ml-auto">
           {feedbackState === 'correct' ? (
             <button
               onClick={onProceedNext}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-fun font-bold text-lg px-6 py-3 rounded-2xl shadow-xl active:scale-95 transition-all animate-bounceSubtle"
+              className="candy-btn candy-btn-green flex items-center gap-2 px-8 py-3.5 rounded-2xl font-black text-xl animate-wiggle"
             >
               <span>Lanjut Petualangan!</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-6 h-6 stroke-[3]" />
             </button>
           ) : (
             <button
               onClick={handleCheckAnswer}
               disabled={!selectedOption}
-              className={`flex items-center gap-2 font-fun font-bold text-lg px-6 py-3 rounded-2xl shadow-xl transition-all ${
+              className={`candy-btn px-8 py-3.5 rounded-2xl font-black text-lg transition-all ${
                 selectedOption
-                  ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 active:scale-95 cursor-pointer'
-                  : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                  ? 'candy-btn-blue cursor-pointer'
+                  : 'bg-slate-200 text-slate-400 border-b-4 border-slate-300 cursor-not-allowed shadow-none'
               }`}
             >
-              <span>Kirim Jawaban</span>
-              <CheckCircle2 className="w-5 h-5" />
+              Periksa Jawaban
             </button>
           )}
         </div>

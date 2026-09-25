@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { CharacterDef, CharacterEmotion, EnvironmentType, ObjectType, SceneAction, SceneDef } from '@/types/story';
+import { CharacterDef, CharacterEmotion, EnvironmentType, ObjectType, SceneDef } from '@/types/story';
 import { soundEngine } from '@/lib/audio/soundEngine';
+import { Sparkles, Hand } from 'lucide-react';
 
 interface PixelCanvasProps {
   currentScene: SceneDef;
@@ -130,7 +131,6 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       }
 
       if (act.type === 'transfer_object' && act.from && act.to && act.quantity) {
-        // Transfer quantity of objects from sender to receiver
         let transferred = 0;
         const targetBaseX = act.to === 'siti' ? 520 : 240;
         const targetBaseY = 340;
@@ -155,7 +155,6 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       }
     }
 
-    // Attach dialogue speech bubble if any
     if (currentScene.dialogue) {
       const spk = chars.get(currentScene.dialogue.speaker);
       if (spk) {
@@ -192,7 +191,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       const width = canvas.width;
       const height = canvas.height;
 
-      // Disable anti-aliasing for true pixel-art crispness
+      // Keep pixel crispness for the story world inside the canvas
       ctx.imageSmoothingEnabled = false;
 
       // 1. Draw Background Environment
@@ -212,7 +211,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
             const dy = obj.targetY - obj.y;
             const currentX = obj.x + dx * (newP - currentP);
             const currentY = obj.y + dy * (newP - currentP);
-            const arcHeight = Math.sin(newP * Math.PI) * 60; // parabolic arc
+            const arcHeight = Math.sin(newP * Math.PI) * 60;
 
             drawPixelObject(ctx, obj.type, currentX, currentY - arcHeight, obj.colorIdx, obj.isHighlighted, obj.countedNumber, tick);
 
@@ -230,7 +229,6 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
 
       // 3. Update & Draw Characters
       activeChars.forEach(char => {
-        // Move towards target
         if (char.x !== char.targetX || char.y !== char.targetY) {
           const dx = char.targetX - char.x;
           char.x += Math.sign(dx) * Math.min(Math.abs(dx), 3);
@@ -242,7 +240,6 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
 
         drawPixelCharacter(ctx, char, tick);
 
-        // Draw Speech Bubble
         if (char.speechBubble) {
           drawSpeechBubble(ctx, char.x, char.y - 75, char.speechBubble);
         }
@@ -260,7 +257,6 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
     };
   }, [currentScene, isPaused, activeChars]);
 
-  // Handle tap / click to count objects
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -270,13 +266,12 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
     const clickX = (e.clientX - rect.left) * scaleX;
     const clickY = (e.clientY - rect.top) * scaleY;
 
-    // Check if clicked near an uncounted object
     setActiveObjects(prev => {
       let newlyCounted = false;
       let nextTotal = countedTotal;
       const updated = prev.map(obj => {
         const dist = Math.hypot(obj.x - clickX, obj.y - clickY);
-        if (dist < 22 && !obj.isCounted) {
+        if (dist < 26 && !obj.isCounted) {
           newlyCounted = true;
           nextTotal++;
           soundEngine.playSfx('count');
@@ -299,33 +294,68 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   };
 
   return (
-    <div className="relative w-full flex flex-col items-center select-none">
-      <div className="relative w-full aspect-[16/9] max-w-4xl bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-4 border-amber-400/80">
-        <canvas
-          ref={canvasRef}
-          width={800}
-          height={450}
-          onClick={handleCanvasClick}
-          className="w-full h-full cursor-pointer touch-none block"
-          style={{ imageRendering: 'pixelated' }}
-        />
-
-        {/* Interactive counting indicator */}
-        {interactiveCountMode && (
-          <div className="absolute top-3 left-4 bg-amber-500/90 text-white font-fun font-bold text-sm md:text-base px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2 animate-bounceSubtle">
-            <span>👆 Sentuh objek untuk menghitung:</span>
-            <span className="bg-white text-amber-700 px-2.5 py-0.5 rounded-full font-pixel text-xs">
-              {countedTotal}
-            </span>
+    <div className="relative w-full flex flex-col items-center select-none font-fun">
+      {/* Playful Toy Tablet / Game Console Frame */}
+      <div className="w-full max-w-4xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 rounded-[2.5rem] p-4 sm:p-5 shadow-[0_16px_32px_rgba(234,179,8,0.35)] border-4 border-amber-200 relative">
+        {/* Top Console Details (Camera notch + speaker holes) */}
+        <div className="flex items-center justify-between px-4 pb-2 text-amber-700/80 font-bold text-xs sm:text-sm">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-amber-600/60 shadow-inner" />
+            <span className="w-2 h-2 rounded-full bg-amber-600/40" />
+            <span className="font-extrabold tracking-wider text-amber-900">PIXEL ADVENTURE 2D</span>
           </div>
-        )}
+          <div className="flex items-center gap-1.5 bg-amber-200/60 px-3 py-0.5 rounded-full text-amber-900 text-xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-spin" />
+            <span>Cerita Interaktif</span>
+          </div>
+        </div>
+
+        {/* Screen Bevel & Inner Canvas Container */}
+        <div className="relative w-full aspect-[16/9] bg-slate-900 rounded-3xl overflow-hidden shadow-inner border-4 border-slate-950/40">
+          <canvas
+            ref={canvasRef}
+            width={800}
+            height={450}
+            onClick={handleCanvasClick}
+            className="w-full h-full cursor-pointer touch-none block pixel-canvas"
+            style={{ imageRendering: 'pixelated' }}
+          />
+
+          {/* Interactive touch guidance pill */}
+          {interactiveCountMode && (
+            <div className="absolute top-4 left-4 bg-white/95 text-slate-800 font-bold text-sm sm:text-base px-4 py-2 rounded-2xl shadow-xl border-2 border-emerald-400 flex items-center gap-3 animate-wiggle">
+              <Hand className="w-5 h-5 text-emerald-500" />
+              <span>Sentuh benda untuk berhitung:</span>
+              <span className="bg-emerald-500 text-white text-base px-3 py-0.5 rounded-full font-extrabold shadow">
+                {countedTotal}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Console Buttons Deco */}
+        <div className="flex items-center justify-between px-6 pt-3">
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 rounded-full bg-rose-500 border-2 border-rose-300 shadow" />
+            <span className="w-4 h-4 rounded-full bg-sky-500 border-2 border-sky-300 shadow" />
+            <span className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-emerald-300 shadow" />
+          </div>
+          <div className="text-amber-900/70 text-[11px] font-extrabold tracking-widest uppercase">
+            Sentuh Layar untuk Berinteraksi
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-700/60" />
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-700/60" />
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-700/60" />
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
 // ----------------------------------------------------
-// PIXEL DRAWING UTILITIES
+// PIXEL DRAWING UTILITIES (Internal to canvas)
 // ----------------------------------------------------
 
 function drawEnvironment(
@@ -337,7 +367,6 @@ function drawEnvironment(
 ) {
   switch (env) {
     case 'park': {
-      // Sky
       const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.65);
       skyGrad.addColorStop(0, '#60a5fa');
       skyGrad.addColorStop(1, '#bae6fd');
@@ -355,7 +384,7 @@ function drawEnvironment(
       drawPixelCloud(ctx, cloudX, 50);
       drawPixelCloud(ctx, ((tick * 0.25) + 300) % (w + 120) - 80, 80);
 
-      // Distant Hills
+      // Hills
       ctx.fillStyle = '#4ade80';
       ctx.beginPath();
       ctx.ellipse(200, h * 0.68, 260, 90, 0, 0, Math.PI * 2);
@@ -365,11 +394,11 @@ function drawEnvironment(
       ctx.ellipse(620, h * 0.69, 290, 80, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Lawn / Ground
+      // Lawn
       ctx.fillStyle = '#16a34a';
       ctx.fillRect(0, h * 0.65, w, h * 0.35);
 
-      // Grass fringe details
+      // Grass fringe
       ctx.fillStyle = '#15803d';
       for (let x = 0; x < w; x += 16) {
         ctx.fillRect(x, h * 0.65 - 4, 8, 4);
@@ -396,7 +425,6 @@ function drawEnvironment(
     }
 
     case 'forest': {
-      // Canopy & Sunlight
       const forestSky = ctx.createLinearGradient(0, 0, 0, h);
       forestSky.addColorStop(0, '#14532d');
       forestSky.addColorStop(0.5, '#166534');
@@ -404,7 +432,6 @@ function drawEnvironment(
       ctx.fillStyle = forestSky;
       ctx.fillRect(0, 0, w, h);
 
-      // Giant Tree Trunks
       ctx.fillStyle = '#78350f';
       ctx.fillRect(40, 0, 60, h);
       ctx.fillRect(w - 120, 0, 75, h);
@@ -412,11 +439,9 @@ function drawEnvironment(
       ctx.fillRect(80, 0, 20, h);
       ctx.fillRect(w - 75, 0, 25, h);
 
-      // Forest Floor
       ctx.fillStyle = '#1e3a1e';
       ctx.fillRect(0, h * 0.65, w, h * 0.35);
 
-      // Mushrooms
       ctx.fillStyle = '#ef4444';
       ctx.fillRect(140, h * 0.68, 16, 12);
       ctx.fillStyle = '#ffffff';
@@ -427,25 +452,21 @@ function drawEnvironment(
     }
 
     case 'classroom': {
-      // Wall
       ctx.fillStyle = '#fef3c7';
       ctx.fillRect(0, 0, w, h * 0.65);
 
-      // Blackboard
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(150, 40, w - 300, 160);
       ctx.fillStyle = '#b45309';
-      ctx.fillRect(142, 32, w - 284, 8); // top border
-      ctx.fillRect(142, 198, w - 284, 8); // bottom border
+      ctx.fillRect(142, 32, w - 284, 8);
+      ctx.fillRect(142, 198, w - 284, 8);
       ctx.fillRect(142, 32, 8, 174);
       ctx.fillRect(w - 150, 32, 8, 174);
 
-      // Blackboard Chalk Text
       ctx.fillStyle = '#f8fafc';
-      ctx.font = '22px "Press Start 2P", monospace';
-      ctx.fillText('10 - 4 = ?', w / 2 - 110, 130);
+      ctx.font = 'bold 26px "Fredoka", sans-serif';
+      ctx.fillText('10 - 4 = ?', w / 2 - 70, 130);
 
-      // Wooden Floor
       ctx.fillStyle = '#d97706';
       ctx.fillRect(0, h * 0.65, w, h * 0.35);
       ctx.fillStyle = '#b45309';
@@ -456,20 +477,16 @@ function drawEnvironment(
     }
 
     case 'market': {
-      // Sky
       ctx.fillStyle = '#93c5fd';
       ctx.fillRect(0, 0, w, h * 0.65);
 
-      // Cobblestone ground
       ctx.fillStyle = '#64748b';
       ctx.fillRect(0, h * 0.65, w, h * 0.35);
 
-      // Market Canopy (Red and White stripes)
       for (let x = 60; x < w - 60; x += 40) {
         ctx.fillStyle = (x / 40) % 2 === 0 ? '#ef4444' : '#ffffff';
         ctx.fillRect(x, 50, 40, 60);
       }
-      // Wooden stall frame
       ctx.fillStyle = '#78350f';
       ctx.fillRect(50, 105, w - 100, 10);
       ctx.fillRect(70, 105, 12, 160);
@@ -478,15 +495,12 @@ function drawEnvironment(
     }
 
     case 'castle': {
-      // Dark twilight sky
       ctx.fillStyle = '#1e1b4b';
       ctx.fillRect(0, 0, w, h * 0.65);
 
-      // Castle Stone Walls
       ctx.fillStyle = '#475569';
       ctx.fillRect(80, 60, w - 160, h * 0.65);
 
-      // Stone Bricks pattern
       ctx.fillStyle = '#334155';
       for (let y = 70; y < h * 0.65; y += 25) {
         for (let x = 90; x < w - 90; x += 50) {
@@ -494,18 +508,15 @@ function drawEnvironment(
         }
       }
 
-      // Torches with animated pixel fire
       const flameFlicker = (tick % 6 > 3 ? 2 : 0);
       drawPixelTorch(ctx, 130, 140, flameFlicker);
       drawPixelTorch(ctx, w - 150, 140, flameFlicker);
 
-      // Gate Arch
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(w / 2 - 90, 130, 180, h * 0.65 - 130);
       ctx.fillStyle = '#eab308';
-      ctx.fillRect(w / 2 - 92, 126, 184, 8); // Golden rim
+      ctx.fillRect(w / 2 - 92, 126, 184, 8);
 
-      // Castle Floor
       ctx.fillStyle = '#334155';
       ctx.fillRect(0, h * 0.65, w, h * 0.35);
       break;
@@ -521,23 +532,19 @@ function drawPixelCloud(ctx: CanvasRenderingContext2D, x: number, y: number) {
 }
 
 function drawPixelTorch(ctx: CanvasRenderingContext2D, x: number, y: number, flicker: number) {
-  // Wooden mount
   ctx.fillStyle = '#78350f';
   ctx.fillRect(x, y, 8, 20);
-  // Flames
   ctx.fillStyle = '#ea580c';
   ctx.fillRect(x - 2, y - 14 - flicker, 12, 14);
   ctx.fillStyle = '#fde047';
   ctx.fillRect(x, y - 10 - flicker, 8, 10);
 }
 
-// Draw Character with Pixel Art & Emotions
 function drawPixelCharacter(ctx: CanvasRenderingContext2D, char: ActiveCharacter, tick: number) {
   const isBudi = char.asset.includes('budi');
   const cx = Math.round(char.x);
   const cy = Math.round(char.y);
 
-  // Animation offsets
   let bobY = 0;
   let legSwing = 0;
   let armRaise = 0;
@@ -554,112 +561,103 @@ function drawPixelCharacter(ctx: CanvasRenderingContext2D, char: ActiveCharacter
 
   const baseCy = cy - bobY;
 
-  // Shadow on floor
+  // Soft shadow
   ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
   ctx.beginPath();
   ctx.ellipse(cx, cy + 32, 18, 6, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 1. Legs / Shoes
-  ctx.fillStyle = '#f8fafc'; // White shoes
+  // Shoes & Pants
+  ctx.fillStyle = '#f8fafc';
   ctx.fillRect(cx - 10 - legSwing, baseCy + 24, 8, 8);
   ctx.fillRect(cx + 2 + legSwing, baseCy + 24, 8, 8);
-  // Pants
   ctx.fillStyle = isBudi ? '#1e3a8a' : '#be185d';
   ctx.fillRect(cx - 10, baseCy + 14, 8, 11);
   ctx.fillRect(cx + 2, baseCy + 14, 8, 11);
 
-  // 2. Torso / Shirt
-  ctx.fillStyle = isBudi ? '#2563eb' : '#f43f5e'; // Blue shirt (Budi) or Pink/Red (Siti)
+  // Torso / Shirt
+  ctx.fillStyle = isBudi ? '#2563eb' : '#f43f5e';
   ctx.fillRect(cx - 12, baseCy - 6, 24, 21);
-
-  // Shirt collar / detail
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(cx - 4, baseCy - 6, 8, 5);
 
-  // 3. Arms
-  ctx.fillStyle = '#fed7aa'; // Skin tone
+  // Arms
+  ctx.fillStyle = '#fed7aa';
   if (armRaise > 0) {
-    // Arms raised up celebrating
     ctx.fillRect(cx - 18, baseCy - 12, 6, 16);
     ctx.fillRect(cx + 12, baseCy - 12, 6, 16);
   } else {
-    // Normal arms
     ctx.fillRect(cx - 16, baseCy - 3, 5, 16);
     ctx.fillRect(cx + 11, baseCy - 3, 5, 16);
   }
 
-  // 4. Head / Face
-  ctx.fillStyle = '#fed7aa'; // Skin
+  // Head
+  ctx.fillStyle = '#fed7aa';
   ctx.fillRect(cx - 14, baseCy - 34, 28, 28);
 
-  // 5. Hair
+  // Hair
   if (isBudi) {
-    // Short spiky dark hair
     ctx.fillStyle = '#1c1917';
     ctx.fillRect(cx - 16, baseCy - 40, 32, 10);
     ctx.fillRect(cx - 16, baseCy - 34, 6, 8);
     ctx.fillRect(cx + 10, baseCy - 34, 6, 8);
   } else {
-    // Siti with ribbon and twin hair
     ctx.fillStyle = '#292524';
     ctx.fillRect(cx - 16, baseCy - 40, 32, 10);
     ctx.fillRect(cx - 18, baseCy - 34, 6, 16);
     ctx.fillRect(cx + 12, baseCy - 34, 6, 16);
-    // Pink Ribbon
     ctx.fillStyle = '#ec4899';
     ctx.fillRect(cx - 6, baseCy - 44, 12, 6);
   }
 
-  // 6. Eyes
+  // Eyes
   ctx.fillStyle = '#0f172a';
   if (char.emotion === 'happy' || char.emotion === 'celebrate') {
-    // Cheerful crescent eyes ^ ^
     ctx.fillRect(cx - 8, baseCy - 24, 5, 2);
     ctx.fillRect(cx + 3, baseCy - 24, 5, 2);
   } else {
     ctx.fillRect(cx - 8, baseCy - 25, 4, 6);
     ctx.fillRect(cx + 4, baseCy - 25, 4, 6);
-    // White eye twinkle
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(cx - 7, baseCy - 25, 2, 2);
     ctx.fillRect(cx + 5, baseCy - 25, 2, 2);
   }
 
-  // 7. Mouth & Emotion Expression
+  // Mouth
   if (char.emotion === 'talk') {
-    // Mouth animated opening/closing
     const open = Math.sin(tick * 0.4) > 0;
     ctx.fillStyle = '#dc2626';
     ctx.fillRect(cx - 3, baseCy - 14, 6, open ? 5 : 2);
   } else if (char.emotion === 'celebrate' || char.emotion === 'happy') {
-    // Big smile
     ctx.fillStyle = '#dc2626';
     ctx.fillRect(cx - 4, baseCy - 14, 8, 4);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(cx - 2, baseCy - 14, 4, 2);
   } else if (char.emotion === 'think') {
-    // Hand on chin
     ctx.fillStyle = '#fed7aa';
     ctx.fillRect(cx + 4, baseCy - 16, 6, 6);
     ctx.fillStyle = '#334155';
     ctx.fillRect(cx - 2, baseCy - 13, 5, 2);
   } else {
-    // Gentle smile
     ctx.fillStyle = '#e11d48';
     ctx.fillRect(cx - 3, baseCy - 14, 6, 2);
   }
 
-  // Name Tag
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-  ctx.fillRect(cx - 26, baseCy + 38, 52, 16);
-  ctx.fillStyle = '#f8fafc';
-  ctx.font = '9px "Press Start 2P", monospace';
+  // Name Tag in clean rounded pill
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(cx - 26, baseCy + 38, 52, 16, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#1e293b';
+  ctx.font = 'bold 10px "Fredoka", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(char.name, cx, baseCy + 49);
+  ctx.fillText(char.name, cx, baseCy + 50);
 }
 
-// Draw Objects (Marbles, Apples, Coins, etc.)
 function drawPixelObject(
   ctx: CanvasRenderingContext2D,
   type: ObjectType,
@@ -673,12 +671,11 @@ function drawPixelObject(
   const ox = Math.round(x);
   const oy = Math.round(y);
 
-  // Pulsing highlight glow
   if (isHighlighted) {
-    const pulse = Math.sin(tick * 0.15) * 4;
-    ctx.fillStyle = 'rgba(251, 191, 36, 0.45)';
+    const pulse = Math.sin(tick * 0.15) * 5;
+    ctx.fillStyle = 'rgba(250, 204, 21, 0.5)';
     ctx.beginPath();
-    ctx.ellipse(ox, oy, 14 + pulse, 14 + pulse, 0, 0, Math.PI * 2);
+    ctx.ellipse(ox, oy, 15 + pulse, 15 + pulse, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -687,32 +684,26 @@ function drawPixelObject(
       const marbleColors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
       const baseColor = marbleColors[colorIdx % marbleColors.length];
 
-      // Marble Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(ox - 6, oy + 7, 12, 4);
 
-      // Sphere Body
       ctx.fillStyle = baseColor;
       ctx.fillRect(ox - 7, oy - 7, 14, 14);
 
-      // Specular Highlight
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(ox - 5, oy - 5, 4, 4);
       break;
     }
 
     case 'apple': {
-      // Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
       ctx.fillRect(ox - 7, oy + 8, 14, 3);
 
-      // Apple Red Body
       ctx.fillStyle = '#ef4444';
       ctx.fillRect(ox - 8, oy - 7, 16, 14);
       ctx.fillStyle = '#b91c1c';
       ctx.fillRect(ox - 6, oy - 9, 12, 3);
 
-      // Stem & Leaf
       ctx.fillStyle = '#78350f';
       ctx.fillRect(ox - 1, oy - 12, 2, 4);
       ctx.fillStyle = '#22c55e';
@@ -746,48 +737,48 @@ function drawPixelObject(
       ctx.fillStyle = '#fb7185';
       ctx.fillRect(ox - 9, oy - 2, 18, 4);
       ctx.fillStyle = '#ef4444';
-      ctx.fillRect(ox - 3, oy - 10, 6, 5); // Strawberry on top
+      ctx.fillRect(ox - 3, oy - 10, 6, 5);
       break;
     }
   }
 
-  // Draw counted number floating badge
+  // Draw cute friendly round counter tag
   if (countedNumber !== undefined) {
-    ctx.fillStyle = '#e11d48';
+    ctx.fillStyle = '#ef4444';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(ox, oy - 16, 10, 0, Math.PI * 2);
+    ctx.arc(ox, oy - 18, 11, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
+
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 11px sans-serif';
+    ctx.font = 'bold 12px "Fredoka", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(countedNumber), ox, oy - 16);
+    ctx.fillText(String(countedNumber), ox, oy - 18);
   }
 }
 
-// Draw Speech Bubble
 function drawSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string) {
   const maxWidth = 220;
-  const padding = 10;
+  const padding = 12;
 
-  ctx.font = '12px "Fredoka", sans-serif';
+  ctx.font = 'bold 13px "Fredoka", sans-serif';
   ctx.textAlign = 'center';
 
-  // Measure text
   const boxW = Math.min(maxWidth, Math.max(120, ctx.measureText(text).width + padding * 2));
   const boxH = 46;
 
-  // Background bubble
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#0f172a';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2.5;
 
   ctx.beginPath();
-  ctx.roundRect(x - boxW / 2, y - boxH / 2, boxW, boxH, 8);
+  ctx.roundRect(x - boxW / 2, y - boxH / 2, boxW, boxH, 14);
   ctx.fill();
   ctx.stroke();
 
-  // Tail pointing to character
   ctx.beginPath();
   ctx.moveTo(x - 6, y + boxH / 2);
   ctx.lineTo(x + 6, y + boxH / 2);
@@ -796,11 +787,9 @@ function drawSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, t
   ctx.fill();
   ctx.stroke();
 
-  // Text
   ctx.fillStyle = '#0f172a';
   ctx.textBaseline = 'middle';
 
-  // Truncate or slice if long
   if (text.length > 34) {
     const p1 = text.slice(0, 30) + '...';
     ctx.fillText(p1, x, y);

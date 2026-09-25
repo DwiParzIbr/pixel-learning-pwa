@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShieldAlert, X } from 'lucide-react';
+import { ShieldCheck, X } from 'lucide-react';
 import { soundEngine } from '@/lib/audio/soundEngine';
 
 interface ParentalGateModalProps {
@@ -29,63 +29,63 @@ export const ParentalGateModal: React.FC<ParentalGateModalProps> = ({ onSuccess,
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border-4 border-indigo-500 rounded-3xl p-6 max-w-sm w-full shadow-2xl text-white font-fun">
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-pop-in">
+      <div className="bg-white border-4 border-indigo-200 rounded-[2.5rem] p-7 max-w-sm w-full shadow-2xl text-slate-800 font-fun">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 text-indigo-400">
-            <ShieldAlert className="w-6 h-6" />
-            <h3 className="font-bold text-lg text-white">Khusus Orang Tua</h3>
+          <div className="flex items-center gap-2 text-indigo-600">
+            <ShieldCheck className="w-7 h-7" />
+            <h3 className="font-black text-xl text-slate-900">Area Orang Tua</h3>
           </div>
           <button
             onClick={onCancel}
-            className="text-slate-400 hover:text-white p-1 rounded-lg"
+            className="text-slate-400 hover:text-slate-700 p-1 rounded-xl"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <p className="text-sm text-slate-300 mb-4">
-          Untuk memastikan kamu adalah orang tua, silakan jawab pertanyaan perkalian di bawah:
+        <p className="text-sm font-bold text-slate-600 mb-4">
+          Untuk memastikan Anda adalah orang tua, silakan jawab perkalian singkat di bawah ini:
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-center">
-            <span className="font-pixel text-xl text-amber-400">
+          <div className="p-4 bg-indigo-50 border-2 border-indigo-200 rounded-2xl text-center">
+            <span className="text-2xl font-black text-indigo-900">
               {numA} × {numB} = ?
             </span>
           </div>
 
           <input
             type="number"
-            placeholder="Ketik jawaban..."
+            placeholder="Jawaban..."
             autoFocus
             value={answerInput}
             onChange={e => {
               setAnswerInput(e.target.value);
               setHasError(false);
             }}
-            className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-2.5 text-center text-xl font-bold text-white focus:outline-none focus:border-indigo-400"
+            className="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl px-4 py-3 text-center text-2xl font-black text-slate-900 focus:outline-none focus:border-indigo-500 shadow-inner"
           />
 
           {hasError && (
-            <p className="text-xs text-rose-400 text-center font-bold">
+            <p className="text-xs text-rose-500 text-center font-bold">
               Jawaban belum tepat. Silakan hitung kembali.
             </p>
           )}
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm"
+              className="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-sm"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-md"
+              className="candy-btn candy-btn-purple flex-1 py-3 rounded-2xl text-white font-black text-sm"
             >
-              Masuk
+              Buka Dashboard
             </button>
           </div>
         </form>
