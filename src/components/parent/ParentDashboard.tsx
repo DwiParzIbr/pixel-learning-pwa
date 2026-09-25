@@ -16,7 +16,7 @@ import {
   ShieldCheck,
   Volume2,
 } from 'lucide-react';
-import { voiceEngine, PRESET_VOICES } from '@/lib/audio/voiceEngine';
+import { voiceEngine, NARRATOR_PERSONAS, CHARACTER_VOICES } from '@/lib/audio/voiceEngine';
 
 interface ParentDashboardProps {
   onBackToApp: () => void;
@@ -290,21 +290,69 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3 sm:mb-4">
             <h3 className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
               <Volume2 className="w-5 h-5 text-purple-600" />
-              <span>Pilihan Suara Cerita & Narasi</span>
+              <span>Sistem Suara Terpisah (Narator & Karakter)</span>
             </h3>
             <span className="text-xs bg-purple-100 text-purple-800 font-bold px-3 py-1 rounded-full w-fit">
-              6 Karakter Suara Tersedia
+              Suara Karakter & Narator Dibedakan
             </span>
           </div>
 
           <p className="text-xs text-slate-500 font-bold mb-4 leading-relaxed">
-            Pilih karakter vokal yang paling disukai anak untuk membacakan alur cerita petualangan dan percakapan soal.
+            Aplikasi secara otomatis membedakan suara Narator yang membacakan alur cerita dengan suara karakter anak (Budi & Siti) yang berbicara di dalam animasi.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {PRESET_VOICES.map((p) => {
+          {/* Sub-section: Animation Characters */}
+          <div className="mb-5 bg-amber-50/50 p-4 rounded-2xl border border-amber-200">
+            <h4 className="text-xs font-black text-amber-950 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <span>🎭</span>
+              <span>Suara Karakter Animasi (Otomatis & Terpisah)</span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {CHARACTER_VOICES.slice(0, 2).map((c) => {
+                const isPlaying = previewingVoice === `char_${c.id}`;
+                return (
+                  <div
+                    key={c.id}
+                    className="bg-white p-3 rounded-xl border border-amber-200 shadow-xs flex items-center justify-between gap-2"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-2xl">{c.icon}</span>
+                      <div className="min-w-0">
+                        <h5 className="font-black text-xs sm:text-sm text-slate-900 truncate">{c.name}</h5>
+                        <p className="text-[10px] text-slate-500 font-bold truncate">{c.description}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setPreviewingVoice(`char_${c.id}`);
+                        voiceEngine.previewSpeaker(c.id as 'budi' | 'siti').finally(() => {
+                          setPreviewingVoice(null);
+                        });
+                      }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-black flex items-center gap-1 shrink-0 transition-all ${
+                        isPlaying
+                          ? 'bg-emerald-500 text-white animate-pulse'
+                          : 'bg-amber-100 text-amber-900 hover:bg-amber-200'
+                      }`}
+                    >
+                      <span>{isPlaying ? '🔊' : '▶️'}</span>
+                      <span className="text-[10px]">{isPlaying ? 'Bicara...' : 'Tes'}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sub-section: Narrator Personas */}
+          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+            <span>📖</span>
+            <span>Pilihan Suara Narator (Pembaca Alur & Soal)</span>
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            {NARRATOR_PERSONAS.map((p) => {
               const isSelected = activeVoiceId === p.id;
-              const isPlaying = previewingVoice === p.id;
+              const isPlaying = previewingVoice === `narrator_${p.id}`;
               return (
                 <div
                   key={p.id}
@@ -323,18 +371,20 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ onBackToApp })
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPreviewingVoice(p.id);
+                        setPreviewingVoice(`narrator_${p.id}`);
                         voiceEngine.speak(p.sampleText, {
                           pitch: p.pitch,
                           rate: p.rate,
-                          speaker: p.id,
+                          speaker: 'narrator',
                           onEnd: () => setPreviewingVoice(null),
                         });
                       }}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1 transition-all ${
-                        isPlaying ? 'bg-emerald-500 text-white animate-pulse' : 'bg-white border border-slate-300 text-slate-700 hover:bg-purple-100'
+                      className={`px-2 py-1 rounded-lg text-xs font-black flex items-center gap-1 transition-all ${
+                        isPlaying
+                          ? 'bg-emerald-500 text-white animate-pulse'
+                          : 'bg-white border border-slate-300 text-slate-700 hover:bg-purple-100'
                       }`}
-                      title="Tes Suara"
+                      title="Tes Suara Narator"
                     >
                       <span>{isPlaying ? '🔊' : '▶️'}</span>
                       <span className="text-[10px]">{isPlaying ? 'Bicara...' : 'Tes'}</span>

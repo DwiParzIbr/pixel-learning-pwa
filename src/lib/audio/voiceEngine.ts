@@ -1,8 +1,8 @@
 // AI Voice & Speech Synthesis Engine for Indonesian Narration
-// Includes audio cache mechanism and multi-voice persona customization
+// Features distinct acoustic profiles & voices for Narrator vs Character (Budi, Siti, etc.)
 
 export interface VoiceOptions {
-  speaker?: string;
+  speaker?: 'narrator' | 'budi' | 'siti' | 'bibo' | string;
   pitch?: number;
   rate?: number;
   lang?: string;
@@ -22,36 +22,66 @@ export interface VoicePersona {
   sampleText: string;
 }
 
-export const PRESET_VOICES: VoicePersona[] = [
+export interface CharacterVoiceProfile {
+  id: string;
+  name: string;
+  role: string;
+  icon: string;
+  description: string;
+  pitch: number;
+  rate: number;
+  sampleText: string;
+  gender: 'male' | 'female' | 'robot';
+}
+
+// Dedicated Character Voices for Animation Characters
+export const CHARACTER_VOICES: CharacterVoiceProfile[] = [
+  {
+    id: 'budi',
+    name: 'Budi (Anak Laki-Laki)',
+    role: 'Karakter Animasi',
+    icon: '👦',
+    description: 'Suara anak laki-laki yang lincah, bersemangat, dan ceria.',
+    pitch: 1.45,
+    rate: 1.05,
+    gender: 'male',
+    sampleText: 'Hai kawan-kawan! Aku Budi! Ayo kita hitung buah apel dan bermain bersama!',
+  },
+  {
+    id: 'siti',
+    name: 'Siti (Anak Perempuan)',
+    role: 'Karakter Animasi',
+    icon: '👧',
+    description: 'Suara anak perempuan yang manis, lembut, dan pintar.',
+    pitch: 1.75,
+    rate: 0.96,
+    gender: 'female',
+    sampleText: 'Halo semuanya! Aku Siti! Tenang saja, kita pasti bisa selesaikan soal ini bersama!',
+  },
+  {
+    id: 'bibo',
+    name: 'Robot Bibo',
+    role: 'Karakter Robot',
+    icon: '🤖',
+    description: 'Suara robot berartikulasi unik yang futuristik dan cerdas.',
+    pitch: 1.90,
+    rate: 1.15,
+    gender: 'robot',
+    sampleText: 'Bip bop! Sistem robot pintar aktif! Siap menghitung bersama kawan!',
+  },
+];
+
+// Narrator Personas for Storytelling and Question Prompting
+export const NARRATOR_PERSONAS: VoicePersona[] = [
   {
     id: 'kakak_ceria',
     name: 'Kakak Ceria',
     role: 'Pengajar Ramah',
     icon: '🌟',
     description: 'Suara ramah, bersahabat, dan jelas untuk memandu petualangan.',
-    pitch: 1.1,
-    rate: 0.95,
+    pitch: 0.98,
+    rate: 0.90,
     sampleText: 'Halo adik manis! Yuk belajar dan berpetualang seru bersama Kakak!',
-  },
-  {
-    id: 'budi_cilik',
-    name: 'Budi Cilik',
-    role: 'Teman Bersemangat',
-    icon: '👦',
-    description: 'Suara anak laki-laki yang lincah, bersemangat, dan ceria.',
-    pitch: 1.35,
-    rate: 1.0,
-    sampleText: 'Hai! Aku Budi! Aku suka sekali berhitung buah apel dan bermain!',
-  },
-  {
-    id: 'siti_manis',
-    name: 'Siti Manis',
-    role: 'Sahabat Pintar',
-    icon: '👧',
-    description: 'Suara anak perempuan yang lembut, manis, dan cerdas.',
-    pitch: 1.45,
-    rate: 0.92,
-    sampleText: 'Halo teman-teman! Aku Siti, ayo kita selesaikan tantangan ini bersama!',
   },
   {
     id: 'ibu_guru',
@@ -59,38 +89,43 @@ export const PRESET_VOICES: VoicePersona[] = [
     role: 'Pendamping Tenang',
     icon: '👩‍🏫',
     description: 'Tutur kata lembut, tenang, dan perlahan agar mudah dipahami.',
-    pitch: 1.0,
+    pitch: 0.92,
     rate: 0.85,
     sampleText: 'Selamat belajar anak pintar. Jangan takut salah, kita coba pelan-pelan ya.',
-  },
-  {
-    id: 'robot_bibo',
-    name: 'Robot Bibo',
-    role: 'Sahabat Cerdas',
-    icon: '🤖',
-    description: 'Suara robot berartikulasi unik yang disukai anak-anak.',
-    pitch: 1.7,
-    rate: 1.1,
-    sampleText: 'Bip bop! Sistem pintar aktif! Siap menghitung bersama kawan!',
   },
   {
     id: 'paman_dongeng',
     name: 'Paman Dongeng',
     role: 'Karakter Hangat',
     icon: '🧙‍♂️',
-    description: 'Suara hangat dan berwibawa, cocok untuk kisah petualangan.',
-    pitch: 0.8,
-    rate: 0.88,
-    sampleText: 'Pada suatu hari di Hutan Ajaib yang rindang, petualangan pun dimulai!',
+    description: 'Suara berwibawa dan hangat, cocok untuk kisah petualangan dongeng.',
+    pitch: 0.80,
+    rate: 0.86,
+    sampleText: 'Pada suatu hari di Hutan Ajaib yang rindang, petualangan berhitung pun dimulai!',
+  },
+  {
+    id: 'kakak_penjelajah',
+    name: 'Kakak Penjelajah',
+    role: 'Petualang Cerdas',
+    icon: '🧭',
+    description: 'Suara penuh rasa ingin tahu dan semangat menjelajahi alam & sains.',
+    pitch: 1.05,
+    rate: 0.94,
+    sampleText: 'Wah, lihat ke depan kawan! Ada teka-teki rahasia yang menunggu untuk kita pecahkan!',
   },
 ];
+
+// Presets compatibility export
+export const PRESET_VOICES: VoicePersona[] = NARRATOR_PERSONAS;
 
 class VoiceEngine {
   private synth: SpeechSynthesis | null = null;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
   public isSpeaking: boolean = false;
   private indonesianVoice: SpeechSynthesisVoice | null = null;
-  private activePersonaId: string = 'kakak_ceria';
+  private femaleVoice: SpeechSynthesisVoice | null = null;
+  private maleVoice: SpeechSynthesisVoice | null = null;
+  private activeNarratorPersonaId: string = 'kakak_ceria';
   private selectedVoiceURI: string | null = null;
   private pitchModifier: number = 0;
   private rateModifier: number = 0;
@@ -104,9 +139,11 @@ class VoiceEngine {
       }
 
       try {
-        const savedPersona = localStorage.getItem('pixel_learning_voice_persona');
-        if (savedPersona && PRESET_VOICES.some(p => p.id === savedPersona)) {
-          this.activePersonaId = savedPersona;
+        const savedPersona =
+          localStorage.getItem('pixel_learning_voice_narrator_persona') ||
+          localStorage.getItem('pixel_learning_voice_persona');
+        if (savedPersona && NARRATOR_PERSONAS.some(p => p.id === savedPersona)) {
+          this.activeNarratorPersonaId = savedPersona;
         }
         const savedVoiceURI = localStorage.getItem('pixel_learning_voice_uri');
         if (savedVoiceURI) {
@@ -121,31 +158,60 @@ class VoiceEngine {
   private loadVoices() {
     if (!this.synth) return;
     const voices = this.synth.getVoices();
-    // Prioritize id-ID or Indonesian voices
-    const idVoice = voices.find(v => v.lang.toLowerCase().includes('id') || v.lang.toLowerCase().includes('indonesia'));
-    if (idVoice) {
-      this.indonesianVoice = idVoice;
+    if (!voices || voices.length === 0) return;
+
+    // 1. Find Indonesian voices
+    const idVoices = voices.filter(
+      v => v.lang.toLowerCase().includes('id') || v.lang.toLowerCase().includes('indonesia')
+    );
+
+    // 2. Identify dedicated female voice (for Siti / female characters)
+    const femaleNameRegex = /(female|wanita|gadis|damayanti|siti|putri|zira|susan|victoria|karen|samantha|kyoko|yuna)/i;
+    const idFemale = idVoices.find(v => femaleNameRegex.test(v.name));
+    this.femaleVoice = idFemale || voices.find(v => femaleNameRegex.test(v.name)) || null;
+
+    // 3. Identify dedicated male voice (for Budi / male characters)
+    const maleNameRegex = /(male|pria|laki|andika|budi|arva|david|daniel|alex|george)/i;
+    const idMale = idVoices.find(v => maleNameRegex.test(v.name));
+    this.maleVoice = idMale || voices.find(v => maleNameRegex.test(v.name)) || null;
+
+    // 4. Default primary Indonesian voice
+    if (idVoices.length > 0) {
+      this.indonesianVoice = idVoices[0];
     } else {
       this.indonesianVoice = voices[0] || null;
     }
   }
 
   public getPersonas(): VoicePersona[] {
-    return PRESET_VOICES;
+    return NARRATOR_PERSONAS;
+  }
+
+  public getNarratorPersonas(): VoicePersona[] {
+    return NARRATOR_PERSONAS;
+  }
+
+  public getCharacterVoices(): CharacterVoiceProfile[] {
+    return CHARACTER_VOICES;
   }
 
   public getActivePersonaId(): string {
-    return this.activePersonaId;
+    return this.activeNarratorPersonaId;
+  }
+
+  public getActiveNarratorPersona(): VoicePersona {
+    return NARRATOR_PERSONAS.find(p => p.id === this.activeNarratorPersonaId) || NARRATOR_PERSONAS[0];
   }
 
   public getActivePersona(): VoicePersona {
-    return PRESET_VOICES.find(p => p.id === this.activePersonaId) || PRESET_VOICES[0];
+    return this.getActiveNarratorPersona();
   }
 
   public setPersona(personaId: string) {
-    if (PRESET_VOICES.some(p => p.id === personaId)) {
-      this.activePersonaId = personaId;
+    if (NARRATOR_PERSONAS.some(p => p.id === personaId)) {
+      this.activeNarratorPersonaId = personaId;
       try {
+        localStorage.setItem('pixel_learning_voice_narrator_persona', personaId);
         localStorage.setItem('pixel_learning_voice_persona', personaId);
       } catch {
         // ignore
@@ -176,12 +242,29 @@ class VoiceEngine {
   }
 
   public previewPersona(personaId: string): Promise<void> {
-    const persona = PRESET_VOICES.find(p => p.id === personaId) || PRESET_VOICES[0];
+    const persona = NARRATOR_PERSONAS.find(p => p.id === personaId) || NARRATOR_PERSONAS[0];
     return this.speak(persona.sampleText, {
       pitch: persona.pitch,
       rate: persona.rate,
-      speaker: persona.id,
+      speaker: 'narrator',
     });
+  }
+
+  public previewSpeaker(role: 'narrator' | 'budi' | 'siti' | 'bibo'): Promise<void> {
+    if (role === 'budi') {
+      const budi = CHARACTER_VOICES.find(c => c.id === 'budi')!;
+      return this.speak(budi.sampleText, { speaker: 'budi' });
+    }
+    if (role === 'siti') {
+      const siti = CHARACTER_VOICES.find(c => c.id === 'siti')!;
+      return this.speak(siti.sampleText, { speaker: 'siti' });
+    }
+    if (role === 'bibo') {
+      const bibo = CHARACTER_VOICES.find(c => c.id === 'bibo')!;
+      return this.speak(bibo.sampleText, { speaker: 'bibo' });
+    }
+    // Default narrator preview
+    return this.previewPersona(this.activeNarratorPersonaId);
   }
 
   public getAudioHash(text: string, voiceId: string = 'default', pitch = 1.0, rate = 1.0): string {
@@ -211,35 +294,53 @@ class VoiceEngine {
       const utterance = new SpeechSynthesisUtterance(text);
       this.currentUtterance = utterance;
 
-      // Select system voice
+      const speaker = (options.speaker || 'narrator').toLowerCase();
       const voices = this.synth.getVoices();
-      if (this.selectedVoiceURI) {
-        const found = voices.find(v => v.voiceURI === this.selectedVoiceURI);
-        if (found) {
-          utterance.voice = found;
-        } else if (this.indonesianVoice) {
-          utterance.voice = this.indonesianVoice;
-        }
-      } else if (this.indonesianVoice) {
-        utterance.voice = this.indonesianVoice;
+
+      // Distinct voice selection per character/role
+      let chosenVoice: SpeechSynthesisVoice | null = null;
+      if (speaker === 'siti' && this.femaleVoice) {
+        chosenVoice = this.femaleVoice;
+      } else if (speaker === 'budi' && this.maleVoice) {
+        chosenVoice = this.maleVoice;
+      } else if (this.selectedVoiceURI && (speaker === 'narrator' || !options.speaker)) {
+        chosenVoice = voices.find(v => v.voiceURI === this.selectedVoiceURI) || this.indonesianVoice;
+      } else {
+        chosenVoice = this.indonesianVoice || (voices.length > 0 ? voices[0] : null);
+      }
+
+      if (chosenVoice) {
+        utterance.voice = chosenVoice;
       }
       utterance.lang = options.lang || (utterance.voice ? utterance.voice.lang : 'id-ID');
 
-      // Calculate pitch & rate based on active Persona and optional speaker
-      const persona = this.getActivePersona();
-      let targetPitch = persona.pitch;
-      let targetRate = persona.rate;
+      // Acoustic differentiation (Pitch & Rate)
+      let targetPitch = 1.0;
+      let targetRate = 1.0;
 
-      if (options.pitch !== undefined) {
-        targetPitch = options.pitch;
-      } else if (options.speaker === 'budi') {
-        targetPitch = Math.min(2, persona.pitch * 1.15);
-        targetRate = persona.rate;
-      } else if (options.speaker === 'siti') {
-        targetPitch = Math.min(2, persona.pitch * 1.25);
-        targetRate = Math.max(0.7, persona.rate * 0.96);
+      if (speaker === 'budi') {
+        // Distinct energetic young boy timbre
+        targetPitch = 1.45;
+        targetRate = 1.05;
+      } else if (speaker === 'siti') {
+        // Distinct sweet, melodious young girl timbre
+        targetPitch = 1.75;
+        targetRate = 0.96;
+      } else if (speaker === 'bibo' || speaker === 'robot' || speaker === 'robot_bibo') {
+        // High playful robot timbre
+        targetPitch = 1.90;
+        targetRate = 1.15;
+      } else {
+        // Narrator: Calm, warm adult storytelling timbre from chosen persona
+        const narratorPersona = this.getActiveNarratorPersona();
+        targetPitch = narratorPersona.pitch;
+        targetRate = narratorPersona.rate;
       }
 
+      // Explicit overrides if passed
+      if (options.pitch !== undefined) {
+        targetPitch = options.pitch;
+      }
       if (options.rate !== undefined) {
         targetRate = options.rate;
       }

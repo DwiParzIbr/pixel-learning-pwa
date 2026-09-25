@@ -13,6 +13,7 @@ interface PixelCanvasProps {
   onSceneComplete?: (sceneIndex: number) => void;
   onObjectCounted?: (count: number) => void;
   interactiveCountMode?: boolean;
+  activeSpeaker?: string | null;
 }
 
 interface CharacterEntity {
@@ -73,6 +74,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   onSceneComplete,
   onObjectCounted,
   interactiveCountMode = false,
+  activeSpeaker = null,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [countedTotal, setCountedTotal] = useState<number>(0);
@@ -246,22 +248,43 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         }
       }
 
-      // Update Speech Bubble
+      // Update Speech Bubble only when this character is the active speaker
       state.characters.forEach(char => {
-        if (scene.dialogue && scene.dialogue.speaker === char.id) {
+        if (activeSpeaker && scene.dialogue && scene.dialogue.speaker === char.id && activeSpeaker === char.id) {
           char.speechBubble = scene.dialogue.text;
           char.emotion = 'talk';
         } else {
           char.speechBubble = undefined;
+          if (char.emotion === 'talk') {
+            char.emotion = 'idle';
+          }
         }
       });
     },
-    [allScenes, characters]
+    [allScenes, characters, activeSpeaker]
   );
 
   useEffect(() => {
     applySceneActions(activeSceneIndex);
   }, [activeSceneIndex, applySceneActions]);
+
+  // Dynamically update speech bubbles and character talk animation when activeSpeaker changes
+  useEffect(() => {
+    const scene = allScenes[activeSceneIndex];
+    if (!scene) return;
+    const state = gameStateRef.current;
+    state.characters.forEach(char => {
+      if (activeSpeaker && scene.dialogue && scene.dialogue.speaker === char.id && activeSpeaker === char.id) {
+        char.speechBubble = scene.dialogue.text;
+        char.emotion = 'talk';
+      } else {
+        char.speechBubble = undefined;
+        if (char.emotion === 'talk') {
+          char.emotion = 'idle';
+        }
+      }
+    });
+  }, [activeSpeaker, activeSceneIndex, allScenes]);
 
   // Main 60 FPS Render Loop
   useEffect(() => {

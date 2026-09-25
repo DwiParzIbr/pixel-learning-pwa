@@ -1,9 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { voiceEngine, VoicePersona, PRESET_VOICES } from '@/lib/audio/voiceEngine';
+import {
+  voiceEngine,
+  VoicePersona,
+  NARRATOR_PERSONAS,
+  CHARACTER_VOICES,
+} from '@/lib/audio/voiceEngine';
 import { soundEngine } from '@/lib/audio/soundEngine';
-import { Volume2, Check, Sparkles, X, Play } from 'lucide-react';
+import { Volume2, Check, Sparkles, X, Play, Mic, UserCheck } from 'lucide-react';
 
 interface VoiceSettingsModalProps {
   isOpen: boolean;
@@ -21,7 +26,6 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
       setSelectedPersonaId(voiceEngine.getActivePersonaId());
       setSelectedVoiceURI(voiceEngine.getSelectedVoiceURI() || '');
       const voices = voiceEngine.getAvailableSystemVoices();
-      // Filter indonesian or interesting voices
       const idVoices = voices.filter(v => v.lang.toLowerCase().includes('id'));
       setSystemVoices(idVoices.length > 0 ? idVoices : voices.slice(0, 8));
     }
@@ -29,19 +33,28 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
 
   if (!isOpen) return null;
 
-  const handlePreview = (persona: VoicePersona, e: React.MouseEvent) => {
+  const handlePreviewNarrator = (persona: VoicePersona, e: React.MouseEvent) => {
     e.stopPropagation();
     soundEngine.playSfx('click');
-    setIsPlayingPreview(persona.id);
+    setIsPlayingPreview(`narrator_${persona.id}`);
     voiceEngine.speak(persona.sampleText, {
       pitch: persona.pitch,
       rate: persona.rate,
-      speaker: persona.id,
+      speaker: 'narrator',
       onEnd: () => setIsPlayingPreview(null),
     });
   };
 
-  const handleSelect = (personaId: string) => {
+  const handlePreviewCharacter = (role: 'budi' | 'siti' | 'bibo', e: React.MouseEvent) => {
+    e.stopPropagation();
+    soundEngine.playSfx('click');
+    setIsPlayingPreview(`char_${role}`);
+    voiceEngine.previewSpeaker(role).finally(() => {
+      setIsPlayingPreview(null);
+    });
+  };
+
+  const handleSelectNarrator = (personaId: string) => {
     soundEngine.playSfx('click');
     setSelectedPersonaId(personaId);
   };
@@ -54,12 +67,12 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-pop-in font-fun">
-      <div className="bg-white border-4 border-amber-300 rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 max-w-lg w-full shadow-2xl text-slate-800 relative max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-pop-in font-fun">
+      <div className="bg-white border-4 border-amber-300 rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 max-w-lg w-full shadow-2xl text-slate-800 relative max-h-[92vh] flex flex-col">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-black text-xl p-2 leading-none"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-black text-xl p-2 leading-none active:scale-90"
         >
           <X className="w-5 h-5" />
         </button>
@@ -71,105 +84,181 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
           </span>
           <div className="min-w-0 pr-6">
             <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
-              Pilih Suara Cerita & Karakter
+              Pilihan Suara Cerita & Karakter
             </h3>
             <p className="text-xs text-slate-500 font-bold mt-0.5">
-              Pilih karakter suara favoritmu untuk membacakan cerita & soal
+              Suara Narator & Karakter Animasi dibedakan agar petualangan lebih hidup!
             </p>
           </div>
         </div>
 
-        {/* Notice Info Pill */}
-        <div className="bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl text-xs text-amber-900 font-bold mb-3 flex items-center gap-2 shrink-0">
-          <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-          <span>Tekan tombol <strong>Tes Suara</strong> untuk mendengarkan contohnya!</span>
+        {/* Info Banner */}
+        <div className="bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl text-xs text-amber-950 font-bold mb-3 flex items-start gap-2 shrink-0">
+          <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+          <span>
+            <strong>Sistem Suara Terpisah:</strong> 1 suara Narator untuk membacakan alur cerita & soal, serta suara khusus untuk karakter anak (Budi & Siti).
+          </span>
         </div>
 
-        {/* Persona Options List */}
-        <div className="space-y-2.5 overflow-y-auto flex-1 pr-1 py-1">
-          {PRESET_VOICES.map((p) => {
-            const isSelected = selectedPersonaId === p.id;
-            const isPlaying = isPlayingPreview === p.id;
+        {/* Scrollable Content Container */}
+        <div className="overflow-y-auto flex-1 pr-1 space-y-4">
+          {/* SECTION 1: ANIMATION CHARACTERS VOICES */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span>🎭</span>
+                <span>Suara Karakter Animasi</span>
+              </h4>
+              <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                Otomatis Aktif
+              </span>
+            </div>
 
-            return (
-              <div
-                key={p.id}
-                onClick={() => handleSelect(p.id)}
-                className={`p-3 sm:p-3.5 rounded-2xl border-2 sm:border-3 transition-all cursor-pointer relative active:scale-[0.99] flex items-center justify-between gap-3 ${
-                  isSelected
-                    ? 'bg-amber-50/90 border-amber-400 shadow-md ring-2 ring-amber-300'
-                    : 'bg-slate-50 hover:bg-white border-slate-200 hover:border-amber-300'
-                }`}
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0 shadow-inner ${
-                    isSelected ? 'bg-amber-400 text-amber-950' : 'bg-white border border-slate-200'
-                  }`}>
-                    {p.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <h4 className="font-black text-sm sm:text-base text-slate-900 truncate">
-                        {p.name}
-                      </h4>
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 shrink-0">
-                        {p.role}
-                      </span>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-slate-500 font-bold line-clamp-1">
-                      {p.description}
-                    </p>
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {CHARACTER_VOICES.slice(0, 2).map((char) => {
+                const isPlaying = isPlayingPreview === `char_${char.id}`;
+                const isBudi = char.id === 'budi';
 
-                {/* Right Actions: Test Play & Radio Check */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    onClick={(e) => handlePreview(p, e)}
-                    className={`px-2.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 transition-all active:scale-95 shadow-xs ${
-                      isPlaying
-                        ? 'bg-emerald-500 text-white animate-pulse'
-                        : 'candy-btn candy-btn-blue text-white'
+                return (
+                  <div
+                    key={char.id}
+                    className={`p-3 rounded-2xl border-2 flex flex-col justify-between transition-all ${
+                      isBudi
+                        ? 'bg-amber-50/60 border-amber-200'
+                        : 'bg-pink-50/60 border-pink-200'
                     }`}
-                    title="Dengarkan contoh suara ini"
                   >
-                    {isPlaying ? <Volume2 className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-                    <span className="hidden xs:inline">{isPlaying ? 'Bicara...' : 'Tes'}</span>
-                  </button>
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-2xl shadow-xs shrink-0">
+                        {char.icon}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h5 className="font-black text-xs sm:text-sm text-slate-900 truncate">
+                          {char.name}
+                        </h5>
+                        <p className="text-[10px] text-slate-500 font-bold leading-tight line-clamp-1">
+                          {char.description}
+                        </p>
+                      </div>
+                    </div>
 
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                    isSelected
-                      ? 'bg-amber-500 border-amber-600 text-white'
-                      : 'border-slate-300 bg-white'
-                  }`}>
-                    {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    <button
+                      onClick={(e) => handlePreviewCharacter(char.id as 'budi' | 'siti', e)}
+                      className={`w-full py-1.5 px-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-xs ${
+                        isPlaying
+                          ? 'bg-emerald-500 text-white animate-pulse'
+                          : isBudi
+                          ? 'candy-btn candy-btn-yellow text-slate-800'
+                          : 'candy-btn candy-btn-pink text-white'
+                      }`}
+                    >
+                      {isPlaying ? <Volume2 className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                      <span>{isPlaying ? 'Bicara...' : `Tes Suara ${isBudi ? 'Budi' : 'Siti'}`}</span>
+                    </button>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Optional System Voice Dropdown if available */}
-        {systemVoices.length > 1 && (
-          <div className="mt-2.5 pt-2.5 border-t border-slate-200 shrink-0">
-            <label className="block text-[11px] font-black text-slate-600 mb-1">
-              ⚙️ Suara Sistem Perangkat (Opsional):
-            </label>
-            <select
-              value={selectedVoiceURI}
-              onChange={(e) => setSelectedVoiceURI(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-300"
-            >
-              <option value="">Otomatis (Rekomendasi Terbaik)</option>
-              {systemVoices.map((v) => (
-                <option key={v.voiceURI} value={v.voiceURI}>
-                  {v.name} ({v.lang})
-                </option>
-              ))}
-            </select>
+                );
+              })}
+            </div>
           </div>
-        )}
+
+          {/* SECTION 2: NARRATOR PERSONAS SELECTION */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span>📖</span>
+                <span>Pilih Karakter Suara Narator</span>
+              </h4>
+              <span className="text-[10px] font-black text-slate-500">
+                (Pembaca Cerita & Soal)
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {NARRATOR_PERSONAS.map((p) => {
+                const isSelected = selectedPersonaId === p.id;
+                const isPlaying = isPlayingPreview === `narrator_${p.id}`;
+
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => handleSelectNarrator(p.id)}
+                    className={`p-3 rounded-2xl border-2 sm:border-3 transition-all cursor-pointer relative active:scale-[0.99] flex items-center justify-between gap-2.5 ${
+                      isSelected
+                        ? 'bg-purple-50/90 border-purple-400 shadow-md ring-2 ring-purple-200'
+                        : 'bg-slate-50 hover:bg-white border-slate-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-inner ${
+                        isSelected ? 'bg-purple-500 text-white' : 'bg-white border border-slate-200'
+                      }`}>
+                        {p.icon}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <h5 className="font-black text-xs sm:text-sm text-slate-900 truncate">
+                            {p.name}
+                          </h5>
+                          <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-800 shrink-0">
+                            {p.role}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-bold line-clamp-1">
+                          {p.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right Actions: Test Play & Radio Check */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={(e) => handlePreviewNarrator(p, e)}
+                        className={`px-2.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 transition-all active:scale-95 shadow-xs ${
+                          isPlaying
+                            ? 'bg-emerald-500 text-white animate-pulse'
+                            : 'candy-btn candy-btn-blue text-white'
+                        }`}
+                        title="Dengarkan contoh suara ini"
+                      >
+                        {isPlaying ? <Volume2 className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                        <span className="hidden xs:inline">{isPlaying ? 'Bicara...' : 'Tes'}</span>
+                      </button>
+
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isSelected
+                          ? 'bg-purple-600 border-purple-700 text-white'
+                          : 'border-slate-300 bg-white'
+                      }`}>
+                        {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SECTION 3: SYSTEM VOICE OVERRIDE IF AVAILABLE */}
+          {systemVoices.length > 1 && (
+            <div className="pt-2 border-t border-slate-200">
+              <label className="block text-[11px] font-black text-slate-600 mb-1">
+                ⚙️ Suara Sistem Perangkat (Opsional):
+              </label>
+              <select
+                value={selectedVoiceURI}
+                onChange={(e) => setSelectedVoiceURI(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-purple-300"
+              >
+                <option value="">Otomatis (Rekomendasi Terbaik)</option>
+                {systemVoices.map((v) => (
+                  <option key={v.voiceURI} value={v.voiceURI}>
+                    {v.name} ({v.lang})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
 
         {/* Save Button */}
         <div className="mt-3.5 pt-2.5 border-t-2 border-slate-100 shrink-0">
@@ -177,7 +266,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
             onClick={handleSave}
             className="w-full candy-btn candy-btn-green py-3 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
           >
-            <span>Simpan & Gunakan Suara Ini ✅</span>
+            <span>Simpan & Terapkan Suara ✅</span>
           </button>
         </div>
       </div>

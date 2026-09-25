@@ -44,12 +44,14 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
   const [isRemedialMode, setIsRemedialMode] = useState<boolean>(false);
   const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
   const [activeLesson, setActiveLesson] = useState<StoryLesson>(lesson);
+  const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
 
   useEffect(() => {
     setActiveLesson(lesson);
     setCurrentSceneIndex(0);
     setShowQuestion(false);
     setIsRemedialMode(false);
+    setActiveSpeaker(null);
   }, [lesson]);
 
   const currentLessonIdx = levelLessons && levelLessons.length > 1
@@ -64,13 +66,17 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
 
   const currentScene: SceneDef = scenes[currentSceneIndex] || scenes[0];
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const dialogueDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Continuous Full-Story Auto-Advancer
+  // Continuous Full-Story Auto-Advancer with Separated Narrator & Character Roles
   useEffect(() => {
     if (!currentScene || showQuestion || isPaused) return;
 
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
+    }
+    if (dialogueDelayTimerRef.current) {
+      clearTimeout(dialogueDelayTimerRef.current);
     }
 
     const textToSpeak = currentScene.narration;
@@ -84,18 +90,32 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           setShowQuestion(true);
           soundEngine.playSfx('star');
         }
-      }, 1400); // 1.4s natural breathing pause between story beats
+      }, 1200); // 1.2s breathing pause between story beats
     };
 
     if (textToSpeak && !isMuted) {
+      // Step 1: Narrator speaks the scene narration
+      setActiveSpeaker('narrator');
       voiceEngine.speak(textToSpeak, {
         speaker: 'narrator',
         onEnd: () => {
+          setActiveSpeaker(null);
+
           if (currentScene.dialogue) {
-            voiceEngine.speak(currentScene.dialogue.text, {
-              speaker: currentScene.dialogue.speaker,
-              onEnd: advanceToNext,
-            });
+            // Step 2: Brief 450ms pause, then the Character speaks their dialogue
+            dialogueDelayTimerRef.current = setTimeout(() => {
+              if (isPaused) return;
+              const charSpeaker = currentScene.dialogue?.speaker || 'budi';
+              setActiveSpeaker(charSpeaker);
+
+              voiceEngine.speak(currentScene.dialogue!.text, {
+                speaker: charSpeaker,
+                onEnd: () => {
+                  setActiveSpeaker(null);
+                  advanceToNext();
+                },
+              });
+            }, 450);
           } else {
             advanceToNext();
           }
@@ -103,14 +123,31 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
       });
     } else {
       // Fallback timer if muted or speech not available
-      const readingTimeMs = Math.max(4000, textToSpeak.length * 65);
-      autoAdvanceTimerRef.current = setTimeout(advanceToNext, readingTimeMs);
+      setActiveSpeaker('narrator');
+      const readingTimeMs = Math.max(3500, textToSpeak.length * 60);
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        if (currentScene.dialogue) {
+          setActiveSpeaker(currentScene.dialogue.speaker);
+          const dialogueTimeMs = Math.max(2500, currentScene.dialogue.text.length * 60);
+          autoAdvanceTimerRef.current = setTimeout(() => {
+            setActiveSpeaker(null);
+            advanceToNext();
+          }, dialogueTimeMs);
+        } else {
+          setActiveSpeaker(null);
+          advanceToNext();
+        }
+      }, readingTimeMs);
     }
 
     return () => {
       if (autoAdvanceTimerRef.current) {
         clearTimeout(autoAdvanceTimerRef.current);
       }
+      if (dialogueDelayTimerRef.current) {
+        clearTimeout(dialogueDelayTimerRef.current);
+      }
+      setActiveSpeaker(null);
       voiceEngine.stop();
     };
   }, [currentSceneIndex, isRemedialMode, isMuted, isPaused, showQuestion, scenes.length, currentScene]);
@@ -121,6 +158,10 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
     }
+    if (dialogueDelayTimerRef.current) {
+      clearTimeout(dialogueDelayTimerRef.current);
+    }
+    setActiveSpeaker(null);
     setShowQuestion(false);
     setCurrentSceneIndex(0);
   };
@@ -131,6 +172,10 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
     }
+    if (dialogueDelayTimerRef.current) {
+      clearTimeout(dialogueDelayTimerRef.current);
+    }
+    setActiveSpeaker(null);
     setShowQuestion(true);
   };
 
@@ -275,6 +320,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           activeSceneIndex={currentSceneIndex}
           characters={activeLesson.characters}
           isPaused={isPaused}
+          activeSpeaker={activeSpeaker}
           onSceneComplete={idx => {
             if (idx === -1) {
               handleRestartFullStory();
@@ -294,17 +340,64 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
               />
             </div>
 
-            <div className="flex items-start gap-4">
-              {/* Character Avatar */}
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-gradient-to-br from-amber-300 to-amber-500 border-3 border-white shadow-lg flex items-center justify-center text-3xl sm:text-4xl shrink-0 animate-bounceSubtle">
-                {currentScene.dialogue?.speaker === 'siti' ? '👧' : currentScene.dialogue?.speaker === 'budi' ? '👦' : '🦁'}
+            <div className="flex items-start gap-3 sm:gap-4">
+              {/* Dynamic Role / Character Avatar */}
+              <div
+                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl border-3 border-white shadow-lg flex items-center justify-center text-3xl sm:text-4xl shrink-0 transition-all duration-300 ${
+                  activeSpeaker === 'budi'
+                    ? 'bg-gradient-to-br from-amber-400 to-orange-500 ring-4 ring-amber-300 scale-105 animate-bounceSubtle'
+                    : activeSpeaker === 'siti'
+                    ? 'bg-gradient-to-br from-pink-400 to-rose-500 ring-4 ring-pink-300 scale-105 animate-bounceSubtle'
+                    : activeSpeaker === 'narrator'
+                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 ring-4 ring-purple-300 scale-105'
+                    : currentScene.dialogue?.speaker === 'siti'
+                    ? 'bg-gradient-to-br from-pink-300 to-rose-400'
+                    : currentScene.dialogue?.speaker === 'budi'
+                    ? 'bg-gradient-to-br from-amber-300 to-orange-400'
+                    : 'bg-gradient-to-br from-indigo-400 to-purple-500'
+                }`}
+              >
+                {activeSpeaker === 'siti'
+                  ? '👧'
+                  : activeSpeaker === 'budi'
+                  ? '👦'
+                  : activeSpeaker === 'narrator'
+                  ? '📖'
+                  : currentScene.dialogue?.speaker === 'siti'
+                  ? '👧'
+                  : currentScene.dialogue?.speaker === 'budi'
+                  ? '👦'
+                  : '📖'}
               </div>
 
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="bg-amber-100 text-amber-900 font-black text-xs sm:text-sm px-3.5 py-0.5 rounded-full uppercase tracking-wider">
-                    {currentScene.dialogue?.speaker
-                      ? `Karakter: ${currentScene.dialogue.speaker === 'siti' ? 'Siti' : 'Budi'}`
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                  <span
+                    className={`font-black text-xs sm:text-sm px-3.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1.5 transition-all ${
+                      activeSpeaker === 'budi'
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-xs'
+                        : activeSpeaker === 'siti'
+                        ? 'bg-pink-100 text-pink-900 border border-pink-300 shadow-xs'
+                        : activeSpeaker === 'narrator'
+                        ? 'bg-indigo-100 text-indigo-900 border border-indigo-200 shadow-xs'
+                        : 'bg-slate-100 text-slate-700 border border-slate-200'
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        activeSpeaker ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                      }`}
+                    />
+                    {activeSpeaker === 'budi'
+                      ? '👦 Karakter Budi Berbicara'
+                      : activeSpeaker === 'siti'
+                      ? '👧 Karakter Siti Berbicara'
+                      : activeSpeaker === 'narrator'
+                      ? '📖 Narator Membaca Cerita'
+                      : currentScene.dialogue?.speaker === 'siti'
+                      ? 'Karakter: Siti'
+                      : currentScene.dialogue?.speaker === 'budi'
+                      ? 'Karakter: Budi'
                       : 'Narator Cerita'}
                   </span>
 
@@ -313,14 +406,35 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                   </span>
                 </div>
 
-                <p className="text-lg sm:text-2xl text-slate-800 font-black leading-relaxed">
+                {/* Scene Narration */}
+                <p
+                  className={`text-base sm:text-2xl font-black leading-relaxed transition-all duration-300 ${
+                    activeSpeaker === 'narrator' ? 'text-slate-900' : 'text-slate-600'
+                  }`}
+                >
                   {currentScene.narration}
                 </p>
 
+                {/* Character Dialogue Box */}
                 {currentScene.dialogue && (
-                  <div className="mt-3 bg-amber-50 border-2 border-amber-300/80 rounded-2xl p-3 text-amber-950 font-black text-base sm:text-lg flex items-center gap-2">
-                    <span className="text-xl">💬</span>
-                    <span>&ldquo;{currentScene.dialogue.text}&rdquo;</span>
+                  <div
+                    className={`mt-3 rounded-2xl p-3 sm:p-4 text-base sm:text-lg font-black flex items-start gap-2.5 transition-all duration-300 ${
+                      activeSpeaker === currentScene.dialogue.speaker
+                        ? currentScene.dialogue.speaker === 'siti'
+                          ? 'bg-pink-50 border-3 border-pink-400 text-pink-950 shadow-md ring-2 ring-pink-300'
+                          : 'bg-amber-50 border-3 border-amber-400 text-amber-950 shadow-md ring-2 ring-amber-300'
+                        : 'bg-slate-50/80 border-2 border-slate-200 text-slate-500 opacity-80'
+                    }`}
+                  >
+                    <span className="text-xl sm:text-2xl shrink-0">
+                      {currentScene.dialogue.speaker === 'siti' ? '👧' : '👦'}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[11px] sm:text-xs uppercase tracking-wider block font-bold mb-0.5 text-slate-400">
+                        {currentScene.dialogue.speaker === 'siti' ? 'Siti Menjawab:' : 'Budi Berkata:'}
+                      </span>
+                      <span className="leading-snug">&ldquo;{currentScene.dialogue.text}&rdquo;</span>
+                    </div>
                   </div>
                 )}
               </div>
