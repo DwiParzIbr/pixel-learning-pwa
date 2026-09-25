@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { CharacterDef, CharacterEmotion, EnvironmentType, ObjectType, SceneDef } from '@/types/story';
 import { soundEngine } from '@/lib/audio/soundEngine';
-import { Sparkles, Hand } from 'lucide-react';
+import { Sparkles, Hand, RotateCcw, Play } from 'lucide-react';
 
 interface PixelCanvasProps {
   currentScene: SceneDef;
@@ -14,7 +14,7 @@ interface PixelCanvasProps {
   interactiveCountMode?: boolean;
 }
 
-interface ActiveCharacter {
+interface CharacterEntity {
   id: string;
   name: string;
   asset: string;
@@ -22,26 +22,49 @@ interface ActiveCharacter {
   y: number;
   targetX: number;
   targetY: number;
+  isWalking: boolean;
+  walkSpeed: number;
+  facing: 'left' | 'right';
   emotion: CharacterEmotion;
-  animFrame: number;
-  direction: 'left' | 'right';
   speechBubble?: string;
+  jumpOffset: number;
+  stepCycle: number;
 }
 
-interface ActiveObjectItem {
+interface ObjectEntity {
   id: string;
   type: ObjectType;
   owner?: string;
   x: number;
   y: number;
-  targetX?: number;
-  targetY?: number;
-  arcProgress?: number;
-  isTransferring?: boolean;
+  targetX: number;
+  targetY: number;
+  groundY: number;
+  dropProgress: number; // 0 to 1 for falling/spawning
+  isTransferring: boolean;
+  transferProgress: number;
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
   colorIdx: number;
-  isCounted?: boolean;
-  countedNumber?: number;
-  isHighlighted?: boolean;
+  isCounted: boolean;
+  countNumber?: number;
+  isHighlighted: boolean;
+  bounceOffset: number;
+  scale: number;
+}
+
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  size: number;
+  alpha: number;
+  life: number;
+  maxLife: number;
 }
 
 export const PixelCanvas: React.FC<PixelCanvasProps> = ({
@@ -53,210 +76,297 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   interactiveCountMode = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [activeChars, setActiveChars] = useState<Map<string, ActiveCharacter>>(new Map());
-  const [activeObjects, setActiveObjects] = useState<ActiveObjectItem[]>([]);
   const [countedTotal, setCountedTotal] = useState<number>(0);
-  const animFrameRef = useRef<number | null>(null);
+  const [isPlayingSeq, setIsPlayingSeq] = useState<boolean>(true);
 
-  // Initialize or update scene actions
-  useEffect(() => {
-    const chars = new Map<string, ActiveCharacter>();
-    let objects: ActiveObjectItem[] = [];
+  // Mutable Game State stored in Ref to guarantee 60fps glitch-free physics and animation
+  const gameStateRef = useRef<{
+    characters: Map<string, CharacterEntity>;
+    objects: ObjectEntity[];
+    particles: Particle[];
+    tick: number;
+    timelineTime: number;
+    timelineStep: number;
+  }>({
+    characters: new Map(),
+    objects: [],
+    particles: [],
+    tick: 0,
+    timelineTime: 0,
+    timelineStep: 0,
+  });
 
-    // Parse and apply actions
+  // Re-initialize and run the action sequence when scene changes
+  const startSceneSequence = useCallback(() => {
+    const chars = new Map<string, CharacterEntity>();
+    const objs: ObjectEntity[] = [];
+    const particles: Particle[] = [];
+
+    setCountedTotal(0);
+    setIsPlayingSeq(true);
+
+    // Look for characters in actions
     for (const act of currentScene.actions) {
       if (act.type === 'spawn_character' && act.characterId) {
         const charDef = characters.find(c => c.id === act.characterId);
-        const posX = act.position?.x ?? 200;
-        const posY = act.position?.y ?? 310;
+        const finalX = act.position?.x ?? 220;
+        const finalY = act.position?.y ?? 330;
+
+        // Animate walking in from offscreen or side!
+        const isBudi = act.characterId === 'budi';
+        const startX = isBudi ? (finalX > 300 ? 50 : 20) : (finalX < 500 ? 750 : 680);
+
         chars.set(act.characterId, {
           id: act.characterId,
           name: charDef?.name || act.characterId,
           asset: charDef?.asset || 'character_budi',
-          x: posX,
-          y: posY,
-          targetX: posX,
-          targetY: posY,
-          emotion: act.animation || 'idle',
-          animFrame: 0,
-          direction: posX > 400 ? 'left' : 'right',
+          x: startX,
+          y: finalY,
+          targetX: finalX,
+          targetY: finalY,
+          isWalking: startX !== finalX,
+          walkSpeed: 2.8,
+          facing: finalX >= startX ? 'right' : 'left',
+          emotion: act.animation || 'walk',
+          speechBubble: undefined,
+          jumpOffset: 0,
+          stepCycle: 0,
         });
       }
+    }
 
+    // Look for objects to spawn (apples, marbles, coins, etc.)
+    for (const act of currentScene.actions) {
       if (act.type === 'spawn_object' && act.object && act.quantity) {
-        const startX = act.position?.x ?? (act.owner === 'siti' ? 500 : 250);
-        const startY = act.position?.y ?? 340;
-        for (let i = 0; i < act.quantity; i++) {
-          const row = Math.floor(i / 5);
+        const count = act.quantity;
+        const baseX = act.position?.x ?? (act.owner === 'siti' ? 520 : 380);
+        const groundY = act.position?.y ?? 355;
+
+        for (let i = 0; i < count; i++) {
           const col = i % 5;
-          objects.push({
-            id: `obj_${act.object}_${act.owner || 'neutral'}_${i}`,
+          const row = Math.floor(i / 5);
+          const targetObjX = baseX + col * 36;
+          const targetObjY = groundY + row * 26;
+
+          objs.push({
+            id: `obj_${act.object}_${i}_${Date.now()}`,
             type: act.object,
             owner: act.owner,
-            x: startX + col * 26 + (row % 2) * 10,
-            y: startY + row * 22,
-            colorIdx: i % 5,
+            x: targetObjX,
+            y: -30 - (i * 15), // Start above canvas and drop down!
+            targetX: targetObjX,
+            targetY: targetObjY,
+            groundY: targetObjY,
+            dropProgress: 0,
+            isTransferring: false,
+            transferProgress: 0,
+            fromX: targetObjX,
+            fromY: targetObjY,
+            toX: targetObjX,
+            toY: targetObjY,
+            colorIdx: i,
+            isCounted: false,
             isHighlighted: false,
+            bounceOffset: 0,
+            scale: 1,
           });
         }
       }
     }
 
-    // Process movements / animations / transfers
-    for (const act of currentScene.actions) {
-      if (act.type === 'move_character' && act.characterId) {
-        const c = chars.get(act.characterId);
-        if (c && act.position) {
-          c.targetX = act.position.x;
-          c.targetY = act.position.y;
-          c.emotion = 'walk';
-          c.direction = act.position.x >= c.x ? 'right' : 'left';
-        }
-      }
-
-      if (act.type === 'animate_character' && act.characterId && act.animation) {
-        const c = chars.get(act.characterId);
-        if (c) {
-          c.emotion = act.animation;
-        }
-      }
-
-      if (act.type === 'highlight_object') {
-        objects = objects.map(o => {
-          if (!act.owner || o.owner === act.owner) {
-            return { ...o, isHighlighted: true };
-          }
-          return o;
-        });
-      }
-
-      if (act.type === 'transfer_object' && act.from && act.to && act.quantity) {
-        let transferred = 0;
-        const targetBaseX = act.to === 'siti' ? 520 : 240;
-        const targetBaseY = 340;
-
-        objects = objects.map(o => {
-          if (o.owner === act.from && transferred < (act.quantity || 0)) {
-            const row = Math.floor(transferred / 5);
-            const col = transferred % 5;
-            transferred++;
-            return {
-              ...o,
-              owner: act.to,
-              targetX: targetBaseX + col * 26,
-              targetY: targetBaseY + row * 22,
-              isTransferring: true,
-              arcProgress: 0,
-            };
-          }
-          return o;
-        });
-        soundEngine.playSfx('transfer');
-      }
-    }
-
-    if (currentScene.dialogue) {
-      const spk = chars.get(currentScene.dialogue.speaker);
-      if (spk) {
-        spk.speechBubble = currentScene.dialogue.text;
-        spk.emotion = 'talk';
-      }
-    }
-
-    setActiveChars(chars);
-    setActiveObjects(objects);
-    setCountedTotal(0);
-
-    const timer = setTimeout(() => {
-      onSceneAnimationComplete?.();
-    }, 2500);
-
-    return () => clearTimeout(timer);
+    gameStateRef.current = {
+      characters: chars,
+      objects: objs,
+      particles,
+      tick: 0,
+      timelineTime: 0,
+      timelineStep: 0,
+    };
   }, [currentScene, characters]);
 
-  // Main Canvas Render Loop
+  useEffect(() => {
+    startSceneSequence();
+  }, [startSceneSequence]);
+
+  // Main 60 FPS Game Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let tick = 0;
+    let animId: number;
 
-    const render = () => {
+    const gameLoop = () => {
+      const state = gameStateRef.current;
       if (!isPaused) {
-        tick++;
+        state.tick++;
+        state.timelineTime += 1 / 60;
       }
 
-      const width = canvas.width;
-      const height = canvas.height;
+      const w = canvas.width;
+      const h = canvas.height;
 
-      // Keep pixel crispness for the story world inside the canvas
+      // 1. Draw Environment
       ctx.imageSmoothingEnabled = false;
+      drawEnvironment(ctx, w, h, currentScene.background, state.tick);
 
-      // 1. Draw Background Environment
-      drawEnvironment(ctx, width, height, currentScene.background, tick);
-
-      // 2. Update & Draw Interactive Objects
-      setActiveObjects(prevObjects => {
-        return prevObjects.map(obj => {
-          let updated = { ...obj };
-          if (obj.isTransferring && obj.targetX !== undefined && obj.targetY !== undefined) {
-            const currentP = obj.arcProgress || 0;
-            const newP = Math.min(1, currentP + 0.025);
-            updated.arcProgress = newP;
-
-            // Parabolic arc interpolation
-            const dx = obj.targetX - obj.x;
-            const dy = obj.targetY - obj.y;
-            const currentX = obj.x + dx * (newP - currentP);
-            const currentY = obj.y + dy * (newP - currentP);
-            const arcHeight = Math.sin(newP * Math.PI) * 60;
-
-            drawPixelObject(ctx, obj.type, currentX, currentY - arcHeight, obj.colorIdx, obj.isHighlighted, obj.countedNumber, tick);
-
-            if (newP >= 1) {
-              updated.isTransferring = false;
-              updated.x = obj.targetX;
-              updated.y = obj.targetY;
-            }
-          } else {
-            drawPixelObject(ctx, obj.type, obj.x, obj.y, obj.colorIdx, obj.isHighlighted, obj.countedNumber, tick);
-          }
-          return updated;
-        });
-      });
-
-      // 3. Update & Draw Characters
-      activeChars.forEach(char => {
-        if (char.x !== char.targetX || char.y !== char.targetY) {
-          const dx = char.targetX - char.x;
-          char.x += Math.sign(dx) * Math.min(Math.abs(dx), 3);
-          if (Math.abs(char.targetX - char.x) < 3) {
+      // 2. Timeline and Action Progress
+      // Character walking logic
+      state.characters.forEach(char => {
+        if (char.x !== char.targetX) {
+          const diff = char.targetX - char.x;
+          if (Math.abs(diff) <= char.walkSpeed) {
             char.x = char.targetX;
+            char.isWalking = false;
             char.emotion = 'idle';
+          } else {
+            char.x += Math.sign(diff) * char.walkSpeed;
+            char.isWalking = true;
+            char.stepCycle += 0.25;
+            char.facing = diff > 0 ? 'right' : 'left';
           }
+        } else {
+          char.isWalking = false;
         }
 
-        drawPixelCharacter(ctx, char, tick);
-
-        if (char.speechBubble) {
-          drawSpeechBubble(ctx, char.x, char.y - 75, char.speechBubble);
+        // Attach dialogue after walking
+        if (!char.isWalking && currentScene.dialogue && currentScene.dialogue.speaker === char.id) {
+          char.speechBubble = currentScene.dialogue.text;
+          char.emotion = 'talk';
         }
       });
 
-      animFrameRef.current = requestAnimationFrame(render);
+      // Object falling & physics logic
+      state.objects.forEach(obj => {
+        // Drop into scene
+        if (obj.y < obj.groundY && !obj.isTransferring) {
+          obj.y += 6.5;
+          if (obj.y >= obj.groundY) {
+            obj.y = obj.groundY;
+            soundEngine.playSfx('pickup');
+            // Spawn little impact sparkle particles
+            for (let p = 0; p < 4; p++) {
+              state.particles.push({
+                x: obj.x,
+                y: obj.groundY,
+                vx: (Math.random() - 0.5) * 3,
+                vy: -Math.random() * 3,
+                color: '#fde047',
+                size: 3,
+                alpha: 1,
+                life: 0,
+                maxLife: 20,
+              });
+            }
+          }
+        }
+
+        // Object Transfer (e.g. Budi to Siti transfer action)
+        if (obj.isTransferring) {
+          obj.transferProgress += 0.022;
+          const p = Math.min(1, obj.transferProgress);
+          obj.x = obj.fromX + (obj.toX - obj.fromX) * p;
+          const linearY = obj.fromY + (obj.toY - obj.fromY) * p;
+          const arcHeight = Math.sin(p * Math.PI) * 80;
+          obj.y = linearY - arcHeight;
+
+          if (p >= 1) {
+            obj.isTransferring = false;
+            obj.y = obj.groundY;
+            obj.x = obj.toX;
+            soundEngine.playSfx('pickup');
+          }
+        }
+      });
+
+      // Handle Transfer actions in scene if time reached
+      for (const act of currentScene.actions) {
+        if (act.type === 'transfer_object' && act.from && act.to && act.quantity) {
+          if (state.timelineTime > 1.8 && state.timelineStep === 0) {
+            state.timelineStep = 1;
+            let transferredCount = 0;
+            const targetBaseX = act.to === 'siti' ? 540 : 250;
+            const groundY = 355;
+
+            state.objects.forEach(obj => {
+              if (obj.owner === act.from && transferredCount < (act.quantity || 0) && !obj.isTransferring) {
+                const col = transferredCount % 5;
+                const row = Math.floor(transferredCount / 5);
+                obj.owner = act.to;
+                obj.fromX = obj.x;
+                obj.fromY = obj.y;
+                obj.toX = targetBaseX + col * 36;
+                obj.toY = groundY + row * 26;
+                obj.groundY = obj.toY;
+                obj.isTransferring = true;
+                obj.transferProgress = -transferredCount * 0.15; // Staggered leaps!
+                transferredCount++;
+              }
+            });
+
+            soundEngine.playSfx('transfer');
+
+            // Celebrate character receiver
+            const receiver = state.characters.get(act.to);
+            if (receiver) receiver.emotion = 'celebrate';
+          }
+        }
+
+        if (act.type === 'highlight_object') {
+          if (state.timelineTime > 1.5) {
+            state.objects.forEach(obj => {
+              if (!act.owner || obj.owner === act.owner) {
+                obj.isHighlighted = true;
+              }
+            });
+          }
+        }
+      }
+
+      // 3. Render Objects
+      state.objects.forEach(obj => {
+        drawPixelObjectSprite(ctx, obj, state.tick);
+      });
+
+      // 4. Render Characters
+      state.characters.forEach(char => {
+        drawPixelCharacterSprite(ctx, char, state.tick);
+        if (char.speechBubble) {
+          drawComicSpeechBubble(ctx, char.x, char.y - 72, char.speechBubble);
+        }
+      });
+
+      // 5. Render Particles
+      for (let i = state.particles.length - 1; i >= 0; i--) {
+        const pt = state.particles[i];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.vy += 0.12; // gravity
+        pt.life++;
+        pt.alpha = 1 - pt.life / pt.maxLife;
+
+        ctx.fillStyle = pt.color;
+        ctx.globalAlpha = Math.max(0, pt.alpha);
+        ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
+        ctx.globalAlpha = 1;
+
+        if (pt.life >= pt.maxLife) {
+          state.particles.splice(i, 1);
+        }
+      }
+
+      animId = requestAnimationFrame(gameLoop);
     };
 
-    animFrameRef.current = requestAnimationFrame(render);
+    animId = requestAnimationFrame(gameLoop);
 
     return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
+      cancelAnimationFrame(animId);
     };
-  }, [currentScene, isPaused, activeChars]);
+  }, [currentScene, isPaused]);
 
+  // Click handler to interact and count objects directly
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -266,87 +376,106 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
     const clickX = (e.clientX - rect.left) * scaleX;
     const clickY = (e.clientY - rect.top) * scaleY;
 
-    setActiveObjects(prev => {
-      let newlyCounted = false;
-      let nextTotal = countedTotal;
-      const updated = prev.map(obj => {
-        const dist = Math.hypot(obj.x - clickX, obj.y - clickY);
-        if (dist < 26 && !obj.isCounted) {
-          newlyCounted = true;
-          nextTotal++;
-          soundEngine.playSfx('count');
-          return {
-            ...obj,
-            isCounted: true,
-            countedNumber: nextTotal,
-            isHighlighted: true,
-          };
-        }
-        return obj;
-      });
+    const state = gameStateRef.current;
+    let newlyCounted = false;
+    let newCount = countedTotal;
 
-      if (newlyCounted) {
-        setCountedTotal(nextTotal);
-        onObjectCounted?.(nextTotal);
+    state.objects.forEach(obj => {
+      const dist = Math.hypot(obj.x - clickX, obj.y - clickY);
+      if (dist < 32 && !obj.isCounted) {
+        newlyCounted = true;
+        newCount++;
+        obj.isCounted = true;
+        obj.countNumber = newCount;
+        obj.isHighlighted = true;
+        obj.bounceOffset = -18; // Joyful jump on touch!
+
+        soundEngine.playSfx('count');
+
+        // Sparkle burst
+        for (let p = 0; p < 8; p++) {
+          state.particles.push({
+            x: obj.x,
+            y: obj.y,
+            vx: (Math.random() - 0.5) * 4,
+            vy: -Math.random() * 4 - 1,
+            color: '#fde047',
+            size: 4,
+            alpha: 1,
+            life: 0,
+            maxLife: 25,
+          });
+        }
       }
-      return updated;
     });
+
+    if (newlyCounted) {
+      setCountedTotal(newCount);
+      onObjectCounted?.(newCount);
+    }
   };
 
   return (
     <div className="relative w-full flex flex-col items-center select-none font-fun">
-      {/* Playful Toy Tablet / Game Console Frame */}
-      <div className="w-full max-w-4xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 rounded-[2.5rem] p-4 sm:p-5 shadow-[0_16px_32px_rgba(234,179,8,0.35)] border-4 border-amber-200 relative">
-        {/* Top Console Details (Camera notch + speaker holes) */}
-        <div className="flex items-center justify-between px-4 pb-2 text-amber-700/80 font-bold text-xs sm:text-sm">
+      {/* Handheld Kid Console Frame */}
+      <div className="w-full max-w-4xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 rounded-[2.5rem] p-4 sm:p-5 shadow-[0_16px_36px_rgba(245,158,11,0.3)] border-4 border-amber-200 relative">
+        {/* Top Console Notch */}
+        <div className="flex items-center justify-between px-4 pb-2 text-amber-900 font-extrabold text-xs sm:text-sm">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-amber-600/60 shadow-inner" />
-            <span className="w-2 h-2 rounded-full bg-amber-600/40" />
-            <span className="font-extrabold tracking-wider text-amber-900">PIXEL ADVENTURE 2D</span>
+            <span className="w-3.5 h-3.5 rounded-full bg-amber-600/70 shadow-inner" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-600/50" />
+            <span className="tracking-wider">PANGGUNG PETUALANGAN 2D</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-amber-200/60 px-3 py-0.5 rounded-full text-amber-900 text-xs">
-            <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-spin" />
-            <span>Cerita Interaktif</span>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                soundEngine.playSfx('click');
+                startSceneSequence();
+              }}
+              className="bg-white/80 hover:bg-white text-amber-900 font-black text-xs px-3 py-1 rounded-full flex items-center gap-1 shadow-sm active:scale-95 transition-all"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+              <span>Putar Ulang Animasi</span>
+            </button>
           </div>
         </div>
 
-        {/* Screen Bevel & Inner Canvas Container */}
+        {/* Screen Bevel & Canvas */}
         <div className="relative w-full aspect-[16/9] bg-slate-900 rounded-3xl overflow-hidden shadow-inner border-4 border-slate-950/40">
           <canvas
             ref={canvasRef}
             width={800}
             height={450}
             onClick={handleCanvasClick}
-            className="w-full h-full cursor-pointer touch-none block pixel-canvas"
+            className="w-full h-full cursor-pointer touch-none block"
             style={{ imageRendering: 'pixelated' }}
           />
 
           {/* Interactive touch guidance pill */}
-          {interactiveCountMode && (
-            <div className="absolute top-4 left-4 bg-white/95 text-slate-800 font-bold text-sm sm:text-base px-4 py-2 rounded-2xl shadow-xl border-2 border-emerald-400 flex items-center gap-3 animate-wiggle">
-              <Hand className="w-5 h-5 text-emerald-500" />
-              <span>Sentuh benda untuk berhitung:</span>
-              <span className="bg-emerald-500 text-white text-base px-3 py-0.5 rounded-full font-extrabold shadow">
-                {countedTotal}
-              </span>
-            </div>
-          )}
+          <div className="absolute top-4 left-4 bg-white/95 text-slate-800 font-bold text-xs sm:text-base px-3.5 py-1.5 rounded-2xl shadow-xl border-2 border-emerald-400 flex items-center gap-2 sm:gap-3">
+            <Hand className="w-5 h-5 text-emerald-500 animate-wiggle" />
+            <span>Sentuh benda untuk berhitung:</span>
+            <span className="bg-emerald-500 text-white px-2.5 py-0.5 rounded-full font-black text-sm shadow">
+              {countedTotal}
+            </span>
+          </div>
         </div>
 
-        {/* Bottom Console Buttons Deco */}
+        {/* Console Footing */}
         <div className="flex items-center justify-between px-6 pt-3">
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded-full bg-rose-500 border-2 border-rose-300 shadow" />
             <span className="w-4 h-4 rounded-full bg-sky-500 border-2 border-sky-300 shadow" />
             <span className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-emerald-300 shadow" />
           </div>
-          <div className="text-amber-900/70 text-[11px] font-extrabold tracking-widest uppercase">
-            Sentuh Layar untuk Berinteraksi
+          <div className="text-amber-950/70 text-xs font-black tracking-widest uppercase">
+            Ketuk Objek di Layar untuk Menghitung
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-700/60" />
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-700/60" />
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-700/60" />
+            <div className="w-2 h-2 rounded-full bg-amber-700/60" />
+            <div className="w-2 h-2 rounded-full bg-amber-700/60" />
+            <div className="w-2 h-2 rounded-full bg-amber-700/60" />
           </div>
         </div>
       </div>
@@ -355,7 +484,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
 };
 
 // ----------------------------------------------------
-// PIXEL DRAWING UTILITIES (Internal to canvas)
+// PIXEL DRAWING ENGINES
 // ----------------------------------------------------
 
 function drawEnvironment(
@@ -366,159 +495,202 @@ function drawEnvironment(
   tick: number
 ) {
   switch (env) {
+    case 'forest': {
+      // 1. Lush Green Canopy & Gradient Sky
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+      skyGrad.addColorStop(0, '#15803d');
+      skyGrad.addColorStop(0.4, '#166534');
+      skyGrad.addColorStop(1, '#14532d');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Sunlight rays
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.08)';
+      ctx.beginPath();
+      ctx.moveTo(100, 0);
+      ctx.lineTo(280, 0);
+      ctx.lineTo(450, h);
+      ctx.lineTo(250, h);
+      ctx.fill();
+
+      // Big Apple Tree on the Right
+      ctx.fillStyle = '#78350f'; // Trunk
+      ctx.fillRect(w - 240, 60, 90, h - 60);
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(w - 200, 60, 24, h - 60);
+
+      // Big Tree Canopy
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath();
+      ctx.arc(w - 195, 120, 150, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.arc(w - 170, 100, 120, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Apples hanging in the tree
+      const treeApples = [
+        { x: w - 260, y: 120 },
+        { x: w - 190, y: 80 },
+        { x: w - 130, y: 130 },
+        { x: w - 210, y: 160 },
+      ];
+      treeApples.forEach(app => {
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(app.x, app.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(app.x, app.y - 12, 4, 3);
+      });
+
+      // Ground Lawn
+      ctx.fillStyle = '#1e3a1e';
+      ctx.fillRect(0, h * 0.72, w, h * 0.28);
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(0, h * 0.72, w, 12);
+
+      // Mushrooms & Ferns
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(90, h * 0.76, 20, 14);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(94, h * 0.78, 4, 4);
+      ctx.fillRect(102, h * 0.78, 4, 4);
+      ctx.fillStyle = '#fed7aa';
+      ctx.fillRect(98, h * 0.88, 6, 12);
+      break;
+    }
+
     case 'park': {
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.65);
-      skyGrad.addColorStop(0, '#60a5fa');
+      // Sky
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.7);
+      skyGrad.addColorStop(0, '#38bdf8');
       skyGrad.addColorStop(1, '#bae6fd');
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, w, h);
 
-      // Pixel Sun
+      // Sun
       ctx.fillStyle = '#fde047';
-      ctx.fillRect(w - 110, 30, 48, 48);
+      ctx.fillRect(w - 110, 30, 52, 52);
       ctx.fillStyle = '#fef08a';
-      ctx.fillRect(w - 104, 36, 36, 36);
+      ctx.fillRect(w - 104, 36, 40, 40);
 
       // Clouds
-      const cloudX = (tick * 0.4) % (w + 120) - 80;
-      drawPixelCloud(ctx, cloudX, 50);
-      drawPixelCloud(ctx, ((tick * 0.25) + 300) % (w + 120) - 80, 80);
+      const cloudX = (tick * 0.5) % (w + 140) - 100;
+      drawPixelCloud(ctx, cloudX, 45);
+      drawPixelCloud(ctx, ((tick * 0.3) + 360) % (w + 140) - 100, 75);
 
-      // Hills
+      // Distant Hills
       ctx.fillStyle = '#4ade80';
       ctx.beginPath();
-      ctx.ellipse(200, h * 0.68, 260, 90, 0, 0, Math.PI * 2);
+      ctx.ellipse(220, h * 0.74, 280, 100, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#22c55e';
       ctx.beginPath();
-      ctx.ellipse(620, h * 0.69, 290, 80, 0, 0, Math.PI * 2);
+      ctx.ellipse(640, h * 0.75, 300, 90, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Lawn
+      // Park Grass Lawn
       ctx.fillStyle = '#16a34a';
-      ctx.fillRect(0, h * 0.65, w, h * 0.35);
-
-      // Grass fringe
+      ctx.fillRect(0, h * 0.72, w, h * 0.28);
       ctx.fillStyle = '#15803d';
-      for (let x = 0; x < w; x += 16) {
-        ctx.fillRect(x, h * 0.65 - 4, 8, 4);
-      }
+      ctx.fillRect(0, h * 0.72, w, 10);
 
       // Wooden fence
       ctx.fillStyle = '#92400e';
-      for (let x = 30; x < w; x += 45) {
-        ctx.fillRect(x, h * 0.58, 8, 35);
-        ctx.fillRect(x - 2, h * 0.57, 12, 5);
+      for (let x = 20; x < w; x += 50) {
+        ctx.fillRect(x, h * 0.64, 10, 38);
+        ctx.fillRect(x - 2, h * 0.63, 14, 6);
       }
-      ctx.fillRect(20, h * 0.61, w - 40, 6);
+      ctx.fillRect(10, h * 0.67, w - 20, 8);
 
-      // Flowers
-      for (let i = 0; i < 15; i++) {
-        const fx = 40 + i * 50;
-        const fy = h * 0.72 + (i % 3) * 18;
+      // Colorful flowers
+      for (let i = 0; i < 14; i++) {
+        const fx = 35 + i * 55;
+        const fy = h * 0.78 + (i % 3) * 16;
         ctx.fillStyle = i % 2 === 0 ? '#f43f5e' : '#eab308';
-        ctx.fillRect(fx, fy, 6, 6);
+        ctx.fillRect(fx, fy, 8, 8);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(fx + 2, fy + 2, 2, 2);
+        ctx.fillRect(fx + 2, fy + 2, 4, 4);
       }
-      break;
-    }
-
-    case 'forest': {
-      const forestSky = ctx.createLinearGradient(0, 0, 0, h);
-      forestSky.addColorStop(0, '#14532d');
-      forestSky.addColorStop(0.5, '#166534');
-      forestSky.addColorStop(1, '#15803d');
-      ctx.fillStyle = forestSky;
-      ctx.fillRect(0, 0, w, h);
-
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(40, 0, 60, h);
-      ctx.fillRect(w - 120, 0, 75, h);
-      ctx.fillStyle = '#451a03';
-      ctx.fillRect(80, 0, 20, h);
-      ctx.fillRect(w - 75, 0, 25, h);
-
-      ctx.fillStyle = '#1e3a1e';
-      ctx.fillRect(0, h * 0.65, w, h * 0.35);
-
-      ctx.fillStyle = '#ef4444';
-      ctx.fillRect(140, h * 0.68, 16, 12);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(144, h * 0.70, 4, 4);
-      ctx.fillStyle = '#fed7aa';
-      ctx.fillRect(146, h * 0.80, 6, 10);
       break;
     }
 
     case 'classroom': {
       ctx.fillStyle = '#fef3c7';
-      ctx.fillRect(0, 0, w, h * 0.65);
+      ctx.fillRect(0, 0, w, h * 0.72);
 
+      // Blackboard
       ctx.fillStyle = '#1e293b';
-      ctx.fillRect(150, 40, w - 300, 160);
+      ctx.fillRect(140, 35, w - 280, 175);
       ctx.fillStyle = '#b45309';
-      ctx.fillRect(142, 32, w - 284, 8);
-      ctx.fillRect(142, 198, w - 284, 8);
-      ctx.fillRect(142, 32, 8, 174);
-      ctx.fillRect(w - 150, 32, 8, 174);
+      ctx.fillRect(132, 27, w - 264, 10);
+      ctx.fillRect(132, 208, w - 264, 10);
+      ctx.fillRect(132, 27, 10, 191);
+      ctx.fillRect(w - 142, 27, 10, 191);
 
       ctx.fillStyle = '#f8fafc';
-      ctx.font = 'bold 26px "Fredoka", sans-serif';
-      ctx.fillText('10 - 4 = ?', w / 2 - 70, 130);
+      ctx.font = 'bold 32px "Fredoka", sans-serif';
+      ctx.fillText('10 - 4 = ?', w / 2 - 80, 135);
 
+      // Floor
       ctx.fillStyle = '#d97706';
-      ctx.fillRect(0, h * 0.65, w, h * 0.35);
+      ctx.fillRect(0, h * 0.72, w, h * 0.28);
       ctx.fillStyle = '#b45309';
-      for (let y = h * 0.65; y < h; y += 24) {
-        ctx.fillRect(0, y, w, 2);
+      for (let y = h * 0.72; y < h; y += 26) {
+        ctx.fillRect(0, y, w, 3);
       }
       break;
     }
 
     case 'market': {
-      ctx.fillStyle = '#93c5fd';
-      ctx.fillRect(0, 0, w, h * 0.65);
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(0, 0, w, h * 0.72);
 
+      // Cobblestone
       ctx.fillStyle = '#64748b';
-      ctx.fillRect(0, h * 0.65, w, h * 0.35);
+      ctx.fillRect(0, h * 0.72, w, h * 0.28);
 
-      for (let x = 60; x < w - 60; x += 40) {
-        ctx.fillStyle = (x / 40) % 2 === 0 ? '#ef4444' : '#ffffff';
-        ctx.fillRect(x, 50, 40, 60);
+      // Canopy
+      for (let x = 40; x < w - 40; x += 45) {
+        ctx.fillStyle = (x / 45) % 2 === 0 ? '#ef4444' : '#ffffff';
+        ctx.fillRect(x, 40, 45, 65);
       }
       ctx.fillStyle = '#78350f';
-      ctx.fillRect(50, 105, w - 100, 10);
-      ctx.fillRect(70, 105, 12, 160);
-      ctx.fillRect(w - 82, 105, 12, 160);
+      ctx.fillRect(30, 100, w - 60, 12);
+      ctx.fillRect(60, 100, 14, 170);
+      ctx.fillRect(w - 74, 100, 14, 170);
       break;
     }
 
     case 'castle': {
       ctx.fillStyle = '#1e1b4b';
-      ctx.fillRect(0, 0, w, h * 0.65);
+      ctx.fillRect(0, 0, w, h * 0.72);
 
       ctx.fillStyle = '#475569';
-      ctx.fillRect(80, 60, w - 160, h * 0.65);
+      ctx.fillRect(70, 50, w - 140, h * 0.72);
 
       ctx.fillStyle = '#334155';
-      for (let y = 70; y < h * 0.65; y += 25) {
-        for (let x = 90; x < w - 90; x += 50) {
-          ctx.fillRect(x + ((y % 50 === 0) ? 20 : 0), y, 44, 20);
+      for (let y = 60; y < h * 0.72; y += 28) {
+        for (let x = 80; x < w - 80; x += 55) {
+          ctx.fillRect(x + ((y % 56 === 0) ? 22 : 0), y, 48, 22);
         }
       }
 
-      const flameFlicker = (tick % 6 > 3 ? 2 : 0);
-      drawPixelTorch(ctx, 130, 140, flameFlicker);
-      drawPixelTorch(ctx, w - 150, 140, flameFlicker);
+      // Torches
+      const flicker = (tick % 6 > 3 ? 3 : 0);
+      drawPixelTorch(ctx, 120, 140, flicker);
+      drawPixelTorch(ctx, w - 140, 140, flicker);
 
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(w / 2 - 90, 130, 180, h * 0.65 - 130);
+      // Gate
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(w / 2 - 95, 120, 190, h * 0.72 - 120);
       ctx.fillStyle = '#eab308';
-      ctx.fillRect(w / 2 - 92, 126, 184, 8);
+      ctx.fillRect(w / 2 - 98, 116, 196, 10);
 
       ctx.fillStyle = '#334155';
-      ctx.fillRect(0, h * 0.65, w, h * 0.35);
+      ctx.fillRect(0, h * 0.72, w, h * 0.28);
       break;
     }
   }
@@ -526,263 +698,323 @@ function drawEnvironment(
 
 function drawPixelCloud(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(x, y + 10, 60, 20);
-  ctx.fillRect(x + 10, y, 40, 30);
-  ctx.fillRect(x + 20, y - 8, 24, 16);
+  ctx.fillRect(x, y + 12, 70, 24);
+  ctx.fillRect(x + 12, y, 46, 36);
+  ctx.fillRect(x + 24, y - 10, 28, 20);
 }
 
 function drawPixelTorch(ctx: CanvasRenderingContext2D, x: number, y: number, flicker: number) {
   ctx.fillStyle = '#78350f';
-  ctx.fillRect(x, y, 8, 20);
+  ctx.fillRect(x, y, 10, 24);
   ctx.fillStyle = '#ea580c';
-  ctx.fillRect(x - 2, y - 14 - flicker, 12, 14);
+  ctx.fillRect(x - 3, y - 16 - flicker, 16, 18);
   ctx.fillStyle = '#fde047';
-  ctx.fillRect(x, y - 10 - flicker, 8, 10);
+  ctx.fillRect(x, y - 12 - flicker, 10, 12);
 }
 
-function drawPixelCharacter(ctx: CanvasRenderingContext2D, char: ActiveCharacter, tick: number) {
+// ----------------------------------------------------
+// DETAILED 2D CHARACTER SPRITE ENGINE
+// ----------------------------------------------------
+
+function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: CharacterEntity, tick: number) {
   const isBudi = char.asset.includes('budi');
   const cx = Math.round(char.x);
   const cy = Math.round(char.y);
 
+  // Animated Walk / Jump Cycle
+  let stepOffset = 0;
   let bobY = 0;
-  let legSwing = 0;
-  let armRaise = 0;
+  let armSwing = 0;
 
-  if (char.emotion === 'walk') {
-    legSwing = Math.sin(tick * 0.25) * 6;
-    bobY = Math.abs(Math.sin(tick * 0.25)) * 4;
+  if (char.isWalking) {
+    stepOffset = Math.sin(char.stepCycle) * 10;
+    armSwing = Math.cos(char.stepCycle) * 8;
+    bobY = Math.abs(Math.sin(char.stepCycle)) * 6;
   } else if (char.emotion === 'celebrate' || char.emotion === 'happy') {
-    bobY = Math.abs(Math.sin(tick * 0.3)) * 14;
-    armRaise = 10;
+    bobY = Math.abs(Math.sin(tick * 0.25)) * 16;
+    armSwing = -14; // Arms raised high!
   } else if (char.emotion === 'idle') {
-    bobY = Math.sin(tick * 0.08) * 2;
+    bobY = Math.sin(tick * 0.08) * 3;
   }
 
   const baseCy = cy - bobY;
 
-  // Soft shadow
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  // Soft Elliptical Ground Shadow
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   ctx.beginPath();
-  ctx.ellipse(cx, cy + 32, 18, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy + 32, 22, 7, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Shoes & Pants
-  ctx.fillStyle = '#f8fafc';
-  ctx.fillRect(cx - 10 - legSwing, baseCy + 24, 8, 8);
-  ctx.fillRect(cx + 2 + legSwing, baseCy + 24, 8, 8);
+  // 1. Shoes & Pants (Animated stepping legs!)
+  ctx.fillStyle = '#f8fafc'; // White sneakers
+  ctx.fillRect(cx - 12 - stepOffset, baseCy + 24, 10, 10);
+  ctx.fillRect(cx + 2 + stepOffset, baseCy + 24, 10, 10);
+
+  // Pants (Blue for Budi, Magenta for Siti)
   ctx.fillStyle = isBudi ? '#1e3a8a' : '#be185d';
-  ctx.fillRect(cx - 10, baseCy + 14, 8, 11);
-  ctx.fillRect(cx + 2, baseCy + 14, 8, 11);
+  ctx.fillRect(cx - 12 - (stepOffset * 0.6), baseCy + 14, 10, 12);
+  ctx.fillRect(cx + 2 + (stepOffset * 0.6), baseCy + 14, 10, 12);
 
-  // Torso / Shirt
+  // 2. Torso / Shirt
   ctx.fillStyle = isBudi ? '#2563eb' : '#f43f5e';
-  ctx.fillRect(cx - 12, baseCy - 6, 24, 21);
+  ctx.fillRect(cx - 16, baseCy - 10, 32, 26);
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(cx - 4, baseCy - 6, 8, 5);
+  ctx.fillRect(cx - 5, baseCy - 10, 10, 8); // White collar
 
-  // Arms
-  ctx.fillStyle = '#fed7aa';
-  if (armRaise > 0) {
-    ctx.fillRect(cx - 18, baseCy - 12, 6, 16);
-    ctx.fillRect(cx + 12, baseCy - 12, 6, 16);
+  // 3. Arms
+  ctx.fillStyle = '#fed7aa'; // Skin
+  if (armSwing < -5) {
+    // Arms up celebrating!
+    ctx.fillRect(cx - 24, baseCy - 18, 8, 20);
+    ctx.fillRect(cx + 16, baseCy - 18, 8, 20);
   } else {
-    ctx.fillRect(cx - 16, baseCy - 3, 5, 16);
-    ctx.fillRect(cx + 11, baseCy - 3, 5, 16);
+    ctx.fillRect(cx - 22 + armSwing, baseCy - 6, 7, 20);
+    ctx.fillRect(cx + 15 - armSwing, baseCy - 6, 7, 20);
   }
 
-  // Head
+  // 4. Head & Face
   ctx.fillStyle = '#fed7aa';
-  ctx.fillRect(cx - 14, baseCy - 34, 28, 28);
+  ctx.fillRect(cx - 18, baseCy - 44, 36, 34);
 
-  // Hair
+  // 5. Hair
   if (isBudi) {
     ctx.fillStyle = '#1c1917';
-    ctx.fillRect(cx - 16, baseCy - 40, 32, 10);
-    ctx.fillRect(cx - 16, baseCy - 34, 6, 8);
-    ctx.fillRect(cx + 10, baseCy - 34, 6, 8);
+    ctx.fillRect(cx - 20, baseCy - 52, 40, 14);
+    ctx.fillRect(cx - 20, baseCy - 44, 8, 12);
+    ctx.fillRect(cx + 12, baseCy - 44, 8, 12);
   } else {
     ctx.fillStyle = '#292524';
-    ctx.fillRect(cx - 16, baseCy - 40, 32, 10);
-    ctx.fillRect(cx - 18, baseCy - 34, 6, 16);
-    ctx.fillRect(cx + 12, baseCy - 34, 6, 16);
+    ctx.fillRect(cx - 20, baseCy - 52, 40, 14);
+    ctx.fillRect(cx - 24, baseCy - 44, 8, 24); // Twin-tails!
+    ctx.fillRect(cx + 16, baseCy - 44, 8, 24);
+    // Ribbon
     ctx.fillStyle = '#ec4899';
-    ctx.fillRect(cx - 6, baseCy - 44, 12, 6);
+    ctx.fillRect(cx - 8, baseCy - 56, 16, 8);
   }
 
-  // Eyes
+  // 6. Eyes (Expressive)
   ctx.fillStyle = '#0f172a';
   if (char.emotion === 'happy' || char.emotion === 'celebrate') {
-    ctx.fillRect(cx - 8, baseCy - 24, 5, 2);
-    ctx.fillRect(cx + 3, baseCy - 24, 5, 2);
+    // Joyful crescent eyes ^ ^
+    ctx.fillRect(cx - 10, baseCy - 30, 6, 3);
+    ctx.fillRect(cx + 4, baseCy - 30, 6, 3);
   } else {
-    ctx.fillRect(cx - 8, baseCy - 25, 4, 6);
-    ctx.fillRect(cx + 4, baseCy - 25, 4, 6);
+    ctx.fillRect(cx - 11, baseCy - 32, 6, 8);
+    ctx.fillRect(cx + 5, baseCy - 32, 6, 8);
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(cx - 7, baseCy - 25, 2, 2);
-    ctx.fillRect(cx + 5, baseCy - 25, 2, 2);
+    ctx.fillRect(cx - 10, baseCy - 32, 3, 3);
+    ctx.fillRect(cx + 6, baseCy - 32, 3, 3);
   }
 
-  // Mouth
+  // 7. Mouth
   if (char.emotion === 'talk') {
-    const open = Math.sin(tick * 0.4) > 0;
+    const mouthOpen = Math.sin(tick * 0.4) > 0;
     ctx.fillStyle = '#dc2626';
-    ctx.fillRect(cx - 3, baseCy - 14, 6, open ? 5 : 2);
+    ctx.fillRect(cx - 4, baseCy - 18, 8, mouthOpen ? 7 : 3);
   } else if (char.emotion === 'celebrate' || char.emotion === 'happy') {
     ctx.fillStyle = '#dc2626';
-    ctx.fillRect(cx - 4, baseCy - 14, 8, 4);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(cx - 2, baseCy - 14, 4, 2);
+    ctx.fillRect(cx - 5, baseCy - 18, 10, 5);
   } else if (char.emotion === 'think') {
-    ctx.fillStyle = '#fed7aa';
-    ctx.fillRect(cx + 4, baseCy - 16, 6, 6);
+    // Thoughtful expression
     ctx.fillStyle = '#334155';
-    ctx.fillRect(cx - 2, baseCy - 13, 5, 2);
+    ctx.fillRect(cx - 3, baseCy - 17, 7, 3);
   } else {
     ctx.fillStyle = '#e11d48';
-    ctx.fillRect(cx - 3, baseCy - 14, 6, 2);
+    ctx.fillRect(cx - 4, baseCy - 17, 8, 3);
   }
 
-  // Name Tag in clean rounded pill
+  // 8. Name Tag Badge
   ctx.fillStyle = '#ffffff';
-  ctx.strokeStyle = '#334155';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.roundRect(cx - 26, baseCy + 38, 52, 16, 8);
+  ctx.roundRect(cx - 30, baseCy + 38, 60, 20, 10);
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = '#1e293b';
-  ctx.font = 'bold 10px "Fredoka", sans-serif';
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 12px "Fredoka", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(char.name, cx, baseCy + 50);
+  ctx.fillText(char.name, cx, baseCy + 52);
 }
 
-function drawPixelObject(
-  ctx: CanvasRenderingContext2D,
-  type: ObjectType,
-  x: number,
-  y: number,
-  colorIdx: number,
-  isHighlighted?: boolean,
-  countedNumber?: number,
-  tick: number = 0
-) {
-  const ox = Math.round(x);
-  const oy = Math.round(y);
+// ----------------------------------------------------
+// HIGH-VISIBILITY 32PX PIXEL OBJECT SPRITES
+// ----------------------------------------------------
 
-  if (isHighlighted) {
-    const pulse = Math.sin(tick * 0.15) * 5;
-    ctx.fillStyle = 'rgba(250, 204, 21, 0.5)';
+function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity, tick: number) {
+  const ox = Math.round(obj.x);
+  const oy = Math.round(obj.y + obj.bounceOffset);
+
+  // Return bounce back to 0
+  if (obj.bounceOffset < 0) {
+    obj.bounceOffset += 1.5;
+  }
+
+  // Pulsing highlight glow
+  if (obj.isHighlighted) {
+    const pulse = Math.sin(tick * 0.15) * 6;
+    ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';
     ctx.beginPath();
-    ctx.ellipse(ox, oy, 15 + pulse, 15 + pulse, 0, 0, Math.PI * 2);
+    ctx.arc(ox, oy, 22 + pulse, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  switch (type) {
-    case 'marble': {
-      const marbleColors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
-      const baseColor = marbleColors[colorIdx % marbleColors.length];
+  // Soft shadow on ground
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ctx.beginPath();
+  ctx.ellipse(ox, obj.groundY + 12, 16, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.fillRect(ox - 6, oy + 7, 12, 4);
+  switch (obj.type) {
+    case 'apple': {
+      // Big, vibrant, luscious red pixel apple (32x32)
+      ctx.fillStyle = '#dc2626'; // Deep red
+      ctx.beginPath();
+      ctx.arc(ox - 5, oy, 11, 0, Math.PI * 2);
+      ctx.arc(ox + 5, oy, 11, 0, Math.PI * 2);
+      ctx.fill();
 
-      ctx.fillStyle = baseColor;
-      ctx.fillRect(ox - 7, oy - 7, 14, 14);
+      ctx.fillStyle = '#ef4444'; // Bright red body
+      ctx.beginPath();
+      ctx.arc(ox, oy, 12, 0, Math.PI * 2);
+      ctx.fill();
 
+      // White gloss reflection
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(ox - 5, oy - 5, 4, 4);
+      ctx.fillRect(ox - 6, oy - 7, 4, 4);
+
+      // Brown Stem
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(ox - 1.5, oy - 18, 3, 7);
+
+      // Green Leaf
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.ellipse(ox + 5, oy - 16, 6, 3, Math.PI / 4, 0, Math.PI * 2);
+      ctx.fill();
       break;
     }
 
-    case 'apple': {
-      ctx.fillStyle = 'rgba(0,0,0,0.25)';
-      ctx.fillRect(ox - 7, oy + 8, 14, 3);
+    case 'marble': {
+      // 3D Glass Marble with Specular Highlight (28x28)
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+      const baseColor = colors[obj.colorIdx % colors.length];
 
-      ctx.fillStyle = '#ef4444';
-      ctx.fillRect(ox - 8, oy - 7, 16, 14);
-      ctx.fillStyle = '#b91c1c';
-      ctx.fillRect(ox - 6, oy - 9, 12, 3);
+      ctx.fillStyle = baseColor;
+      ctx.beginPath();
+      ctx.arc(ox, oy, 13, 0, Math.PI * 2);
+      ctx.fill();
 
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(ox - 1, oy - 12, 2, 4);
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(ox + 1, oy - 13, 5, 3);
+      // Inner swirl
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.arc(ox - 2, oy - 2, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sharp white highlight
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(ox - 6, oy - 6, 5, 5);
       break;
     }
 
     case 'coin': {
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(ox - 8, oy - 8, 16, 16);
+      // Golden Coin
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.arc(ox, oy, 14, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = '#fde047';
-      ctx.fillRect(ox - 6, oy - 6, 12, 12);
+      ctx.beginPath();
+      ctx.arc(ox, oy, 11, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = '#b45309';
-      ctx.fillRect(ox - 2, oy - 4, 4, 8);
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', ox, oy);
       break;
     }
 
     case 'star': {
+      // Glowing 5-point star
       ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(ox - 2, oy - 8, 4, 16);
-      ctx.fillRect(ox - 8, oy - 2, 16, 4);
-      ctx.fillRect(ox - 5, oy - 5, 10, 10);
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        ctx.lineTo(
+          ox + Math.cos(((18 + i * 72) * Math.PI) / 180) * 16,
+          oy - Math.sin(((18 + i * 72) * Math.PI) / 180) * 16
+        );
+        ctx.lineTo(
+          ox + Math.cos(((54 + i * 72) * Math.PI) / 180) * 7,
+          oy - Math.sin(((54 + i * 72) * Math.PI) / 180) * 7
+        );
+      }
+      ctx.closePath();
+      ctx.fill();
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(ox - 1, oy - 1, 2, 2);
+      ctx.fillRect(ox - 2, oy - 2, 4, 4);
       break;
     }
 
     case 'cake': {
       ctx.fillStyle = '#fbcfe8';
-      ctx.fillRect(ox - 9, oy - 6, 18, 12);
+      ctx.fillRect(ox - 14, oy - 8, 28, 18);
       ctx.fillStyle = '#fb7185';
-      ctx.fillRect(ox - 9, oy - 2, 18, 4);
-      ctx.fillStyle = '#ef4444';
-      ctx.fillRect(ox - 3, oy - 10, 6, 5);
+      ctx.fillRect(ox - 14, oy - 2, 28, 6);
+      ctx.fillStyle = '#ef4444'; // Strawberry
+      ctx.beginPath();
+      ctx.arc(ox, oy - 12, 6, 0, Math.PI * 2);
+      ctx.fill();
       break;
     }
   }
 
-  // Draw cute friendly round counter tag
-  if (countedNumber !== undefined) {
+  // Draw floating counted number badge if counted!
+  if (obj.countNumber !== undefined) {
     ctx.fillStyle = '#ef4444';
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(ox, oy - 18, 11, 0, Math.PI * 2);
+    ctx.arc(ox, oy - 26, 14, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px "Fredoka", sans-serif';
+    ctx.font = 'black 16px "Fredoka", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(countedNumber), ox, oy - 18);
+    ctx.fillText(String(obj.countNumber), ox, oy - 26);
   }
 }
 
-function drawSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string) {
-  const maxWidth = 220;
-  const padding = 12;
+// Draw Comic Speech Bubble
+function drawComicSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string) {
+  const maxWidth = 260;
+  const padding = 14;
 
-  ctx.font = 'bold 13px "Fredoka", sans-serif';
+  ctx.font = 'bold 14px "Fredoka", sans-serif';
   ctx.textAlign = 'center';
 
-  const boxW = Math.min(maxWidth, Math.max(120, ctx.measureText(text).width + padding * 2));
-  const boxH = 46;
+  const boxW = Math.min(maxWidth, Math.max(140, ctx.measureText(text).width + padding * 2));
+  const boxH = 50;
 
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#0f172a';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
 
   ctx.beginPath();
-  ctx.roundRect(x - boxW / 2, y - boxH / 2, boxW, boxH, 14);
+  ctx.roundRect(x - boxW / 2, y - boxH / 2, boxW, boxH, 16);
   ctx.fill();
   ctx.stroke();
 
+  // Pointer
   ctx.beginPath();
-  ctx.moveTo(x - 6, y + boxH / 2);
-  ctx.lineTo(x + 6, y + boxH / 2);
-  ctx.lineTo(x, y + boxH / 2 + 8);
+  ctx.moveTo(x - 8, y + boxH / 2);
+  ctx.lineTo(x + 8, y + boxH / 2);
+  ctx.lineTo(x, y + boxH / 2 + 10);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -790,8 +1022,8 @@ function drawSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, t
   ctx.fillStyle = '#0f172a';
   ctx.textBaseline = 'middle';
 
-  if (text.length > 34) {
-    const p1 = text.slice(0, 30) + '...';
+  if (text.length > 36) {
+    const p1 = text.slice(0, 32) + '...';
     ctx.fillText(p1, x, y);
   } else {
     ctx.fillText(text, x, y);
