@@ -16,6 +16,7 @@ interface PixelCanvasProps {
   interactiveCountMode?: boolean;
   activeSpeaker?: string | null;
   voiceLang?: 'id' | 'en';
+  boardText?: string;
 }
 
 interface CharacterEntity {
@@ -79,6 +80,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   interactiveCountMode = false,
   activeSpeaker = null,
   voiceLang = 'id',
+  boardText,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [countedTotal, setCountedTotal] = useState<number>(0);
@@ -321,7 +323,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       const h = canvas.height;
 
       ctx.imageSmoothingEnabled = false;
-      drawEnvironment(ctx, w, h, currentScene.background, state.tick);
+      drawEnvironment(ctx, w, h, currentScene.background, state.tick, boardText);
 
       // Character Movement Physics & Emotion State
       state.characters.forEach(char => {
@@ -562,7 +564,8 @@ function drawEnvironment(
   w: number,
   h: number,
   env: EnvironmentType,
-  tick: number
+  tick: number,
+  boardText?: string
 ) {
   switch (env) {
     case 'forest': {
@@ -718,9 +721,26 @@ function drawEnvironment(
       ctx.fillRect(132, 27, 10, 191);
       ctx.fillRect(w - 142, 27, 10, 191);
 
+      // Chalkboard writing synced with the active question / subject
+      const textToDisplay = boardText || '⭐ Belajar Ceria Bersama ⭐';
       ctx.fillStyle = '#f8fafc';
-      ctx.font = 'bold 32px "Fredoka", sans-serif';
-      ctx.fillText('10 - 4 = ?', w / 2 - 80, 135);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const fontSize = textToDisplay.length > 22 ? 18 : textToDisplay.length > 14 ? 22 : 30;
+      ctx.font = `bold ${fontSize}px "Fredoka", sans-serif`;
+      ctx.fillText(textToDisplay, w / 2, 122);
+      ctx.textAlign = 'start';
+      ctx.textBaseline = 'alphabetic';
+
+      // Chalk ledge & colored chalks
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(134, 218, w - 268, 6);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(170, 213, 14, 5);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(195, 213, 12, 5);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(217, 213, 12, 5);
 
       ctx.fillStyle = '#d97706';
       ctx.fillRect(0, h * 0.72, w, h * 0.28);

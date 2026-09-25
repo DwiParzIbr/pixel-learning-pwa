@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { StoryLesson, SceneDef, BadgeDef } from '@/types/story';
 import { PixelCanvas } from './PixelCanvas';
 import { QuestionModal } from './QuestionModal';
@@ -67,6 +67,55 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
     : activeLesson.scenes;
 
   const currentScene: SceneDef = scenes[currentSceneIndex] || scenes[0];
+
+  // Dynamically compute chalkboard text that matches the active subject, formula, or topic
+  const boardText = useMemo(() => {
+    // 1. Mathematics with formula: display the exact arithmetic equation
+    if (activeLesson.subject === 'mathematics') {
+      if (activeLesson.metadata?.mathFormula) {
+        const { operandA, operator, operandB } = activeLesson.metadata.mathFormula;
+        return `${operandA} ${operator} ${operandB} = ?`;
+      }
+      if (activeLesson.question?.visualHint?.formula) {
+        const hintFormula = activeLesson.question.visualHint.formula;
+        return hintFormula.includes('=') ? hintFormula.split('=')[0].trim() + ' = ?' : hintFormula;
+      }
+      return voiceLang === 'en' ? '🔢 Math & Numbers' : '🔢 Matematika Ceria';
+    }
+
+    // 2. Language: Reading & spelling
+    if (activeLesson.subject === 'language') {
+      if (activeLesson.topic === 'language_letters') return '🔤 A B C D E';
+      if (activeLesson.topic === 'language_spelling') return '📖 M - E - J - A';
+      if (activeLesson.topic === 'language_antonyms') return voiceLang === 'en' ? '🔄 Tall vs Short' : '🔄 Tinggi vs Pendek';
+      return voiceLang === 'en' ? '📖 Reading & Writing' : '📖 Belajar Membaca & Menulis';
+    }
+
+    // 3. Science: Nature & discovery
+    if (activeLesson.subject === 'science') {
+      if (activeLesson.topic === 'science_animals') return voiceLang === 'en' ? '🐾 Animal Friends' : '🐾 Sahabat Hewan';
+      if (activeLesson.topic === 'science_plants') return voiceLang === 'en' ? '🌱 Plants & Trees' : '🌱 Tumbuhan & Alam';
+      if (activeLesson.topic === 'science_weather') return voiceLang === 'en' ? '🌈 Weather & Sky' : '🌈 Cuaca & Pelangi';
+      if (activeLesson.topic === 'science_space') return voiceLang === 'en' ? '🚀 Earth & Moon' : '🚀 Bumi & Antariksa';
+      return voiceLang === 'en' ? '🔬 Science Explorer' : '🔬 Peneliti Cilik Sains';
+    }
+
+    // 4. Character: Good deeds & manners
+    if (activeLesson.subject === 'character') {
+      return voiceLang === 'en' ? '💖 Kindness & Manners 🤝' : '💖 Sopan Santun & Berbagi 🤝';
+    }
+
+    // 5. Logic: Brain riddles & puzzles
+    if (activeLesson.subject === 'logic') {
+      if (activeLesson.topic === 'logic_patterns') return '🔴 🔵 🔴 🔵 ... ?';
+      if (activeLesson.topic === 'logic_shapes') return '⭕ ⬛ 🔺 ⭐';
+      if (activeLesson.topic === 'logic_riddles') return voiceLang === 'en' ? '🧩 Brain Riddle 💡' : '🧩 Teka-Teki Cerdik 💡';
+      return voiceLang === 'en' ? '🧩 Smart Brain & Puzzle 💡' : '🧩 Logika & Asah Otak 💡';
+    }
+
+    return voiceLang === 'en' ? '⭐ Learn & Play Together ⭐' : '⭐ Belajar Ceria Bersama ⭐';
+  }, [activeLesson, voiceLang]);
+
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const dialogueDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -327,6 +376,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           isPaused={isPaused}
           activeSpeaker={activeSpeaker}
           voiceLang={voiceLang}
+          boardText={boardText}
           onSceneComplete={idx => {
             if (idx === -1) {
               handleRestartFullStory();
