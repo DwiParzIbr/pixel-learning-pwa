@@ -1,4 +1,4 @@
-export type SubjectType = 'mathematics' | 'science' | 'language' | 'logic';
+export type SubjectType = 'mathematics' | 'science' | 'language' | 'character' | 'logic';
 
 export type MathTopicType =
   | 'counting'
@@ -7,7 +7,23 @@ export type MathTopicType =
   | 'comparison'
   | 'multiplication'
   | 'division'
-  | 'general';
+  | 'general'
+  | 'science_nature'
+  | 'science_animals'
+  | 'science_plants'
+  | 'science_weather'
+  | 'science_space'
+  | 'language_letters'
+  | 'language_spelling'
+  | 'language_antonyms'
+  | 'language_comprehension'
+  | 'character_politeness'
+  | 'character_sharing'
+  | 'character_cleanliness'
+  | 'character_healthy'
+  | 'logic_patterns'
+  | 'logic_sorting'
+  | 'logic_shapes';
 
 export type CharacterEmotion =
   | 'idle'
@@ -32,7 +48,23 @@ export type ObjectType =
   | 'book'
   | 'coin'
   | 'star'
-  | 'cake';
+  | 'cake'
+  | 'flower'
+  | 'letter';
+
+export interface SubjectDef {
+  id: SubjectType;
+  title: string;
+  subtitle: string;
+  icon: string;
+  badge: string;
+  bannerTitle: string;
+  bannerDescription: string;
+  bannerGradient: string;
+  badgeBg: string;
+  themeColor: string;
+  levels: LevelDef[];
+}
 
 export interface CharacterDef {
   id: string;

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { LevelDef, ChildProfile, StoryLesson } from '@/types/story';
-import { mockLevels, canonicalSubtractionLesson } from '@/data/mockLessons';
+import { LevelDef, ChildProfile, StoryLesson, SubjectType } from '@/types/story';
+import { mockSubjects, mockLevels, canonicalSubtractionLesson } from '@/data/mockLessons';
 import { progressStore, availableBadges } from '@/lib/progress/progressStore';
 import { soundEngine } from '@/lib/audio/soundEngine';
 import {
@@ -17,6 +17,8 @@ import {
   Plus,
   Compass,
   CheckCircle2,
+  BookOpen,
+  ChevronRight,
 } from 'lucide-react';
 
 interface WorldMapProps {
@@ -34,8 +36,13 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   const [profiles, setProfiles] = useState<ChildProfile[]>(progressStore.getProfiles());
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
   const [showBadgesModal, setShowBadgesModal] = useState<boolean>(false);
+  const [showSubjectModal, setShowSubjectModal] = useState<boolean>(false);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<SubjectType>('mathematics');
   const [newChildName, setNewChildName] = useState<string>('');
   const [selectedAvatar, setSelectedAvatar] = useState<string>('👦');
+
+  const activeSubject = mockSubjects.find(s => s.id === selectedSubjectId) || mockSubjects[0];
+  const activeLevels = activeSubject.levels;
 
   useEffect(() => {
     const unsub = progressStore.subscribe(() => {
@@ -69,7 +76,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
 
   const xpProgressToNext = activeChild.xp % 100;
 
-  const currentLevelIndex = mockLevels.findIndex(
+  const currentLevelIndex = activeLevels.findIndex(
     lvl => activeChild.xp >= lvl.requiredXp && !activeChild.completedLessons.some(id => lvl.lessons.some(l => l.lessonId === id))
   );
   const activePinIdx = currentLevelIndex !== -1 ? currentLevelIndex : 0;
@@ -180,26 +187,79 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         </div>
       </header>
 
+      {/* Subject Selector Bar */}
+      <div className="sticky top-[52px] sm:top-[68px] z-30 bg-white/95 backdrop-blur-md border-b-2 border-amber-200/90 px-2 sm:px-4 py-1.5 sm:py-2 shadow-xs">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2">
+          {/* Menu Pelajaran Trigger Button */}
+          <button
+            onClick={() => {
+              soundEngine.playSfx('click');
+              setShowSubjectModal(true);
+            }}
+            className="candy-btn candy-btn-yellow flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl font-black text-xs shrink-0 active:scale-95"
+            title="Buka Menu Pelajaran Lengkap"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-950 shrink-0" />
+            <span>Pelajaran</span>
+          </button>
+
+          {/* Quick Subject Tabs */}
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            {mockSubjects.map(sub => {
+              const isSelected = sub.id === selectedSubjectId;
+              return (
+                <button
+                  key={sub.id}
+                  onClick={() => {
+                    soundEngine.playSfx('click');
+                    setSelectedSubjectId(sub.id);
+                  }}
+                  className={`flex items-center gap-1 px-2 sm:px-3 py-1 rounded-xl font-black text-xs transition-all whitespace-nowrap active:scale-95 ${
+                    isSelected
+                      ? 'candy-btn candy-btn-orange shadow-md scale-105'
+                      : 'bg-white hover:bg-amber-50 border-2 border-amber-200 text-slate-700'
+                  }`}
+                >
+                  <span className="text-sm sm:text-base">{sub.icon}</span>
+                  <span>{sub.title.split('&')[0].trim()}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* World Hero Island Banner */}
-      <section className="max-w-5xl mx-auto px-4 pt-6 pb-2 relative z-10">
-        <div className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 border-4 border-white rounded-[2.5rem] p-6 sm:p-8 shadow-[0_12px_24px_rgba(59,130,246,0.3)] relative overflow-hidden text-white">
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <section className="max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-2 relative z-10">
+        <div className={`bg-gradient-to-r ${activeSubject.bannerGradient} border-3 sm:border-4 border-white rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-[0_12px_24px_rgba(0,0,0,0.15)] relative overflow-hidden text-white`}>
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 bg-white/25 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-black text-xs uppercase tracking-wider mb-2.5 shadow-sm">
+              <div className="inline-flex items-center gap-1.5 bg-white/25 backdrop-blur-md px-3.5 py-1 rounded-full text-white font-black text-xs uppercase tracking-wider mb-2 shadow-sm">
                 <Compass className="w-4 h-4" />
-                <span>World 1: Petualangan Matematika</span>
+                <span>{activeSubject.title} • {activeLevels.length} Level</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl font-black text-white tracking-wide drop-shadow-md">
-                Jelajahi Pulau Angka! 🏝️
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-wide drop-shadow-md">
+                {activeSubject.bannerTitle}
               </h1>
-              <p className="text-white text-base sm:text-lg font-bold mt-2 max-w-xl leading-relaxed drop-shadow-sm">
-                Pilih pulau petualanganmu, nikmati cerita seru bersama Budi & Siti, dan kumpulkan bintang pahlawan!
+              <p className="text-white text-xs sm:text-base font-bold mt-1.5 sm:mt-2 max-w-xl leading-relaxed drop-shadow-sm">
+                {activeSubject.bannerDescription}
               </p>
+
+              <button
+                onClick={() => {
+                  soundEngine.playSfx('click');
+                  setShowSubjectModal(true);
+                }}
+                className="mt-3.5 inline-flex items-center gap-2 bg-white text-slate-900 hover:bg-amber-100 font-black text-xs sm:text-sm px-4 py-2 rounded-2xl shadow-lg active:scale-95 transition-all"
+              >
+                <span>Ganti Mata Pelajaran 🌈</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="shrink-0 flex items-center justify-center">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white/30 rounded-[2rem] border-3 border-white/70 flex items-center justify-center text-5xl sm:text-6xl shadow-xl animate-float-kid">
-                🗺️
+              <div className="w-20 h-20 sm:w-28 sm:h-28 bg-white/30 rounded-[2rem] border-3 border-white/70 flex items-center justify-center text-4xl sm:text-6xl shadow-xl animate-float-kid">
+                {activeSubject.icon}
               </div>
             </div>
           </div>
@@ -207,12 +267,12 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       </section>
 
       {/* Adventure Trail Path with Cartoon Stepping Stones */}
-      <section className="max-w-3xl mx-auto px-4 py-8 relative z-10">
+      <section className="max-w-3xl mx-auto px-4 py-6 sm:py-8 relative z-10">
         <div className="relative flex flex-col items-center gap-8">
           {/* Stepping Stone Connector Line */}
           <div className="absolute top-12 bottom-12 w-6 bg-gradient-to-b from-amber-300 via-emerald-300 to-yellow-400 rounded-full border-3 border-amber-400/80 shadow-md -z-0" />
 
-          {mockLevels.map((lvl, index) => {
+          {activeLevels.map((lvl, index) => {
             const isUnlocked = activeChild.xp >= lvl.requiredXp;
             const isCompleted = activeChild.completedLessons.some(id =>
               lvl.lessons.some(l => l.lessonId === id)
@@ -454,6 +514,81 @@ export const WorldMap: React.FC<WorldMapProps> = ({
               className="w-full mt-6 candy-btn candy-btn-yellow py-3 rounded-2xl font-black text-base"
             >
               Kembali ke Petualangan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Subject Menu Hub Modal */}
+      {showSubjectModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-pop-in">
+          <div className="bg-white border-4 border-amber-300 rounded-[2.5rem] p-5 sm:p-8 max-w-2xl w-full shadow-2xl text-slate-800 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b-2 border-slate-100 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-3xl">📚</span>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">Menu Mata Pelajaran</h3>
+                  <p className="text-xs text-slate-500 font-bold">Pilih tema petualangan favorit untuk anak hari ini!</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSubjectModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-2xl font-black p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {mockSubjects.map(sub => {
+                const isSelected = sub.id === selectedSubjectId;
+                const completedInSubject = sub.levels.filter(lvl =>
+                  lvl.lessons.some(l => activeChild.completedLessons.includes(l.lessonId))
+                ).length;
+
+                return (
+                  <div
+                    key={sub.id}
+                    onClick={() => {
+                      soundEngine.playSfx('celebrate');
+                      setSelectedSubjectId(sub.id);
+                      setShowSubjectModal(false);
+                    }}
+                    className={`p-4 rounded-3xl border-3 cursor-pointer transition-all active:scale-[0.98] ${
+                      isSelected
+                        ? 'bg-amber-50 border-amber-400 shadow-md ring-3 ring-amber-300'
+                        : 'bg-slate-50 hover:bg-white border-slate-200 hover:border-amber-300 shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-3xl shadow-sm shrink-0">
+                        {sub.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">
+                            {sub.badge}
+                          </span>
+                          {completedInSubject > 0 && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                              ✓ {completedInSubject}/{sub.levels.length}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-black text-base text-slate-900 leading-snug">{sub.title}</h4>
+                        <p className="text-xs text-slate-500 font-bold mt-1 line-clamp-2">{sub.subtitle}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setShowSubjectModal(false)}
+              className="w-full mt-5 candy-btn candy-btn-yellow py-3 rounded-2xl font-black text-sm"
+            >
+              Mulai Petualangan Sekarang!
             </button>
           </div>
         </div>

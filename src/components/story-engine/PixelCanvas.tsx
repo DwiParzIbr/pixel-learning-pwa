@@ -401,22 +401,22 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
 
     state.objects.forEach(obj => {
       const dist = Math.hypot(obj.x - clickX, obj.y - clickY);
-      if (dist < 32 && !obj.isCounted) {
+      if (dist < 44 && !obj.isCounted) {
         newlyCounted = true;
         newCount++;
         obj.isCounted = true;
         obj.countNumber = newCount;
         obj.isHighlighted = true;
-        obj.bounceOffset = -18;
+        obj.bounceOffset = -22;
 
         soundEngine.playSfx('count');
 
-        for (let p = 0; p < 8; p++) {
+        for (let p = 0; p < 10; p++) {
           state.particles.push({
             x: obj.x,
             y: obj.y,
-            vx: (Math.random() - 0.5) * 4,
-            vy: -Math.random() * 4 - 1,
+            vx: (Math.random() - 0.5) * 5,
+            vy: -Math.random() * 5 - 2,
             color: '#fde047',
             size: 4,
             alpha: 1,
@@ -436,13 +436,13 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   return (
     <div className="relative w-full flex flex-col items-center select-none font-fun">
       {/* Handheld Toy Console Frame */}
-      <div className="w-full max-w-4xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 rounded-[2.5rem] p-4 sm:p-5 shadow-[0_16px_36px_rgba(245,158,11,0.3)] border-4 border-amber-200 relative">
+      <div className="w-full max-w-4xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 rounded-2xl sm:rounded-[2.5rem] p-2 sm:p-4 shadow-[0_12px_32px_rgba(245,158,11,0.25)] border-3 sm:border-4 border-amber-200 relative">
         {/* Top Console Notch */}
-        <div className="flex items-center justify-between px-4 pb-2 text-amber-900 font-extrabold text-xs sm:text-sm">
-          <div className="flex items-center gap-2">
-            <span className="w-3.5 h-3.5 rounded-full bg-amber-600/70 shadow-inner" />
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-600/50" />
-            <span className="tracking-wider">PANGGUNG PETUALANGAN 2D</span>
+        <div className="flex items-center justify-between px-2 sm:px-4 pb-1.5 sm:pb-2 text-amber-900 font-extrabold text-[11px] sm:text-sm">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-amber-600/70 shadow-inner" />
+            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-600/50" />
+            <span className="tracking-wide">PANGGUNG PETUALANGAN CERITA</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -452,37 +452,39 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
                 applySceneActions(0);
                 onSceneComplete?.(-1); // Reset story from start
               }}
-              className="bg-white/80 hover:bg-white text-amber-900 font-black text-xs px-3.5 py-1 rounded-full flex items-center gap-1 shadow-sm active:scale-95 transition-all"
+              className="bg-white/90 hover:bg-white text-amber-900 font-black text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1 rounded-full flex items-center gap-1 shadow-sm active:scale-95 transition-all"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+              <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-700" />
               <span>Putar Dari Awal</span>
             </button>
           </div>
         </div>
 
-        {/* Screen Bevel & Canvas */}
-        <div className="relative w-full aspect-[16/9] bg-slate-900 rounded-3xl overflow-hidden shadow-inner border-4 border-slate-950/40">
+        {/* Screen Bevel & Canvas (Bigger & Taller on Mobile) */}
+        <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] bg-slate-900 rounded-2xl sm:rounded-3xl overflow-hidden shadow-inner border-3 sm:border-4 border-slate-950/40">
           <canvas
             ref={canvasRef}
-            width={800}
-            height={450}
+            width={720}
+            height={420}
             onClick={handleCanvasClick}
             className="w-full h-full cursor-pointer touch-none block"
             style={{ imageRendering: 'pixelated' }}
           />
 
-          {/* Interactive touch guidance pill */}
-          <div className="absolute top-4 left-4 bg-white/95 text-slate-800 font-bold text-xs sm:text-base px-3.5 py-1.5 rounded-2xl shadow-xl border-2 border-emerald-400 flex items-center gap-2 sm:gap-3">
-            <Hand className="w-5 h-5 text-emerald-500 animate-wiggle" />
-            <span>Sentuh benda untuk berhitung:</span>
-            <span className="bg-emerald-500 text-white px-2.5 py-0.5 rounded-full font-black text-sm shadow">
-              {countedTotal}
-            </span>
-          </div>
+          {/* Interactive touch guidance pill (Only during counting mode) */}
+          {interactiveCountMode && (
+            <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 bg-white/95 text-slate-800 font-bold text-xs sm:text-base px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-2xl shadow-xl border-2 border-emerald-400 flex items-center gap-1.5 sm:gap-3">
+              <Hand className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 animate-wiggle shrink-0" />
+              <span>Sentuh apel di layar:</span>
+              <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-full font-black text-xs sm:text-sm shadow">
+                {countedTotal}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Console Footing */}
-        <div className="flex items-center justify-between px-6 pt-3">
+        {/* Console Footing (Hidden on mobile to avoid clutter) */}
+        <div className="hidden sm:flex items-center justify-between px-6 pt-3">
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded-full bg-rose-500 border-2 border-rose-300 shadow" />
             <span className="w-4 h-4 rounded-full bg-sky-500 border-2 border-sky-300 shadow" />
@@ -515,62 +517,95 @@ function drawEnvironment(
 ) {
   switch (env) {
     case 'forest': {
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
-      skyGrad.addColorStop(0, '#15803d');
-      skyGrad.addColorStop(0.4, '#166534');
-      skyGrad.addColorStop(1, '#14532d');
+      // Sunny bright morning sky
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.72);
+      skyGrad.addColorStop(0, '#38bdf8');
+      skyGrad.addColorStop(0.6, '#7dd3fc');
+      skyGrad.addColorStop(1, '#e0f2fe');
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, w, h);
 
-      ctx.fillStyle = 'rgba(254, 240, 138, 0.08)';
+      // Smiling Sun
+      ctx.fillStyle = '#fde047';
       ctx.beginPath();
-      ctx.moveTo(100, 0);
-      ctx.lineTo(280, 0);
-      ctx.lineTo(450, h);
-      ctx.lineTo(250, h);
+      ctx.arc(80, 70, 36, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(80, 70, 36, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Soft Clouds
+      drawPixelCloud(ctx, 140 + Math.sin(tick * 0.02) * 10, 40);
+      drawPixelCloud(ctx, 360 + Math.cos(tick * 0.015) * 12, 60);
+
+      // Distant rolling green hills
+      ctx.fillStyle = '#86efac';
+      ctx.beginPath();
+      ctx.arc(160, h * 0.75, 220, Math.PI, 0);
       ctx.fill();
 
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(w - 240, 60, 90, h - 60);
-      ctx.fillStyle = '#451a03';
-      ctx.fillRect(w - 200, 60, 24, h - 60);
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath();
+      ctx.arc(380, h * 0.76, 200, Math.PI, 0);
+      ctx.fill();
 
+      // Large Lush Cartoon Apple Tree
+      const treeX = w - 190;
+      // Trunk
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(treeX - 28, h * 0.32, 56, h * 0.42);
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(treeX - 8, h * 0.35, 16, h * 0.39);
+
+      // Crown layers
       ctx.fillStyle = '#15803d';
       ctx.beginPath();
-      ctx.arc(w - 195, 120, 150, 0, Math.PI * 2);
+      ctx.arc(treeX, h * 0.32, 125, 0, Math.PI * 2);
       ctx.fill();
+
       ctx.fillStyle = '#16a34a';
       ctx.beginPath();
-      ctx.arc(w - 170, 100, 120, 0, Math.PI * 2);
+      ctx.arc(treeX - 45, h * 0.28, 90, 0, Math.PI * 2);
+      ctx.arc(treeX + 45, h * 0.28, 90, 0, Math.PI * 2);
+      ctx.arc(treeX, h * 0.18, 85, 0, Math.PI * 2);
       ctx.fill();
 
+      // Big bright hanging tree apples
       const treeApples = [
-        { x: w - 260, y: 120 },
-        { x: w - 190, y: 80 },
-        { x: w - 130, y: 130 },
-        { x: w - 210, y: 160 },
+        { x: treeX - 70, y: h * 0.28 },
+        { x: treeX - 25, y: h * 0.15 },
+        { x: treeX + 45, y: h * 0.19 },
+        { x: treeX + 75, y: h * 0.30 },
+        { x: treeX, y: h * 0.32 },
       ];
-      treeApples.forEach(app => {
-        ctx.fillStyle = '#ef4444';
+      treeApples.forEach((app, idx) => {
+        const bob = Math.sin(tick * 0.08 + idx) * 3;
+        ctx.fillStyle = '#dc2626';
         ctx.beginPath();
-        ctx.arc(app.x, app.y, 10, 0, Math.PI * 2);
+        ctx.arc(app.x, app.y + bob, 13, 0, Math.PI * 2);
         ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(app.x - 4, app.y + bob - 5, 4, 4);
         ctx.fillStyle = '#22c55e';
-        ctx.fillRect(app.x, app.y - 12, 4, 3);
+        ctx.fillRect(app.x - 2, app.y + bob - 16, 5, 4);
       });
 
-      ctx.fillStyle = '#1e3a1e';
+      // Ground (Lush green grass)
+      ctx.fillStyle = '#166534';
       ctx.fillRect(0, h * 0.72, w, h * 0.28);
-      ctx.fillStyle = '#15803d';
-      ctx.fillRect(0, h * 0.72, w, 12);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(0, h * 0.72, w, 14);
 
-      ctx.fillStyle = '#ef4444';
-      ctx.fillRect(90, h * 0.76, 20, 14);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(94, h * 0.78, 4, 4);
-      ctx.fillRect(102, h * 0.78, 4, 4);
-      ctx.fillStyle = '#fed7aa';
-      ctx.fillRect(98, h * 0.88, 6, 12);
+      // Wildflowers on grass
+      const flowerXs = [50, 110, 190, 260, 340, 420, 520, 620];
+      flowerXs.forEach((fx, i) => {
+        ctx.fillStyle = i % 2 === 0 ? '#facc15' : '#f43f5e';
+        ctx.beginPath();
+        ctx.arc(fx, h * 0.77 + (i % 3) * 6, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
       break;
     }
 
@@ -720,6 +755,11 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
   const cx = Math.round(char.x);
   const cy = Math.round(char.y);
 
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(1.25, 1.25);
+  ctx.translate(-cx, -cy);
+
   let stepOffset = 0;
   let bobY = 0;
   let armSwing = 0;
@@ -820,6 +860,8 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
   ctx.font = 'bold 12px "Fredoka", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(char.name, cx, baseCy + 52);
+
+  ctx.restore();
 }
 
 // ----------------------------------------------------
@@ -829,6 +871,11 @@ function drawPixelCharacterSprite(ctx: CanvasRenderingContext2D, char: Character
 function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity, tick: number) {
   const ox = Math.round(obj.x);
   const oy = Math.round(obj.y + obj.bounceOffset);
+
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.scale(1.35, 1.35);
+  ctx.translate(-ox, -oy);
 
   if (obj.bounceOffset < 0) {
     obj.bounceOffset += 1.5;
@@ -942,6 +989,56 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
       ctx.fill();
       break;
     }
+
+    case 'book': {
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(ox - 14, oy - 10, 28, 20);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(ox - 12, oy - 8, 11, 16);
+      ctx.fillRect(ox + 1, oy - 8, 11, 16);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(ox - 10, oy - 4, 7, 2);
+      ctx.fillRect(ox - 10, oy, 7, 2);
+      ctx.fillRect(ox + 3, oy - 4, 7, 2);
+      ctx.fillRect(ox + 3, oy, 7, 2);
+      break;
+    }
+
+    case 'flower': {
+      const petalColors = ['#f43f5e', '#ec4899', '#fb7185', '#a855f7'];
+      const color = petalColors[obj.colorIdx % petalColors.length];
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(ox - 2, oy, 4, 14);
+      ctx.beginPath();
+      ctx.ellipse(ox + 5, oy + 7, 5, 2.5, Math.PI / 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(ox - 6, oy - 6, 6, 0, Math.PI * 2);
+      ctx.arc(ox + 6, oy - 6, 6, 0, Math.PI * 2);
+      ctx.arc(ox - 6, oy + 4, 6, 0, Math.PI * 2);
+      ctx.arc(ox + 6, oy + 4, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(ox, oy - 1, 5, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+
+    case 'letter': {
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(ox - 12, oy - 12, 24, 24);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(ox - 10, oy - 10, 20, 20);
+      ctx.fillStyle = '#b45309';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const letters = ['A', 'B', 'C', 'D', 'E'];
+      ctx.fillText(letters[obj.colorIdx % letters.length], ox, oy);
+      break;
+    }
   }
 
   if (obj.countNumber !== undefined) {
@@ -959,6 +1056,8 @@ function drawPixelObjectSprite(ctx: CanvasRenderingContext2D, obj: ObjectEntity,
     ctx.textBaseline = 'middle';
     ctx.fillText(String(obj.countNumber), ox, oy - 26);
   }
+
+  ctx.restore();
 }
 
 function drawComicSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string) {
