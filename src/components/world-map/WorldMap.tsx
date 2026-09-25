@@ -187,8 +187,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         </div>
       </header>
 
-      {/* Subject Selector Bar */}
-      <div className="sticky top-[52px] sm:top-[68px] z-30 bg-white/95 backdrop-blur-md border-b-2 border-amber-200/90 px-2 sm:px-4 py-1.5 sm:py-2 shadow-xs">
+      {/* Subject Selector Bar (Hidden on mobile as requested, visible on tablet/desktop) */}
+      <div className="hidden sm:block sticky top-[68px] z-30 bg-white/95 backdrop-blur-md border-b-2 border-amber-200/90 px-2 sm:px-4 py-1.5 sm:py-2 shadow-xs">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2">
           {/* Menu Pelajaran Trigger Button */}
           <button
