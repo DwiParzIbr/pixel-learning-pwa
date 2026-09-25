@@ -384,14 +384,14 @@ export const WorldMap: React.FC<WorldMapProps> = ({
 
       {/* Profile Switcher Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-pop-in">
-          <div className="bg-white border-4 border-amber-300 rounded-[2.5rem] p-6 max-w-md w-full shadow-2xl text-slate-800">
-            <h3 className="text-2xl font-black text-slate-800 mb-4 flex items-center gap-2">
-              <Users className="w-7 h-7 text-amber-500" />
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-pop-in">
+          <div className="bg-white border-4 border-amber-300 rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 max-w-md w-full shadow-2xl text-slate-800">
+            <h3 className="text-xl sm:text-2xl font-black text-slate-800 mb-3 sm:mb-4 flex items-center gap-2">
+              <Users className="w-6 h-6 sm:w-7 sm:h-7 text-amber-500" />
               <span>Pilih Teman Belajar</span>
             </h3>
 
-            <div className="space-y-3 mb-6 max-h-60 overflow-y-auto pr-1">
+            <div className="space-y-2.5 sm:space-y-3 mb-4 sm:mb-6 max-h-56 sm:max-h-60 overflow-y-auto pr-1">
               {profiles.map(p => (
                 <div
                   key={p.id}
@@ -400,23 +400,23 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                     setShowProfileModal(false);
                     soundEngine.playSfx('click');
                   }}
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border-3 cursor-pointer transition-all active:scale-95 ${
+                  className={`flex items-center justify-between p-2.5 sm:p-3.5 rounded-2xl border-2 sm:border-3 cursor-pointer transition-all active:scale-95 ${
                     p.id === activeChild.id
                       ? 'bg-amber-100 border-amber-400 shadow-md'
                       : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-4xl">{p.avatar}</span>
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <span className="text-3xl sm:text-4xl">{p.avatar}</span>
                     <div>
-                      <h4 className="font-extrabold text-base text-slate-900">{p.name}</h4>
-                      <p className="text-xs text-amber-800 font-bold">
+                      <h4 className="font-extrabold text-sm sm:text-base text-slate-900">{p.name}</h4>
+                      <p className="text-[11px] sm:text-xs text-amber-800 font-bold">
                         Level {p.level} • {p.xp} XP • {p.completedLessons.length} Cerita
                       </p>
                     </div>
                   </div>
                   {p.id === activeChild.id && (
-                    <span className="text-xs bg-amber-400 text-amber-950 font-black px-3 py-1 rounded-full shadow-sm">
+                    <span className="text-xs bg-amber-400 text-amber-950 font-black px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-sm">
                       Aktif
                     </span>
                   )}
@@ -425,39 +425,39 @@ export const WorldMap: React.FC<WorldMapProps> = ({
             </div>
 
             {/* Create New Profile Form */}
-            <form onSubmit={handleCreateProfile} className="border-t-2 border-slate-100 pt-4">
+            <form onSubmit={handleCreateProfile} className="border-t-2 border-slate-100 pt-3 sm:pt-4">
               <span className="block text-xs font-black text-slate-500 mb-2 uppercase">
                 Tambah Teman Baru
               </span>
-              <div className="flex gap-2 mb-3">
+              <div className="grid grid-cols-6 gap-1.5 sm:gap-2 mb-3">
                 {['👦', '👧', '🦊', '🦁', '🚀', '🐼'].map(emoji => (
                   <button
                     key={emoji}
                     type="button"
                     onClick={() => setSelectedAvatar(emoji)}
-                    className={`w-11 h-11 rounded-2xl text-2xl border-2 flex items-center justify-center transition-all ${
+                    className={`aspect-square w-full rounded-xl sm:rounded-2xl text-xl sm:text-2xl border-2 flex items-center justify-center transition-all ${
                       selectedAvatar === emoji
-                        ? 'bg-amber-300 border-amber-500 scale-110 shadow-md'
-                        : 'bg-slate-100 border-slate-200'
+                        ? 'bg-amber-300 border-amber-500 scale-105 shadow-md ring-2 ring-amber-400'
+                        : 'bg-slate-100 border-slate-200 hover:bg-slate-200'
                     }`}
                   >
                     {emoji}
                   </button>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
                   placeholder="Nama panggilan..."
                   value={newChildName}
                   onChange={e => setNewChildName(e.target.value)}
-                  className="flex-1 bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-2.5 font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                  className="min-w-0 flex-1 bg-slate-100 border-2 border-slate-200 rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-400"
                 />
                 <button
                   type="submit"
-                  className="candy-btn candy-btn-yellow font-black px-5 py-2.5 rounded-2xl flex items-center gap-1"
+                  className="candy-btn candy-btn-yellow font-black px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl flex items-center justify-center gap-1 text-xs sm:text-sm shrink-0 active:scale-95"
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                   <span>Tambah</span>
                 </button>
               </div>
@@ -465,7 +465,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
 
             <button
               onClick={() => setShowProfileModal(false)}
-              className="w-full mt-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800"
+              className="w-full mt-3 sm:mt-4 py-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800"
             >
               Tutup
             </button>
