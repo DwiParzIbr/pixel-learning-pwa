@@ -161,57 +161,58 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({ lesson, onExit, onComp
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100 text-slate-800 flex flex-col items-center justify-between p-3 sm:p-6 select-none font-fun">
       {/* Top Navbar */}
-      <header className="w-full max-w-4xl flex items-center justify-between gap-3 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 rounded-3xl shadow-[0_8px_20px_rgba(0,0,0,0.06)] border-3 border-amber-300 mb-3">
+      <header className="w-full max-w-4xl flex items-center justify-between gap-1.5 sm:gap-3 bg-white/95 backdrop-blur-md px-2.5 sm:px-6 py-2 sm:py-3 rounded-2xl sm:rounded-3xl shadow-[0_8px_20px_rgba(0,0,0,0.06)] border-3 border-amber-300 mb-3">
         <button
           onClick={onExit}
-          className="candy-btn candy-btn-yellow flex items-center gap-2 px-4 py-2 rounded-2xl font-black text-sm sm:text-base active:scale-95"
+          className="candy-btn candy-btn-yellow flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-xs sm:text-base active:scale-95 shrink-0"
         >
-          <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
-          <span>Peta Petualangan</span>
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+          <span className="hidden sm:inline">Peta Petualangan</span>
+          <span className="sm:hidden">Peta</span>
         </button>
 
         {/* Center Title & Continuous Episode Badge */}
-        <div className="flex flex-col items-center">
-          <div className="bg-amber-100 border border-amber-300 px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-            <span className="text-base">🎬</span>
-            <span className="font-black text-xs sm:text-sm text-amber-950 truncate max-w-[180px] sm:max-w-xs">
+        <div className="flex flex-col items-center min-w-0">
+          <div className="bg-amber-100 border border-amber-300 px-2.5 sm:px-4 py-0.5 sm:py-1 rounded-full flex items-center gap-1 shadow-sm max-w-full">
+            <span className="text-xs sm:text-base">🎬</span>
+            <span className="font-black text-xs sm:text-sm text-amber-950 truncate max-w-[110px] xs:max-w-[160px] sm:max-w-xs">
               {isRemedialMode ? 'Cerita Remedial' : activeLesson.title}
             </span>
           </div>
-          <span className="text-xs font-black text-amber-800 mt-1 flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-            <span>Cerita Berjalan Otomatis (Full)</span>
+          <span className="text-[10px] sm:text-xs font-black text-amber-800 mt-0.5 sm:mt-1 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+            <span>Otomatis Berjalan</span>
           </span>
         </div>
 
         {/* Playful Top Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
             onClick={toggleBgm}
             title="Musik Ceria"
-            className={`candy-btn p-2.5 rounded-2xl font-bold flex items-center justify-center ${
+            className={`candy-btn p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center ${
               isBgmActive ? 'candy-btn-green' : 'bg-slate-100 border-b-4 border-slate-300 text-slate-600'
             }`}
           >
-            <Music className="w-5 h-5" />
+            <Music className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           <button
             onClick={toggleSound}
             title={isMuted ? 'Nyalakan Suara' : 'Bisukan Suara'}
-            className={`candy-btn p-2.5 rounded-2xl font-bold flex items-center justify-center ${
+            className={`candy-btn p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center ${
               isMuted ? 'candy-btn-orange' : 'candy-btn-blue'
             }`}
           >
-            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            {isMuted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
 
           <button
             onClick={() => setIsPaused(!isPaused)}
             title={isPaused ? 'Lanjutkan Cerita' : 'Jeda Cerita'}
-            className="candy-btn bg-slate-100 border-b-4 border-slate-300 text-slate-700 p-2.5 rounded-2xl font-bold"
+            className="candy-btn bg-slate-100 border-b-4 border-slate-300 text-slate-700 p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl font-bold flex items-center justify-center"
           >
-            {isPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
+            {isPaused ? <Play className="w-4 h-4 sm:w-5 sm:h-5" /> : <Pause className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
         </div>
       </header>
