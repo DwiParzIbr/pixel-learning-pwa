@@ -47,7 +47,6 @@ class SoundEngine {
       | 'celebrate'
       | 'count'
       | 'star'
-      | 'pop'
   ) {
     if (this.isMuted) return;
     this.initContext();
@@ -59,17 +58,6 @@ class SoundEngine {
     gain.connect(this.sfxGain);
 
     switch (type) {
-      case 'pop': {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(340, t);
-        osc.frequency.exponentialRampToValueAtTime(780, t + 0.08);
-        gain.gain.setValueAtTime(0.25, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
-        osc.connect(gain);
-        osc.start(t);
-        osc.stop(t + 0.08);
-        break;
-      }
       case 'click': {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(800, t);

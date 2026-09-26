@@ -5,7 +5,6 @@ import {
   voiceEngine,
   VoicePersona,
   VoiceLanguage,
-  ExpressivityMode,
 } from '@/lib/audio/voiceEngine';
 import { soundEngine } from '@/lib/audio/soundEngine';
 import { Volume2, Check, Sparkles, X, Play, Globe } from 'lucide-react';
@@ -18,7 +17,6 @@ interface VoiceSettingsModalProps {
 export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, onClose }) => {
   const [selectedLang, setSelectedLang] = useState<VoiceLanguage>(voiceEngine.getLanguage());
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>(voiceEngine.getActivePersonaId());
-  const [expressivityMode, setExpressivityMode] = useState<ExpressivityMode>(voiceEngine.getExpressivityMode());
   const [isPlayingPreview, setIsPlayingPreview] = useState<string | null>(null);
   const [systemVoices, setSystemVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>(voiceEngine.getSelectedVoiceURI() || '');
@@ -28,7 +26,6 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
       const currentLang = voiceEngine.getLanguage();
       setSelectedLang(currentLang);
       setSelectedPersonaId(voiceEngine.getActivePersonaId());
-      setExpressivityMode(voiceEngine.getExpressivityMode());
       setSelectedVoiceURI(voiceEngine.getSelectedVoiceURI(currentLang) || '');
       loadSystemVoices(currentLang);
     }
@@ -52,23 +49,6 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
     }
   };
 
-  const handlePreviewExpressivity = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    soundEngine.playSfx('click');
-    setIsPlayingPreview('expressivity_demo');
-    const demoText =
-      selectedLang === 'en'
-        ? "Hello superstars! Wow, look at those shiny red apples! They look so sweet! Let's pick them together. How many apples did we find?"
-        : "Halo teman-teman! Wah, lihat buah apel merah itu! Manis sekali! Ayo kita petik bersama-sama ya. Berapa apel yang sudah kita kumpulkan?";
-
-    voiceEngine.speak(demoText, {
-      speaker: 'narrator',
-      lang: selectedLang,
-      expressivity: expressivityMode,
-      onEnd: () => setIsPlayingPreview(null),
-    });
-  };
-
   const handlePreviewNarrator = (persona: VoicePersona, e: React.MouseEvent) => {
     e.stopPropagation();
     soundEngine.playSfx('click');
@@ -78,7 +58,6 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
       rate: persona.rate,
       speaker: 'narrator',
       lang: persona.lang,
-      expressivity: expressivityMode,
       onEnd: () => setIsPlayingPreview(null),
     });
   };
@@ -101,7 +80,6 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
     soundEngine.playSfx('celebrate');
     voiceEngine.setLanguage(selectedLang);
     voiceEngine.setPersona(selectedPersonaId);
-    voiceEngine.setExpressivityMode(expressivityMode);
     voiceEngine.setSelectedVoiceURI(selectedVoiceURI || null, selectedLang);
     onClose();
   };
@@ -181,7 +159,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
               </>
             ) : (
               <>
-                <strong>Sistem Suara Terpisah (Damayanti):</strong> Narator menggunakan suara resmi <strong>Damayanti</strong>, Budi menggunakan karakter <strong>anak cowok kecil</strong>, dan Siti menggunakan karakter <strong>anak cewek kecil</strong>.
+                <strong>Sistem Suara Terpisah:</strong> 1 suara Narator membacakan alur cerita & soal, serta suara khusus untuk karakter anak (Budi & Siti).
               </>
             )}
           </span>
@@ -220,22 +198,9 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
                         {char.icon}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <h5 className="font-black text-xs sm:text-sm text-slate-900 truncate">
-                            {char.name}
-                          </h5>
-                          <span
-                            className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                              isBudi
-                                ? 'bg-amber-200/80 text-amber-900'
-                                : 'bg-pink-200/80 text-pink-900'
-                            }`}
-                          >
-                            {isBudi
-                              ? (selectedLang === 'en' ? 'Boy Voice' : 'Anak Cowok')
-                              : (selectedLang === 'en' ? 'Girl Voice' : 'Anak Cewek')}
-                          </span>
-                        </div>
+                        <h5 className="font-black text-xs sm:text-sm text-slate-900 truncate">
+                          {char.name}
+                        </h5>
                         <p className="text-[10px] text-slate-500 font-bold leading-tight line-clamp-1">
                           {char.description}
                         </p>
@@ -257,8 +222,8 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
                         {isPlaying
                           ? 'Playing...'
                           : selectedLang === 'en'
-                          ? `Test ${isBudi ? 'Budi (Boy)' : 'Siti (Girl)'} Voice`
-                          : `Tes Suara ${isBudi ? 'Budi (Anak Cowok)' : 'Siti (Anak Cewek)'}`}
+                          ? `Test ${isBudi ? 'Budi' : 'Siti'} Voice`
+                          : `Tes Suara ${isBudi ? 'Budi' : 'Siti'}`}
                       </span>
                     </button>
                   </div>
@@ -267,107 +232,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
             </div>
           </div>
 
-          {/* SECTION 2: EXPRESSIVITY & EMOTIONAL INTONATION */}
-          <div className="bg-gradient-to-r from-amber-50/80 via-orange-50/60 to-yellow-50/80 p-3 sm:p-3.5 rounded-2xl border-2 border-amber-200">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs sm:text-sm font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
-                <span>✨</span>
-                <span>{selectedLang === 'en' ? 'Voice Expressivity & Prosody' : 'Gaya Nada & Ekspresi Suara'}</span>
-              </h4>
-              <span className="text-[10px] font-black bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full">
-                {selectedLang === 'en' ? 'Natural Flow' : 'Lebih Hidup & Alami'}
-              </span>
-            </div>
-
-            <p className="text-[11px] text-amber-800 font-bold mb-2.5 leading-snug">
-              {selectedLang === 'en'
-                ? 'Adjusts emotional pitch variations, clause breathing pauses, and enthusiastic inflection!'
-                : 'Mengatur variasi tinggi-rendah nada emosional, jeda napas antar-klausa, dan kehangatan suara agar tidak kaku!'}
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2.5">
-              {[
-                {
-                  id: 'vibrant' as ExpressivityMode,
-                  emoji: '⚡',
-                  title: selectedLang === 'en' ? 'Vibrant' : 'Super Ceria',
-                  desc: selectedLang === 'en' ? 'Dynamic & joyful' : 'Riang & penuh semangat',
-                  color: 'border-amber-400 bg-white ring-2 ring-amber-300',
-                },
-                {
-                  id: 'storyteller' as ExpressivityMode,
-                  emoji: '📖',
-                  title: selectedLang === 'en' ? 'Storyteller' : 'Mendongeng',
-                  desc: selectedLang === 'en' ? 'Warm & paced' : 'Hangat & berirama',
-                  color: 'border-purple-400 bg-white ring-2 ring-purple-300',
-                },
-                {
-                  id: 'gentle' as ExpressivityMode,
-                  emoji: '🌿',
-                  title: selectedLang === 'en' ? 'Gentle' : 'Tenang',
-                  desc: selectedLang === 'en' ? 'Soft & focused' : 'Lembut & santai',
-                  color: 'border-emerald-400 bg-white ring-2 ring-emerald-300',
-                },
-              ].map((mode) => {
-                const isSelected = expressivityMode === mode.id;
-                return (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => {
-                      soundEngine.playSfx('click');
-                      setExpressivityMode(mode.id);
-                    }}
-                    className={`p-2 rounded-xl border-2 text-left transition-all flex flex-col justify-between ${
-                      isSelected
-                        ? mode.color + ' shadow-sm'
-                        : 'border-amber-200/70 bg-white/70 hover:bg-white text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-base">{mode.emoji}</span>
-                      {isSelected && <span className="w-2 h-2 rounded-full bg-amber-500"></span>}
-                    </div>
-                    <div>
-                      <div className="text-xs font-black text-slate-900 leading-tight">
-                        {mode.title}
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-bold leading-tight mt-0.5">
-                        {mode.desc}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              type="button"
-              onClick={handlePreviewExpressivity}
-              className={`w-full py-2 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xs ${
-                isPlayingPreview === 'expressivity_demo'
-                  ? 'bg-amber-500 text-white animate-pulse'
-                  : 'bg-white border-2 border-amber-300 text-amber-900 hover:bg-amber-100/60'
-              }`}
-            >
-              {isPlayingPreview === 'expressivity_demo' ? (
-                <Volume2 className="w-4 h-4" />
-              ) : (
-                <Play className="w-4 h-4 fill-current text-amber-600" />
-              )}
-              <span>
-                {isPlayingPreview === 'expressivity_demo'
-                  ? selectedLang === 'en'
-                    ? 'Playing Expressive Preview...'
-                    : 'Memutar Contoh Cerita Ekspresif...'
-                  : selectedLang === 'en'
-                  ? 'Test Expressive Story Voice'
-                  : 'Tes Contoh Cerita Berirama Ekspresif'}
-              </span>
-            </button>
-          </div>
-
-          {/* SECTION 3: NARRATOR PERSONAS SELECTION */}
+          {/* SECTION 2: NARRATOR PERSONAS SELECTION */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -444,7 +309,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
             </div>
           </div>
 
-          {/* SECTION 4: SYSTEM VOICE OVERRIDE IF AVAILABLE */}
+          {/* SECTION 3: SYSTEM VOICE OVERRIDE IF AVAILABLE */}
           <div className="pt-2 border-t border-slate-200">
             <label className="block text-[11px] font-black text-slate-600 mb-1">
               ⚙️ {selectedLang === 'en' ? 'Device System Voice:' : 'Suara Sistem Perangkat:'}
@@ -457,8 +322,8 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
               >
                 <option value="">
                   {selectedLang === 'en'
-                    ? 'Otomatis: Suara Bahasa Inggris Alami'
-                    : 'Otomatis: Suara Damayanti (id-ID) - Standar Resmi Apple / Indonesia'}
+                    ? 'Otomatis (Sistem Suara Bahasa Inggris)'
+                    : 'Otomatis (Sistem Suara Asli Bahasa Indonesia id-ID)'}
                 </option>
                 {systemVoices.map((v) => (
                   <option key={v.voiceURI} value={v.voiceURI}>
@@ -472,7 +337,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
                 <span>
                   {selectedLang === 'en'
                     ? 'Sistem Suara Bahasa Inggris Aktif'
-                    : 'Sistem Suara Damayanti Asli Bahasa Indonesia (id-ID) Aktif'}
+                    : 'Sistem Suara Asli Bahasa Indonesia (id-ID) Aktif'}
                 </span>
               </div>
             )}

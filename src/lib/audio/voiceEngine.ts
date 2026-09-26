@@ -5,14 +5,12 @@
 import { translateStoryToEnglish } from '@/lib/i18n/storyTranslator';
 
 export type VoiceLanguage = 'id' | 'en';
-export type ExpressivityMode = 'vibrant' | 'storyteller' | 'gentle';
 
 export interface VoiceOptions {
   speaker?: 'narrator' | 'budi' | 'siti' | 'bibo' | string;
   pitch?: number;
   rate?: number;
   lang?: VoiceLanguage | string;
-  expressivity?: ExpressivityMode;
   onStart?: () => void;
   onEnd?: () => void;
   onBoundary?: (charIndex: number) => void;
@@ -43,58 +41,58 @@ export interface CharacterVoiceProfile {
   lang: VoiceLanguage;
 }
 
-// Indonesian Character Voices - Distinct Little Boy (Budi) & Little Girl (Siti)
+// Indonesian Character Voices
 export const INDONESIAN_CHARACTER_VOICES: CharacterVoiceProfile[] = [
   {
     id: 'budi',
-    name: 'Budi (Anak Cowok Cilik)',
-    role: 'Karakter Anak Laki-Laki',
+    name: 'Budi (Anak Laki-Laki)',
+    role: 'Karakter Animasi',
     icon: '👦',
-    description: 'Suara karakter anak laki-laki kecil (cowok) yang lincah, bersemangat, dan ceria.',
-    pitch: 1.08,
-    rate: 1.08,
+    description: 'Suara anak laki-laki yang lincah, bersemangat, dan ceria.',
+    pitch: 1.45,
+    rate: 1.05,
     gender: 'male',
-    sampleText: 'Halo kawan-kawan! Aku Budi! Wah, asyik sekali! Ayo kita pecahkan tantangan berhitung bersama!',
+    sampleText: 'Hai kawan-kawan! Aku Budi! Ayo kita hitung buah apel dan bermain bersama!',
     lang: 'id',
   },
   {
     id: 'siti',
-    name: 'Siti (Anak Cewek Cilik)',
-    role: 'Karakter Anak Perempuan',
+    name: 'Siti (Anak Perempuan)',
+    role: 'Karakter Animasi',
     icon: '👧',
-    description: 'Suara karakter anak perempuan kecil (cewek) yang manis, melodius, riang, dan pintar.',
-    pitch: 1.45,
+    description: 'Suara anak perempuan yang manis, lembut, dan pintar.',
+    pitch: 1.75,
     rate: 0.96,
     gender: 'female',
-    sampleText: 'Halo semuanya! Aku Siti! Wah, hebat sekali! Tenang saja ya, kita pasti bisa selesaikan soal ini bersama-sama!',
+    sampleText: 'Halo semuanya! Aku Siti! Tenang saja, kita pasti bisa selesaikan soal ini bersama!',
     lang: 'id',
   },
   {
     id: 'bibo',
     name: 'Robot Bibo',
-    role: 'Karakter Robot Sahabat',
+    role: 'Karakter Robot',
     icon: '🤖',
-    description: 'Suara robot berartikulasi unik yang futuristik, jenaka, dan cerdas.',
-    pitch: 1.85,
+    description: 'Suara robot berartikulasi unik yang futuristik dan cerdas.',
+    pitch: 1.90,
     rate: 1.15,
     gender: 'robot',
-    sampleText: 'Bip bop! Sistem robot pintar aktif! Wah, siap berhitung cepat bersama kalian!',
+    sampleText: 'Bip bop! Sistem robot pintar aktif! Siap menghitung bersama kawan!',
     lang: 'id',
   },
 ];
 
-// English Character Voices - Lively, cheerful child & companion voices
+// English Character Voices
 export const ENGLISH_CHARACTER_VOICES: CharacterVoiceProfile[] = [
   {
     id: 'budi',
     name: 'Budi (Energetic Boy)',
     role: 'Animated Character',
     icon: '👦',
-    description: 'Lively, joyful, and enthusiastic young boy voice.',
-    pitch: 1.08,
-    rate: 1.06,
+    description: 'Lively, joyful, and cheerful young boy English voice.',
+    pitch: 1.40,
+    rate: 1.02,
     gender: 'male',
-    sampleText: "Hi everyone! I am Budi! Wow, this is so exciting! Let's count the apples and have fun together!",
+    sampleText: "Hi everyone! I am Budi! Let's count apples and have fun learning together!",
     lang: 'en',
   },
   {
@@ -102,11 +100,11 @@ export const ENGLISH_CHARACTER_VOICES: CharacterVoiceProfile[] = [
     name: 'Siti (Sweet Girl)',
     role: 'Animated Character',
     icon: '👧',
-    description: 'Sweet, bright, melodious, and encouraging young girl voice.',
-    pitch: 1.48,
+    description: 'Sweet, bright, and melodious young girl English voice.',
+    pitch: 1.70,
     rate: 0.96,
     gender: 'female',
-    sampleText: "Hello friends! I am Siti! You are doing amazing! Don't worry, we can solve every puzzle together!",
+    sampleText: "Hello friends! I am Siti! Don't worry, we can solve every puzzle together!",
     lang: 'en',
   },
   {
@@ -114,87 +112,76 @@ export const ENGLISH_CHARACTER_VOICES: CharacterVoiceProfile[] = [
     name: 'Robot Bibo',
     role: 'Robot Companion',
     icon: '🤖',
-    description: 'Playful electronic robot companion with upbeat cadence.',
-    pitch: 1.85,
+    description: 'High, playful electronic robot voice with distinct articulation.',
+    pitch: 1.90,
     rate: 1.15,
     gender: 'robot',
-    sampleText: 'Beep boop! Smart robot online! Wow, ready to calculate and explore with you!',
+    sampleText: 'Beep boop! Smart robot online! Ready to calculate and explore with you!',
     lang: 'en',
   },
 ];
 
 export const CHARACTER_VOICES = INDONESIAN_CHARACTER_VOICES;
 
-// Indonesian Narrator Personas - Warm, engaging storytellers powered by Damayanti
+// Indonesian Narrator Personas
 export const INDONESIAN_NARRATOR_PERSONAS: VoicePersona[] = [
   {
-    id: 'damayanti',
-    name: 'Damayanti (Narator Resmi)',
-    role: 'Narator Utama Bahasa Indonesia',
-    icon: '🎙️',
-    description: 'Suara resmi Damayanti Bahasa Indonesia: artikulatif, hangat, dan jernih khas pendongeng anak.',
-    pitch: 1.0,
-    rate: 0.98,
-    sampleText: 'Halo adik-adik pintar! Selamat datang di dunia petualangan belajar yang seru dan menyenangkan!',
-    lang: 'id',
-  },
-  {
     id: 'kakak_ceria',
-    name: 'Damayanti - Kakak Ceria',
+    name: 'Kakak Ceria',
     role: 'Pengajar Ramah',
     icon: '🌟',
-    description: 'Suara Damayanti dengan intonasi ceria, bersahabat, dan bersemangat membimbing petualangan.',
-    pitch: 1.06,
-    rate: 0.98,
-    sampleText: 'Halo adik manis! Wah, ceria sekali hari ini! Yuk kita belajar dan berpetualang seru bersama Kakak!',
+    description: 'Suara ramah, bersahabat, dan jelas untuk memandu petualangan.',
+    pitch: 0.98,
+    rate: 0.90,
+    sampleText: 'Halo adik manis! Yuk belajar dan berpetualang seru bersama Kakak!',
     lang: 'id',
   },
   {
     id: 'ibu_guru',
-    name: 'Damayanti - Ibu Guru Bijak',
+    name: 'Ibu Guru Bijak',
     role: 'Pendamping Tenang',
     icon: '👩‍🏫',
-    description: 'Suara Damayanti dengan tutur kata lembut, artikulatif, hangat, dan penuh kasih sayang.',
-    pitch: 1.0,
-    rate: 0.92,
-    sampleText: 'Selamat belajar anak pintar! Jangan takut salah ya, kita coba pelan-pelan bersama dengan gembira.',
+    description: 'Tutur kata lembut, tenang, dan perlahan agar mudah dipahami.',
+    pitch: 0.92,
+    rate: 0.85,
+    sampleText: 'Selamat belajar anak pintar. Jangan takut salah, kita coba pelan-pelan ya.',
     lang: 'id',
   },
   {
     id: 'paman_dongeng',
     name: 'Paman Dongeng',
-    role: 'Karakter Dongeng',
+    role: 'Karakter Hangat',
     icon: '🧙‍♂️',
-    description: 'Suara berwibawa, teatrikal, dan hangat khas pembaca dongeng anak.',
-    pitch: 0.88,
-    rate: 0.88,
-    sampleText: 'Pada suatu hari di Hutan Ajaib yang rindang... wah, petualangan berhitung yang ajaib pun dimulai!',
+    description: 'Suara berwibawa dan hangat, cocok untuk kisah petualangan dongeng.',
+    pitch: 0.80,
+    rate: 0.86,
+    sampleText: 'Pada suatu hari di Hutan Ajaib yang rindang, petualangan berhitung pun dimulai!',
     lang: 'id',
   },
   {
     id: 'kakak_penjelajah',
-    name: 'Damayanti - Kakak Penjelajah',
+    name: 'Kakak Penjelajah',
     role: 'Petualang Cerdas',
     icon: '🧭',
-    description: 'Suara Damayanti penuh rasa ingin tahu, energik, dan menantang untuk sains & petualangan.',
-    pitch: 1.10,
-    rate: 1.0,
-    sampleText: 'Wah, lihat ke depan kawan! Ada teka-teki rahasia yang sangat menantang untuk kita pecahkan!',
+    description: 'Suara penuh rasa ingin tahu dan semangat menjelajahi alam & sains.',
+    pitch: 1.05,
+    rate: 0.94,
+    sampleText: 'Wah, lihat ke depan kawan! Ada teka-teki rahasia yang menunggu untuk kita pecahkan!',
     lang: 'id',
   },
 ];
 
-// English Narrator Personas - Animated, clear, and encouraging
+// English Narrator Personas
 export const ENGLISH_NARRATOR_PERSONAS: VoicePersona[] = [
   {
     id: 'teacher_emma',
     name: 'Teacher Emma',
     role: 'Friendly Educator',
     icon: '🌟',
-    description: 'Warm, animated, clear, and encouraging native English voice for kids.',
-    pitch: 1.12,
-    rate: 0.96,
-    sampleText: "Hello little superstar! Wow, you look ready for fun! Let's explore the magical world of numbers together!",
+    description: 'Warm, clear, and encouraging native English voice for kids.',
+    pitch: 1.0,
+    rate: 0.90,
+    sampleText: "Hello little superstar! Let's explore the magical world of numbers and stories together!",
     lang: 'en',
   },
   {
@@ -202,10 +189,10 @@ export const ENGLISH_NARRATOR_PERSONAS: VoicePersona[] = [
     name: 'Miss Clara',
     role: 'Gentle Teacher',
     icon: '👩‍🏫',
-    description: 'Calm, soothing, melodious, and patient storytelling voice.',
-    pitch: 1.04,
-    rate: 0.92,
-    sampleText: "Welcome young learners! Take your time, learning is full of wonderful discoveries step by step.",
+    description: 'Calm, patient, and soft-spoken voice for relaxed storytelling.',
+    pitch: 0.95,
+    rate: 0.85,
+    sampleText: 'Welcome young learners. Take your time, learning is fun step by step.',
     lang: 'en',
   },
   {
@@ -213,10 +200,10 @@ export const ENGLISH_NARRATOR_PERSONAS: VoicePersona[] = [
     name: 'Storyteller Oliver',
     role: 'Warm Storyteller',
     icon: '🧙‍♂️',
-    description: 'Theatrical, warm, and charismatic storytelling voice for quests.',
-    pitch: 0.90,
+    description: 'Warm and theatrical voice perfect for castle and forest quests.',
+    pitch: 0.82,
     rate: 0.88,
-    sampleText: "Once upon a time in the enchanted forest... a magical counting quest began!",
+    sampleText: 'Once upon a time in the enchanted forest, our counting quest began!',
     lang: 'en',
   },
   {
@@ -224,10 +211,10 @@ export const ENGLISH_NARRATOR_PERSONAS: VoicePersona[] = [
     name: 'Explorer Jack',
     role: 'Brave Explorer',
     icon: '🧭',
-    description: 'Excited, adventurous, and curious voice for science quests.',
-    pitch: 1.16,
-    rate: 0.98,
-    sampleText: "Look ahead, brave adventurers! A mysterious riddle is waiting for us to unlock!",
+    description: 'Excited, adventurous, and curious voice for science and quests.',
+    pitch: 1.05,
+    rate: 0.95,
+    sampleText: 'Look ahead friends! A mysterious riddle is waiting for us to unlock!',
     lang: 'en',
   },
 ];
@@ -294,192 +281,18 @@ export function isEnglishVoice(v: SpeechSynthesisVoice | null | undefined): bool
   return lang.startsWith('en');
 }
 
-// Rank Indonesian voices by quality (Damayanti has #1 top priority as requested by user)
+// Rank Indonesian voices by quality (Natural/Online > Google > Damayanti/Siri > Others)
 function rankIndonesianVoice(v: SpeechSynthesisVoice): number {
   let score = 0;
   const name = v.name.toLowerCase();
   const lang = (v.lang || '').toLowerCase().replace(/_/g, '-');
-  if (name.includes('damayanti')) score += 100;
-  if (name.includes('enhanced') || name.includes('premium')) score += 30;
-  if (name.includes('natural') || name.includes('online')) score += 25;
-  if (name.includes('neural') || name.includes('deep')) score += 20;
-  if (name.includes('google')) score += 15;
-  if (name.includes('siri')) score += 12;
-  if (name.includes('gadis') || name.includes('ardi')) score += 10;
-  if (lang === 'id-id' || lang === 'id') score += 10;
-  if (v.default) score += 5;
-  return score;
-}
-
-// Rank English voices by quality & natural expressiveness
-function rankEnglishVoice(v: SpeechSynthesisVoice): number {
-  let score = 0;
-  const name = v.name.toLowerCase();
-  const lang = (v.lang || '').toLowerCase().replace(/_/g, '-');
-  if (name.includes('natural') || name.includes('online')) score += 60;
-  if (name.includes('neural')) score += 55;
-  if (name.includes('premium') || name.includes('enhanced')) score += 50;
+  if (name.includes('natural') || name.includes('online')) score += 50;
   if (name.includes('google')) score += 40;
-  if (name.includes('siri')) score += 35;
-  if (name.includes('jenny') || name.includes('ana') || name.includes('aria') || name.includes('guy') || name.includes('oliver') || name.includes('emma')) score += 25;
-  if (lang === 'en-us' || lang === 'en-gb') score += 15;
+  if (name.includes('damayanti') || name.includes('siri')) score += 35;
+  if (name.includes('gadis') || name.includes('ardi')) score += 30;
+  if (lang === 'id-id' || lang === 'id') score += 20;
   if (v.default) score += 5;
   return score;
-}
-
-export interface SpeechSegment {
-  text: string;
-  pitchOffset: number;
-  rateOffset: number;
-  pauseAfterMs: number;
-  startCharIndex: number;
-}
-
-// Intelligently segment story text into expressive, dynamic prosodic units
-export function buildExpressiveSegments(
-  rawText: string,
-  lang: VoiceLanguage,
-  mode: ExpressivityMode = 'vibrant'
-): SpeechSegment[] {
-  let cleaned = rawText.trim();
-
-  if (lang === 'en') {
-    // English math normalization
-    cleaned = cleaned
-      .replace(/(\d+)\s*[-−]\s*(\d+)/g, '$1 minus $2')
-      .replace(/(\d+)\s*\+\s*(\d+)/g, '$1 plus $2')
-      .replace(/(\d+)\s*[x*×]\s*(\d+)/g, '$1 times $2')
-      .replace(/(\d+)\s*[:/÷]\s*(\d+)/g, '$1 divided by $2')
-      .replace(/\s*=\s*/g, ', equals ');
-
-    // Add breathing pause commas after expressive exclamation words
-    cleaned = cleaned
-      .replace(/(^|[.!?\n]\s*)(wow|yay|hooray|look|awesome|great|super|let's|hello|hi)\s+([a-zA-Z])/gi, '$1$2, $3');
-  } else {
-    // Indonesian math normalization
-    cleaned = cleaned
-      .replace(/(\d+)\s*[-−]\s*(\d+)/g, '$1 dikurang $2')
-      .replace(/(\d+)\s*\+\s*(\d+)/g, '$1 ditambah $2')
-      .replace(/(\d+)\s*[x*×]\s*(\d+)/g, '$1 dikali $2')
-      .replace(/(\d+)\s*[:/÷]\s*(\d+)/g, '$1 dibagi $2')
-      .replace(/\s*=\s*/g, ', sama dengan ');
-
-    // Add breathing pause commas after Indonesian interjections
-    cleaned = cleaned
-      .replace(/(^|[.!?\n]\s*)(wah|hore|asyik|ayo|yuk|hebat|luar biasa|lihat|halo|hai)\s+([a-zA-Z])/gi, '$1$2, $3');
-  }
-
-  // Remove duplicate quotes and collapse spaces
-  cleaned = cleaned.replace(/["“”«»]/g, ' ').replace(/\s+/g, ' ').trim();
-
-  // Split into expressive sentences/clauses
-  const rawSentences = cleaned.match(/[^.!?…\n]+(?:[.!?…\n]+|$)/g) || [cleaned];
-
-  const segments: SpeechSegment[] = [];
-  let cumulativeIndex = 0;
-
-  for (const rawSentence of rawSentences) {
-    const sentence = rawSentence.trim();
-    if (!sentence) continue;
-
-    let pitchOffset = 0.0;
-    let rateOffset = 0.0;
-    let pauseAfterMs = 65;
-
-    // Detect Exclamation / High Energy
-    const isExclamation =
-      sentence.endsWith('!') ||
-      /(\b(wah|hore|asyik|hebat|luar biasa|semangat|selamat|ayo|yuk|wow|yay|hooray|awesome|great|hurrah|amazing|bingo|yippee|aha)\b)/i.test(
-        sentence
-      );
-
-    // Detect Question / Inquisitive Intonation
-    const isQuestion =
-      sentence.endsWith('?') ||
-      /(\b(berapa|apakah|siapa|mengapa|kenapa|bagaimana|dimana|kemana|how|what|where|which|can you|who|why|is there|are there)\b)/i.test(
-        sentence
-      );
-
-    // Detect Comforting / Encouraging Cadence
-    const isEncouraging =
-      /(\b(jangan takut|tenang|tidak apa-apa|coba lagi|bersama-sama|pelan-pelan|yuk kita|don't worry|take your time|try again|step by step)\b)/i.test(
-        sentence
-      );
-
-    if (isExclamation) {
-      if (mode === 'vibrant') {
-        pitchOffset = 0.14;
-        rateOffset = 0.03;
-        pauseAfterMs = 85;
-      } else if (mode === 'storyteller') {
-        pitchOffset = 0.08;
-        rateOffset = 0.01;
-        pauseAfterMs = 95;
-      } else {
-        pitchOffset = 0.04;
-        rateOffset = 0.0;
-        pauseAfterMs = 110;
-      }
-    } else if (isQuestion) {
-      if (mode === 'vibrant') {
-        pitchOffset = 0.09;
-        rateOffset = -0.02;
-        pauseAfterMs = 75;
-      } else if (mode === 'storyteller') {
-        pitchOffset = 0.06;
-        rateOffset = -0.03;
-        pauseAfterMs = 85;
-      } else {
-        pitchOffset = 0.03;
-        rateOffset = -0.05;
-        pauseAfterMs = 100;
-      }
-    } else if (isEncouraging) {
-      if (mode === 'vibrant') {
-        pitchOffset = 0.06;
-        rateOffset = -0.03;
-        pauseAfterMs = 85;
-      } else if (mode === 'storyteller') {
-        pitchOffset = 0.04;
-        rateOffset = -0.04;
-        pauseAfterMs = 95;
-      } else {
-        pitchOffset = 0.01;
-        rateOffset = -0.06;
-        pauseAfterMs = 120;
-      }
-    } else {
-      if (mode === 'storyteller') {
-        rateOffset = -0.03;
-        pauseAfterMs = 75;
-      } else if (mode === 'gentle') {
-        rateOffset = -0.06;
-        pauseAfterMs = 90;
-      }
-    }
-
-    segments.push({
-      text: sentence,
-      pitchOffset,
-      rateOffset,
-      pauseAfterMs,
-      startCharIndex: cumulativeIndex,
-    });
-
-    cumulativeIndex += rawSentence.length;
-  }
-
-  return segments.length > 0
-    ? segments
-    : [
-        {
-          text: cleaned,
-          pitchOffset: 0,
-          rateOffset: 0,
-          pauseAfterMs: 60,
-          startCharIndex: 0,
-        },
-      ];
 }
 
 class VoiceEngine {
@@ -489,13 +302,8 @@ class VoiceEngine {
 
   // Language & Personas
   private activeLanguage: VoiceLanguage = 'id';
-  private activeNarratorPersonaId: string = 'damayanti';
-  private expressivityMode: ExpressivityMode = 'vibrant';
+  private activeNarratorPersonaId: string = 'kakak_ceria';
   private selectedVoiceURI: string | null = null;
-
-  // Segment queue playback
-  private segmentTimer: any = null;
-  private isCancelled: boolean = false;
 
   // Detected voices
   private indonesianVoice: SpeechSynthesisVoice | null = null;
@@ -525,18 +333,11 @@ class VoiceEngine {
           this.activeLanguage = savedLang;
         }
 
-        const savedExpressivity = localStorage.getItem('pixel_learning_voice_expressivity') as ExpressivityMode | null;
-        if (savedExpressivity === 'vibrant' || savedExpressivity === 'storyteller' || savedExpressivity === 'gentle') {
-          this.expressivityMode = savedExpressivity;
-        }
-
         const savedPersona =
           localStorage.getItem('pixel_learning_voice_narrator_persona') ||
           localStorage.getItem('pixel_learning_voice_persona');
         if (savedPersona) {
           this.activeNarratorPersonaId = savedPersona;
-        } else {
-          this.activeNarratorPersonaId = this.activeLanguage === 'en' ? 'teacher_emma' : 'damayanti';
         }
 
         const savedVoiceURI = localStorage.getItem(`pixel_learning_voice_uri_${this.activeLanguage}`);
@@ -556,7 +357,7 @@ class VoiceEngine {
     const voices = this.synth.getVoices();
     if (!voices || voices.length === 0) return;
 
-    // 1. Indonesian Voices - filter and rank authentic Indonesian voices with Damayanti prioritized
+    // 1. Indonesian Voices - filter and rank authentic Indonesian voices
     const idVoices = voices
       .filter(isIndonesianVoice)
       .sort((a, b) => rankIndonesianVoice(b) - rankIndonesianVoice(a));
@@ -564,21 +365,16 @@ class VoiceEngine {
     const femaleNameRegex = /(female|wanita|perempuan|gadis|damayanti|siti|putri|ayu)/i;
     const maleNameRegex = /(male|pria|laki|andika|budi|arva|ardi|bagus)/i;
 
-    const damayanti = idVoices.find(v => v.name.toLowerCase().includes('damayanti'));
+    this.idFemaleVoice = idVoices.find(v => femaleNameRegex.test(v.name)) || idVoices[0] || null;
+    this.idMaleVoice = idVoices.find(v => maleNameRegex.test(v.name)) || idVoices.find(v => v !== this.idFemaleVoice) || idVoices[0] || null;
+    // CRITICAL: NEVER fall back to voices[0] (which is typically English!)
+    this.indonesianVoice = idVoices[0] || null;
 
-    this.idFemaleVoice = damayanti || idVoices.find(v => femaleNameRegex.test(v.name)) || idVoices[0] || null;
-    this.idMaleVoice = idVoices.find(v => maleNameRegex.test(v.name) && !v.name.toLowerCase().includes('damayanti')) || null;
-    this.indonesianVoice = damayanti || idVoices[0] || null;
-
-    // 2. English Voices - filter and rank expressive English voices
-    const enVoices = voices
-      .filter(isEnglishVoice)
-      .sort((a, b) => rankEnglishVoice(b) - rankEnglishVoice(a));
-
-    const junior = enVoices.find(v => v.name.toLowerCase().includes('junior'));
-    this.enFemaleVoice = enVoices.find(v => /(female|jenny|ana|aria|samantha|karen|victoria|zira|tessa|moira|fiona|ava|zoe)/i.test(v.name)) || enVoices[0] || null;
-    this.enMaleVoice = junior || enVoices.find(v => /(male|guy|ryan|daniel|alex|fred|david|oliver|tom)/i.test(v.name)) || enVoices[0] || null;
-    this.enVoice = enVoices[0] || null;
+    // 2. English Voices
+    const enVoices = voices.filter(isEnglishVoice);
+    this.enFemaleVoice = enVoices.find(v => /(female|samantha|karen|victoria|zira|tessa|moira|fiona|jenny|aria)/i.test(v.name)) || enVoices[0] || null;
+    this.enMaleVoice = enVoices.find(v => /(male|daniel|alex|fred|david|oliver|tom|guy|ryan)/i.test(v.name)) || enVoices.find(v => v !== this.enFemaleVoice) || enVoices[0] || null;
+    this.enVoice = enVoices.find(v => (v.lang || '').toLowerCase() === 'en-us' || (v.lang || '').toLowerCase() === 'en-gb') || enVoices[0] || null;
   }
 
   public getLanguage(): VoiceLanguage {
@@ -598,7 +394,7 @@ class VoiceEngine {
     if (lang === 'en' && !ENGLISH_NARRATOR_PERSONAS.some(p => p.id === this.activeNarratorPersonaId)) {
       this.activeNarratorPersonaId = 'teacher_emma';
     } else if (lang === 'id' && !INDONESIAN_NARRATOR_PERSONAS.some(p => p.id === this.activeNarratorPersonaId)) {
-      this.activeNarratorPersonaId = 'damayanti';
+      this.activeNarratorPersonaId = 'kakak_ceria';
     }
   }
 
@@ -699,30 +495,15 @@ class VoiceEngine {
 
     if (role === 'budi') {
       const budi = list.find(c => c.id === 'budi')!;
-      return this.speak(budi.sampleText, {
-        speaker: 'budi',
-        pitch: budi.pitch,
-        rate: budi.rate,
-        lang: targetLang,
-      });
+      return this.speak(budi.sampleText, { speaker: 'budi', lang: targetLang });
     }
     if (role === 'siti') {
       const siti = list.find(c => c.id === 'siti')!;
-      return this.speak(siti.sampleText, {
-        speaker: 'siti',
-        pitch: siti.pitch,
-        rate: siti.rate,
-        lang: targetLang,
-      });
+      return this.speak(siti.sampleText, { speaker: 'siti', lang: targetLang });
     }
     if (role === 'bibo') {
       const bibo = list.find(c => c.id === 'bibo')!;
-      return this.speak(bibo.sampleText, {
-        speaker: 'bibo',
-        pitch: bibo.pitch,
-        rate: bibo.rate,
-        lang: targetLang,
-      });
+      return this.speak(bibo.sampleText, { speaker: 'bibo', lang: targetLang });
     }
     // Default narrator preview
     const persona = this.getActiveNarratorPersona();
@@ -732,35 +513,6 @@ class VoiceEngine {
       speaker: 'narrator',
       lang: targetLang,
     });
-  }
-
-  public getExpressivityMode(): ExpressivityMode {
-    return this.expressivityMode;
-  }
-
-  public setExpressivityMode(mode: ExpressivityMode) {
-    this.expressivityMode = mode;
-    try {
-      localStorage.setItem('pixel_learning_voice_expressivity', mode);
-    } catch {
-      // ignore
-    }
-  }
-
-  public getPitchModifier(): number {
-    return this.pitchModifier;
-  }
-
-  public setPitchModifier(val: number) {
-    this.pitchModifier = Math.max(-0.5, Math.min(0.5, val));
-  }
-
-  public getRateModifier(): number {
-    return this.rateModifier;
-  }
-
-  public setRateModifier(val: number) {
-    this.rateModifier = Math.max(-0.5, Math.min(0.5, val));
   }
 
   public speak(text: string, options: VoiceOptions = {}): Promise<void> {
@@ -775,7 +527,6 @@ class VoiceEngine {
       }
 
       this.stop();
-      this.isCancelled = false;
 
       // Ensure fresh voice cache
       this.loadVoices();
@@ -783,179 +534,125 @@ class VoiceEngine {
       const targetLang: VoiceLanguage =
         options.lang === 'en' || options.lang === 'id' ? options.lang : this.activeLanguage;
 
-      const mode: ExpressivityMode = options.expressivity || this.expressivityMode;
+      // Clean & normalize spoken text according to target language
+      let spokenText = text.trim();
 
-      // Translate text to natural English if in English mode
-      const rawText = targetLang === 'en' ? translateStoryToEnglish(text) : text;
+      if (targetLang === 'en') {
+        spokenText = translateStoryToEnglish(spokenText);
+      } else {
+        // Natural Indonesian speech preparation:
+        // Convert arithmetic symbols into natural Indonesian spoken words
+        spokenText = spokenText
+          .replace(/(\d+)\s*[-−]\s*(\d+)/g, '$1 dikurang $2')
+          .replace(/(\d+)\s*\+\s*(\d+)/g, '$1 ditambah $2')
+          .replace(/(\d+)\s*[x*×]\s*(\d+)/g, '$1 dikali $2')
+          .replace(/(\d+)\s*[:/÷]\s*(\d+)/g, '$1 dibagi $2')
+          .replace(/\s*=\s*/g, ' sama dengan ')
+          .replace(/["“”«»]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
 
-      // Segment text into expressive, dynamic prosodic units
-      const segments = buildExpressiveSegments(rawText, targetLang, mode);
+      const utterance = new SpeechSynthesisUtterance(spokenText);
+      this.currentUtterance = utterance;
 
       const speaker = (options.speaker || 'narrator').toLowerCase();
       const voices = this.synth.getVoices();
 
       let chosenVoice: SpeechSynthesisVoice | null = null;
-      let basePitch = 1.0;
-      let baseRate = 1.0;
 
       if (targetLang === 'en') {
         if (speaker === 'siti') {
           chosenVoice = this.enFemaleVoice || this.enVoice;
-          basePitch = 1.48;
-          baseRate = 0.96;
         } else if (speaker === 'budi') {
           chosenVoice = this.enMaleVoice || this.enVoice;
-          basePitch = this.enMaleVoice?.name.toLowerCase().includes('junior') ? 1.05 : 1.10;
-          baseRate = 1.06;
-        } else if (speaker === 'bibo' || speaker === 'robot') {
-          chosenVoice = this.enVoice;
-          basePitch = 1.85;
-          baseRate = 1.15;
         } else if (this.selectedVoiceURI && speaker === 'narrator') {
           const matched = voices.find(v => v.voiceURI === this.selectedVoiceURI);
           chosenVoice = (matched && isEnglishVoice(matched)) ? matched : this.enVoice;
-          const narratorPersona = this.getActiveNarratorPersona();
-          basePitch = narratorPersona.pitch;
-          baseRate = narratorPersona.rate;
         } else {
           chosenVoice = this.enVoice;
-          const narratorPersona = this.getActiveNarratorPersona();
-          basePitch = narratorPersona.pitch;
-          baseRate = narratorPersona.rate;
+        }
+        utterance.lang = 'en-US';
+        if (chosenVoice) {
+          utterance.voice = chosenVoice;
         }
       } else {
-        // Indonesian mode: Damayanti for Narrator, Child Boy for Budi, Child Girl for Siti
+        // Indonesian mode
         if (speaker === 'siti') {
-          // Siti: Karakter Anak Perempuan Kecil (Cewek Cilik)
           chosenVoice = this.idFemaleVoice || this.indonesianVoice;
-          basePitch = 1.45;
-          baseRate = 0.96;
         } else if (speaker === 'budi') {
-          // Budi: Karakter Anak Laki-Laki Kecil (Cowok Cilik)
-          if (this.idMaleVoice) {
-            // Suara pria asli ditransformasikan ke nada anak cowok
-            chosenVoice = this.idMaleVoice;
-            basePitch = 1.28;
-            baseRate = 1.04;
-          } else {
-            // Berbasis Damayanti: dijaga di nada dada anak cowok (1.08) dengan tempo lincah & berenergi (1.08)
-            // sehingga terdengar tegas dan boyish, BUKAN melengking seperti wanita/cewek
-            chosenVoice = this.indonesianVoice;
-            basePitch = 1.08;
-            baseRate = 1.08;
-          }
-        } else if (speaker === 'bibo' || speaker === 'robot') {
-          chosenVoice = this.indonesianVoice;
-          basePitch = 1.85;
-          baseRate = 1.15;
+          chosenVoice = this.idMaleVoice || this.indonesianVoice;
         } else if (this.selectedVoiceURI && (speaker === 'narrator' || !options.speaker)) {
           const matched = voices.find(v => v.voiceURI === this.selectedVoiceURI);
           chosenVoice = (matched && isIndonesianVoice(matched)) ? matched : this.indonesianVoice;
-          const narratorPersona = this.getActiveNarratorPersona();
-          basePitch = narratorPersona.pitch;
-          baseRate = narratorPersona.rate;
         } else {
-          // Default Indonesian Narrator: Damayanti Asli
           chosenVoice = this.indonesianVoice;
-          const narratorPersona = this.getActiveNarratorPersona();
-          basePitch = narratorPersona.pitch;
-          baseRate = narratorPersona.rate;
+        }
+        utterance.lang = 'id-ID';
+
+        // CRITICAL FIX: Only assign utterance.voice if chosenVoice is an authentic Indonesian voice!
+        // NEVER assign an English voice (Alex/Samantha/David) to an Indonesian utterance,
+        // because doing so forces the browser to pronounce Indonesian text using English phonetics!
+        if (chosenVoice && isIndonesianVoice(chosenVoice)) {
+          utterance.voice = chosenVoice;
         }
       }
 
-      if (options.pitch !== undefined) basePitch = options.pitch;
-      if (options.rate !== undefined) baseRate = options.rate;
+      // Acoustic differentiation (Pitch & Rate)
+      let targetPitch = 1.0;
+      let targetRate = 1.0;
 
-      let currentSegmentIdx = 0;
+      if (speaker === 'budi') {
+        targetPitch = targetLang === 'en' ? 1.35 : 1.30;
+        targetRate = targetLang === 'en' ? 1.02 : 1.02;
+      } else if (speaker === 'siti') {
+        targetPitch = targetLang === 'en' ? 1.65 : 1.55;
+        targetRate = targetLang === 'en' ? 0.96 : 0.96;
+      } else if (speaker === 'bibo' || speaker === 'robot') {
+        targetPitch = 1.90;
+        targetRate = 1.15;
+      } else {
+        // Narrator
+        const narratorPersona = this.getActiveNarratorPersona();
+        targetPitch = narratorPersona.pitch;
+        targetRate = narratorPersona.rate;
+      }
 
-      const playSegment = (idx: number) => {
-        if (this.isCancelled || idx >= segments.length) {
-          this.isSpeaking = false;
-          options.onEnd?.();
-          resolve();
-          return;
-        }
+      if (options.pitch !== undefined) targetPitch = options.pitch;
+      if (options.rate !== undefined) targetRate = options.rate;
 
-        const seg = segments[idx];
-        const utterance = new SpeechSynthesisUtterance(seg.text);
-        this.currentUtterance = utterance;
+      utterance.pitch = Math.max(0.5, Math.min(2.0, targetPitch + this.pitchModifier));
+      utterance.rate = Math.max(0.5, Math.min(2.0, targetRate + this.rateModifier));
 
-        if (targetLang === 'en') {
-          utterance.lang = 'en-US';
-          if (chosenVoice) utterance.voice = chosenVoice;
-        } else {
-          utterance.lang = 'id-ID';
-          if (chosenVoice && isIndonesianVoice(chosenVoice)) {
-            utterance.voice = chosenVoice;
-          }
-        }
-
-        const finalPitch = Math.max(0.5, Math.min(2.0, basePitch + seg.pitchOffset + this.pitchModifier));
-        const finalRate = Math.max(0.5, Math.min(2.0, baseRate + seg.rateOffset + this.rateModifier));
-
-        utterance.pitch = finalPitch;
-        utterance.rate = finalRate;
-
-        utterance.onstart = () => {
-          if (idx === 0) {
-            this.isSpeaking = true;
-            options.onStart?.();
-          }
-        };
-
-        utterance.onboundary = (e) => {
-          if (options.onBoundary) {
-            options.onBoundary(seg.startCharIndex + e.charIndex);
-          }
-        };
-
-        utterance.onend = () => {
-          if (this.isCancelled) return;
-          if (idx === segments.length - 1) {
-            this.isSpeaking = false;
-            options.onEnd?.();
-            resolve();
-          } else {
-            this.segmentTimer = setTimeout(() => {
-              if (!this.isCancelled) {
-                playSegment(idx + 1);
-              }
-            }, seg.pauseAfterMs);
-          }
-        };
-
-        utterance.onerror = (e) => {
-          console.warn('Voice engine utterance error or cancelled:', e);
-          if (this.isCancelled) return;
-          if (idx === segments.length - 1) {
-            this.isSpeaking = false;
-            options.onEnd?.();
-            resolve();
-          } else {
-            playSegment(idx + 1);
-          }
-        };
-
-        if (!this.synth) {
-          this.isSpeaking = false;
-          options.onEnd?.();
-          resolve();
-          return;
-        }
-
-        this.synth.speak(utterance);
+      utterance.onstart = () => {
+        this.isSpeaking = true;
+        options.onStart?.();
       };
 
-      playSegment(0);
+      utterance.onend = () => {
+        this.isSpeaking = false;
+        options.onEnd?.();
+        resolve();
+      };
+
+      utterance.onerror = (e) => {
+        console.warn('Voice engine error or cancelled:', e);
+        this.isSpeaking = false;
+        options.onEnd?.();
+        resolve();
+      };
+
+      utterance.onboundary = (e) => {
+        if (options.onBoundary) {
+          options.onBoundary(e.charIndex);
+        }
+      };
+
+      this.synth.speak(utterance);
     });
   }
 
   public stop() {
-    this.isCancelled = true;
-    if (this.segmentTimer) {
-      clearTimeout(this.segmentTimer);
-      this.segmentTimer = null;
-    }
     if (this.synth) {
       this.synth.cancel();
       this.isSpeaking = false;

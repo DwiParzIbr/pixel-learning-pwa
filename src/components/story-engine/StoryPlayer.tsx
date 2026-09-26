@@ -181,7 +181,6 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
               if (isPaused) return;
               const charSpeaker = currentScene.dialogue?.speaker || 'budi';
               setActiveSpeaker(charSpeaker);
-              soundEngine.playSfx('pop');
 
               voiceEngine.speak(currentScene.dialogue!.text, {
                 speaker: charSpeaker,
@@ -521,11 +520,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                         : 'bg-slate-50/80 border-2 border-slate-200 text-slate-500 opacity-80'
                     }`}
                   >
-                    <span
-                      className={`text-xl sm:text-2xl shrink-0 transition-transform duration-300 ${
-                        activeSpeaker === currentScene.dialogue.speaker ? 'scale-125 animate-bounce' : 'scale-100'
-                      }`}
-                    >
+                    <span className="text-xl sm:text-2xl shrink-0">
                       {currentScene.dialogue.speaker === 'siti' ? '👧' : '👦'}
                     </span>
                     <div className="flex-1 min-w-0">

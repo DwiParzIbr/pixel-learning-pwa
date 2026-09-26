@@ -51,6 +51,10 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   const activeLevels = activeSubject.levels;
 
   useEffect(() => {
+    setActiveChild(progressStore.getActiveChild());
+    setProfiles(progressStore.getProfiles());
+    setVoiceLang(voiceEngine.getLanguage());
+
     const unsub = progressStore.subscribe(() => {
       setActiveChild(progressStore.getActiveChild());
       setProfiles(progressStore.getProfiles());
@@ -102,7 +106,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   ];
 
   return (
-    <div className="min-h-screen text-slate-800 font-fun pb-24 select-none relative overflow-hidden bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-100">
+    <div suppressHydrationWarning className="min-h-screen text-slate-800 font-fun pb-24 select-none relative overflow-hidden bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-100">
       {/* Decorative Cartoon Floating Clouds */}
       <div className="absolute top-16 left-8 w-44 h-16 bg-white/70 rounded-full blur-[1px] -z-0 pointer-events-none animate-float-kid" />
       <div className="absolute top-44 right-12 w-56 h-20 bg-white/80 rounded-full blur-[1px] -z-0 pointer-events-none animate-float-kid" style={{ animationDelay: '1.5s' }} />
@@ -124,41 +128,42 @@ export const WorldMap: React.FC<WorldMapProps> = ({
               setShowProfileModal(true);
             }}
             className="flex items-center gap-1.5 sm:gap-3 bg-amber-50 hover:bg-amber-100/90 border-2 sm:border-3 border-amber-300 rounded-2xl sm:rounded-3xl px-2 sm:px-3.5 py-1 sm:py-1.5 cursor-pointer transition-all active:scale-95 shadow-sm min-w-0"
+            suppressHydrationWarning
           >
-            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-white flex items-center justify-center text-lg sm:text-2xl shadow shrink-0">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-white flex items-center justify-center text-lg sm:text-2xl shadow shrink-0" suppressHydrationWarning>
               {activeChild.avatar}
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <span className="font-extrabold text-slate-800 text-xs sm:text-base truncate max-w-[65px] xs:max-w-[90px] sm:max-w-none">
+            <div className="min-w-0" suppressHydrationWarning>
+              <div className="flex items-center gap-1 sm:gap-2" suppressHydrationWarning>
+                <span className="font-extrabold text-slate-800 text-xs sm:text-base truncate max-w-[65px] xs:max-w-[90px] sm:max-w-none" suppressHydrationWarning>
                   {activeChild.name}
                 </span>
-                <span className="bg-amber-400 text-amber-950 font-black text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full shadow-inner shrink-0">
+                <span className="bg-amber-400 text-amber-950 font-black text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full shadow-inner shrink-0" suppressHydrationWarning>
                   Lv.{activeChild.level}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
+              <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1" suppressHydrationWarning>
                 <div className="w-12 sm:w-32 bg-amber-200/90 h-2 sm:h-3 rounded-full overflow-hidden border border-amber-300 shadow-inner">
                   <div
                     className="bg-gradient-to-r from-amber-400 to-yellow-400 h-full rounded-full transition-all duration-500"
                     style={{ width: `${xpProgressToNext}%` }}
                   />
                 </div>
-                <span className="text-[10px] sm:text-xs font-black text-amber-800 shrink-0">{activeChild.xp} XP</span>
+                <span className="text-[10px] sm:text-xs font-black text-amber-800 shrink-0" suppressHydrationWarning>{activeChild.xp} XP</span>
               </div>
             </div>
           </div>
 
           {/* Child Stats & Badges */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <div className="flex items-center gap-1 bg-yellow-100 border-2 border-yellow-300 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl text-yellow-900 font-black text-xs sm:text-sm shadow-sm">
+            <div className="flex items-center gap-1 bg-yellow-100 border-2 border-yellow-300 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl text-yellow-900 font-black text-xs sm:text-sm shadow-sm" suppressHydrationWarning>
               <Star className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-yellow-500 fill-yellow-400 shrink-0" />
-              <span>{activeChild.stars}</span>
+              <span suppressHydrationWarning>{activeChild.stars}</span>
             </div>
 
-            <div className="flex items-center gap-1 bg-rose-100 border-2 border-rose-300 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl text-rose-900 font-black text-xs sm:text-sm shadow-sm">
+            <div className="flex items-center gap-1 bg-rose-100 border-2 border-rose-300 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl text-rose-900 font-black text-xs sm:text-sm shadow-sm" suppressHydrationWarning>
               <Flame className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-rose-500 fill-rose-400 shrink-0" />
-              <span>{activeChild.streakDays}h</span>
+              <span suppressHydrationWarning>{activeChild.streakDays}h</span>
             </div>
 
             <button
