@@ -43,27 +43,27 @@ export interface CharacterVoiceProfile {
   lang: VoiceLanguage;
 }
 
-// Indonesian Character Voices - Lively, expressive kid personas
+// Indonesian Character Voices - Distinct Little Boy (Budi) & Little Girl (Siti)
 export const INDONESIAN_CHARACTER_VOICES: CharacterVoiceProfile[] = [
   {
     id: 'budi',
-    name: 'Budi (Anak Laki-Laki)',
-    role: 'Karakter Animasi',
+    name: 'Budi (Anak Cowok Cilik)',
+    role: 'Karakter Anak Laki-Laki',
     icon: '👦',
-    description: 'Suara anak laki-laki yang lincah, bersemangat, dan sangat ceria.',
-    pitch: 1.34,
-    rate: 1.02,
+    description: 'Suara karakter anak laki-laki kecil (cowok) yang lincah, bersemangat, dan ceria.',
+    pitch: 1.08,
+    rate: 1.08,
     gender: 'male',
-    sampleText: 'Hai kawan-kawan! Aku Budi! Wah, asyik sekali! Ayo kita hitung buah apel dan bertualang bersama!',
+    sampleText: 'Halo kawan-kawan! Aku Budi! Wah, asyik sekali! Ayo kita pecahkan tantangan berhitung bersama!',
     lang: 'id',
   },
   {
     id: 'siti',
-    name: 'Siti (Anak Perempuan)',
-    role: 'Karakter Animasi',
+    name: 'Siti (Anak Cewek Cilik)',
+    role: 'Karakter Anak Perempuan',
     icon: '👧',
-    description: 'Suara anak perempuan yang manis, bersahabat, melodius, dan pintar.',
-    pitch: 1.62,
+    description: 'Suara karakter anak perempuan kecil (cewek) yang manis, melodius, riang, dan pintar.',
+    pitch: 1.45,
     rate: 0.96,
     gender: 'female',
     sampleText: 'Halo semuanya! Aku Siti! Wah, hebat sekali! Tenang saja ya, kita pasti bisa selesaikan soal ini bersama-sama!',
@@ -72,7 +72,7 @@ export const INDONESIAN_CHARACTER_VOICES: CharacterVoiceProfile[] = [
   {
     id: 'bibo',
     name: 'Robot Bibo',
-    role: 'Karakter Robot',
+    role: 'Karakter Robot Sahabat',
     icon: '🤖',
     description: 'Suara robot berartikulasi unik yang futuristik, jenaka, dan cerdas.',
     pitch: 1.85,
@@ -91,8 +91,8 @@ export const ENGLISH_CHARACTER_VOICES: CharacterVoiceProfile[] = [
     role: 'Animated Character',
     icon: '👦',
     description: 'Lively, joyful, and enthusiastic young boy voice.',
-    pitch: 1.38,
-    rate: 1.02,
+    pitch: 1.08,
+    rate: 1.06,
     gender: 'male',
     sampleText: "Hi everyone! I am Budi! Wow, this is so exciting! Let's count the apples and have fun together!",
     lang: 'en',
@@ -103,7 +103,7 @@ export const ENGLISH_CHARACTER_VOICES: CharacterVoiceProfile[] = [
     role: 'Animated Character',
     icon: '👧',
     description: 'Sweet, bright, melodious, and encouraging young girl voice.',
-    pitch: 1.68,
+    pitch: 1.48,
     rate: 0.96,
     gender: 'female',
     sampleText: "Hello friends! I am Siti! You are doing amazing! Don't worry, we can solve every puzzle together!",
@@ -125,26 +125,37 @@ export const ENGLISH_CHARACTER_VOICES: CharacterVoiceProfile[] = [
 
 export const CHARACTER_VOICES = INDONESIAN_CHARACTER_VOICES;
 
-// Indonesian Narrator Personas - Warm, engaging, cheerful storytellers
+// Indonesian Narrator Personas - Warm, engaging storytellers powered by Damayanti
 export const INDONESIAN_NARRATOR_PERSONAS: VoicePersona[] = [
   {
+    id: 'damayanti',
+    name: 'Damayanti (Narator Resmi)',
+    role: 'Narator Utama Bahasa Indonesia',
+    icon: '🎙️',
+    description: 'Suara resmi Damayanti Bahasa Indonesia: artikulatif, hangat, dan jernih khas pendongeng anak.',
+    pitch: 1.0,
+    rate: 0.98,
+    sampleText: 'Halo adik-adik pintar! Selamat datang di dunia petualangan belajar yang seru dan menyenangkan!',
+    lang: 'id',
+  },
+  {
     id: 'kakak_ceria',
-    name: 'Kakak Ceria',
+    name: 'Damayanti - Kakak Ceria',
     role: 'Pengajar Ramah',
     icon: '🌟',
-    description: 'Suara riang, bersahabat, ekspresif, dan bersemangat membimbing petualangan.',
-    pitch: 1.12,
-    rate: 0.96,
+    description: 'Suara Damayanti dengan intonasi ceria, bersahabat, dan bersemangat membimbing petualangan.',
+    pitch: 1.06,
+    rate: 0.98,
     sampleText: 'Halo adik manis! Wah, ceria sekali hari ini! Yuk kita belajar dan berpetualang seru bersama Kakak!',
     lang: 'id',
   },
   {
     id: 'ibu_guru',
-    name: 'Ibu Guru Bijak',
+    name: 'Damayanti - Ibu Guru Bijak',
     role: 'Pendamping Tenang',
     icon: '👩‍🏫',
-    description: 'Tutur kata lembut, artikulatif, hangat, dan penuh kasih sayang.',
-    pitch: 1.04,
+    description: 'Suara Damayanti dengan tutur kata lembut, artikulatif, hangat, dan penuh kasih sayang.',
+    pitch: 1.0,
     rate: 0.92,
     sampleText: 'Selamat belajar anak pintar! Jangan takut salah ya, kita coba pelan-pelan bersama dengan gembira.',
     lang: 'id',
@@ -152,22 +163,22 @@ export const INDONESIAN_NARRATOR_PERSONAS: VoicePersona[] = [
   {
     id: 'paman_dongeng',
     name: 'Paman Dongeng',
-    role: 'Karakter Hangat',
+    role: 'Karakter Dongeng',
     icon: '🧙‍♂️',
     description: 'Suara berwibawa, teatrikal, dan hangat khas pembaca dongeng anak.',
-    pitch: 0.90,
+    pitch: 0.88,
     rate: 0.88,
     sampleText: 'Pada suatu hari di Hutan Ajaib yang rindang... wah, petualangan berhitung yang ajaib pun dimulai!',
     lang: 'id',
   },
   {
     id: 'kakak_penjelajah',
-    name: 'Kakak Penjelajah',
+    name: 'Damayanti - Kakak Penjelajah',
     role: 'Petualang Cerdas',
     icon: '🧭',
-    description: 'Suara penuh rasa ingin tahu, energik, dan menantang untuk sains & petualangan.',
-    pitch: 1.16,
-    rate: 0.98,
+    description: 'Suara Damayanti penuh rasa ingin tahu, energik, dan menantang untuk sains & petualangan.',
+    pitch: 1.10,
+    rate: 1.0,
     sampleText: 'Wah, lihat ke depan kawan! Ada teka-teki rahasia yang sangat menantang untuk kita pecahkan!',
     lang: 'id',
   },
@@ -283,18 +294,19 @@ export function isEnglishVoice(v: SpeechSynthesisVoice | null | undefined): bool
   return lang.startsWith('en');
 }
 
-// Rank Indonesian voices by quality (Natural/Online > Neural > Google > Damayanti/Siri > Others)
+// Rank Indonesian voices by quality (Damayanti has #1 top priority as requested by user)
 function rankIndonesianVoice(v: SpeechSynthesisVoice): number {
   let score = 0;
   const name = v.name.toLowerCase();
   const lang = (v.lang || '').toLowerCase().replace(/_/g, '-');
-  if (name.includes('natural') || name.includes('online')) score += 60;
-  if (name.includes('neural') || name.includes('deep')) score += 50;
-  if (name.includes('google')) score += 45;
-  if (name.includes('enhanced') || name.includes('premium')) score += 40;
-  if (name.includes('damayanti') || name.includes('siri')) score += 35;
-  if (name.includes('gadis') || name.includes('ardi')) score += 30;
-  if (lang === 'id-id' || lang === 'id') score += 20;
+  if (name.includes('damayanti')) score += 100;
+  if (name.includes('enhanced') || name.includes('premium')) score += 30;
+  if (name.includes('natural') || name.includes('online')) score += 25;
+  if (name.includes('neural') || name.includes('deep')) score += 20;
+  if (name.includes('google')) score += 15;
+  if (name.includes('siri')) score += 12;
+  if (name.includes('gadis') || name.includes('ardi')) score += 10;
+  if (lang === 'id-id' || lang === 'id') score += 10;
   if (v.default) score += 5;
   return score;
 }
@@ -477,7 +489,7 @@ class VoiceEngine {
 
   // Language & Personas
   private activeLanguage: VoiceLanguage = 'id';
-  private activeNarratorPersonaId: string = 'kakak_ceria';
+  private activeNarratorPersonaId: string = 'damayanti';
   private expressivityMode: ExpressivityMode = 'vibrant';
   private selectedVoiceURI: string | null = null;
 
@@ -523,6 +535,8 @@ class VoiceEngine {
           localStorage.getItem('pixel_learning_voice_persona');
         if (savedPersona) {
           this.activeNarratorPersonaId = savedPersona;
+        } else {
+          this.activeNarratorPersonaId = this.activeLanguage === 'en' ? 'teacher_emma' : 'damayanti';
         }
 
         const savedVoiceURI = localStorage.getItem(`pixel_learning_voice_uri_${this.activeLanguage}`);
@@ -542,7 +556,7 @@ class VoiceEngine {
     const voices = this.synth.getVoices();
     if (!voices || voices.length === 0) return;
 
-    // 1. Indonesian Voices - filter and rank authentic Indonesian voices
+    // 1. Indonesian Voices - filter and rank authentic Indonesian voices with Damayanti prioritized
     const idVoices = voices
       .filter(isIndonesianVoice)
       .sort((a, b) => rankIndonesianVoice(b) - rankIndonesianVoice(a));
@@ -550,17 +564,20 @@ class VoiceEngine {
     const femaleNameRegex = /(female|wanita|perempuan|gadis|damayanti|siti|putri|ayu)/i;
     const maleNameRegex = /(male|pria|laki|andika|budi|arva|ardi|bagus)/i;
 
-    this.idFemaleVoice = idVoices.find(v => femaleNameRegex.test(v.name)) || idVoices[0] || null;
-    this.idMaleVoice = idVoices.find(v => maleNameRegex.test(v.name)) || idVoices.find(v => v !== this.idFemaleVoice) || idVoices[0] || null;
-    this.indonesianVoice = idVoices[0] || null;
+    const damayanti = idVoices.find(v => v.name.toLowerCase().includes('damayanti'));
+
+    this.idFemaleVoice = damayanti || idVoices.find(v => femaleNameRegex.test(v.name)) || idVoices[0] || null;
+    this.idMaleVoice = idVoices.find(v => maleNameRegex.test(v.name) && !v.name.toLowerCase().includes('damayanti')) || null;
+    this.indonesianVoice = damayanti || idVoices[0] || null;
 
     // 2. English Voices - filter and rank expressive English voices
     const enVoices = voices
       .filter(isEnglishVoice)
       .sort((a, b) => rankEnglishVoice(b) - rankEnglishVoice(a));
 
+    const junior = enVoices.find(v => v.name.toLowerCase().includes('junior'));
     this.enFemaleVoice = enVoices.find(v => /(female|jenny|ana|aria|samantha|karen|victoria|zira|tessa|moira|fiona|ava|zoe)/i.test(v.name)) || enVoices[0] || null;
-    this.enMaleVoice = enVoices.find(v => /(male|guy|ryan|daniel|alex|fred|david|oliver|tom)/i.test(v.name)) || enVoices.find(v => v !== this.enFemaleVoice) || enVoices[0] || null;
+    this.enMaleVoice = junior || enVoices.find(v => /(male|guy|ryan|daniel|alex|fred|david|oliver|tom)/i.test(v.name)) || enVoices[0] || null;
     this.enVoice = enVoices[0] || null;
   }
 
@@ -581,7 +598,7 @@ class VoiceEngine {
     if (lang === 'en' && !ENGLISH_NARRATOR_PERSONAS.some(p => p.id === this.activeNarratorPersonaId)) {
       this.activeNarratorPersonaId = 'teacher_emma';
     } else if (lang === 'id' && !INDONESIAN_NARRATOR_PERSONAS.some(p => p.id === this.activeNarratorPersonaId)) {
-      this.activeNarratorPersonaId = 'kakak_ceria';
+      this.activeNarratorPersonaId = 'damayanti';
     }
   }
 
@@ -682,15 +699,30 @@ class VoiceEngine {
 
     if (role === 'budi') {
       const budi = list.find(c => c.id === 'budi')!;
-      return this.speak(budi.sampleText, { speaker: 'budi', lang: targetLang });
+      return this.speak(budi.sampleText, {
+        speaker: 'budi',
+        pitch: budi.pitch,
+        rate: budi.rate,
+        lang: targetLang,
+      });
     }
     if (role === 'siti') {
       const siti = list.find(c => c.id === 'siti')!;
-      return this.speak(siti.sampleText, { speaker: 'siti', lang: targetLang });
+      return this.speak(siti.sampleText, {
+        speaker: 'siti',
+        pitch: siti.pitch,
+        rate: siti.rate,
+        lang: targetLang,
+      });
     }
     if (role === 'bibo') {
       const bibo = list.find(c => c.id === 'bibo')!;
-      return this.speak(bibo.sampleText, { speaker: 'bibo', lang: targetLang });
+      return this.speak(bibo.sampleText, {
+        speaker: 'bibo',
+        pitch: bibo.pitch,
+        rate: bibo.rate,
+        lang: targetLang,
+      });
     }
     // Default narrator preview
     const persona = this.getActiveNarratorPersona();
@@ -763,50 +795,72 @@ class VoiceEngine {
       const voices = this.synth.getVoices();
 
       let chosenVoice: SpeechSynthesisVoice | null = null;
+      let basePitch = 1.0;
+      let baseRate = 1.0;
 
       if (targetLang === 'en') {
         if (speaker === 'siti') {
           chosenVoice = this.enFemaleVoice || this.enVoice;
+          basePitch = 1.48;
+          baseRate = 0.96;
         } else if (speaker === 'budi') {
           chosenVoice = this.enMaleVoice || this.enVoice;
+          basePitch = this.enMaleVoice?.name.toLowerCase().includes('junior') ? 1.05 : 1.10;
+          baseRate = 1.06;
+        } else if (speaker === 'bibo' || speaker === 'robot') {
+          chosenVoice = this.enVoice;
+          basePitch = 1.85;
+          baseRate = 1.15;
         } else if (this.selectedVoiceURI && speaker === 'narrator') {
           const matched = voices.find(v => v.voiceURI === this.selectedVoiceURI);
           chosenVoice = (matched && isEnglishVoice(matched)) ? matched : this.enVoice;
+          const narratorPersona = this.getActiveNarratorPersona();
+          basePitch = narratorPersona.pitch;
+          baseRate = narratorPersona.rate;
         } else {
           chosenVoice = this.enVoice;
+          const narratorPersona = this.getActiveNarratorPersona();
+          basePitch = narratorPersona.pitch;
+          baseRate = narratorPersona.rate;
         }
       } else {
-        // Indonesian mode
+        // Indonesian mode: Damayanti for Narrator, Child Boy for Budi, Child Girl for Siti
         if (speaker === 'siti') {
+          // Siti: Karakter Anak Perempuan Kecil (Cewek Cilik)
           chosenVoice = this.idFemaleVoice || this.indonesianVoice;
+          basePitch = 1.45;
+          baseRate = 0.96;
         } else if (speaker === 'budi') {
-          chosenVoice = this.idMaleVoice || this.indonesianVoice;
+          // Budi: Karakter Anak Laki-Laki Kecil (Cowok Cilik)
+          if (this.idMaleVoice) {
+            // Suara pria asli ditransformasikan ke nada anak cowok
+            chosenVoice = this.idMaleVoice;
+            basePitch = 1.28;
+            baseRate = 1.04;
+          } else {
+            // Berbasis Damayanti: dijaga di nada dada anak cowok (1.08) dengan tempo lincah & berenergi (1.08)
+            // sehingga terdengar tegas dan boyish, BUKAN melengking seperti wanita/cewek
+            chosenVoice = this.indonesianVoice;
+            basePitch = 1.08;
+            baseRate = 1.08;
+          }
+        } else if (speaker === 'bibo' || speaker === 'robot') {
+          chosenVoice = this.indonesianVoice;
+          basePitch = 1.85;
+          baseRate = 1.15;
         } else if (this.selectedVoiceURI && (speaker === 'narrator' || !options.speaker)) {
           const matched = voices.find(v => v.voiceURI === this.selectedVoiceURI);
           chosenVoice = (matched && isIndonesianVoice(matched)) ? matched : this.indonesianVoice;
+          const narratorPersona = this.getActiveNarratorPersona();
+          basePitch = narratorPersona.pitch;
+          baseRate = narratorPersona.rate;
         } else {
+          // Default Indonesian Narrator: Damayanti Asli
           chosenVoice = this.indonesianVoice;
+          const narratorPersona = this.getActiveNarratorPersona();
+          basePitch = narratorPersona.pitch;
+          baseRate = narratorPersona.rate;
         }
-      }
-
-      // Base Acoustic differentiation (Pitch & Rate) per character
-      let basePitch = 1.0;
-      let baseRate = 1.0;
-
-      if (speaker === 'budi') {
-        basePitch = targetLang === 'en' ? 1.38 : 1.34;
-        baseRate = 1.02;
-      } else if (speaker === 'siti') {
-        basePitch = targetLang === 'en' ? 1.68 : 1.62;
-        baseRate = 0.96;
-      } else if (speaker === 'bibo' || speaker === 'robot') {
-        basePitch = 1.85;
-        baseRate = 1.15;
-      } else {
-        // Narrator persona base
-        const narratorPersona = this.getActiveNarratorPersona();
-        basePitch = narratorPersona.pitch;
-        baseRate = narratorPersona.rate;
       }
 
       if (options.pitch !== undefined) basePitch = options.pitch;

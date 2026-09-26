@@ -181,7 +181,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
               </>
             ) : (
               <>
-                <strong>Sistem Suara Terpisah:</strong> 1 suara Narator membacakan alur cerita & soal, serta suara khusus untuk karakter anak (Budi & Siti).
+                <strong>Sistem Suara Terpisah (Damayanti):</strong> Narator menggunakan suara resmi <strong>Damayanti</strong>, Budi menggunakan karakter <strong>anak cowok kecil</strong>, dan Siti menggunakan karakter <strong>anak cewek kecil</strong>.
               </>
             )}
           </span>
@@ -220,9 +220,22 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
                         {char.icon}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h5 className="font-black text-xs sm:text-sm text-slate-900 truncate">
-                          {char.name}
-                        </h5>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <h5 className="font-black text-xs sm:text-sm text-slate-900 truncate">
+                            {char.name}
+                          </h5>
+                          <span
+                            className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                              isBudi
+                                ? 'bg-amber-200/80 text-amber-900'
+                                : 'bg-pink-200/80 text-pink-900'
+                            }`}
+                          >
+                            {isBudi
+                              ? (selectedLang === 'en' ? 'Boy Voice' : 'Anak Cowok')
+                              : (selectedLang === 'en' ? 'Girl Voice' : 'Anak Cewek')}
+                          </span>
+                        </div>
                         <p className="text-[10px] text-slate-500 font-bold leading-tight line-clamp-1">
                           {char.description}
                         </p>
@@ -244,8 +257,8 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
                         {isPlaying
                           ? 'Playing...'
                           : selectedLang === 'en'
-                          ? `Test ${isBudi ? 'Budi' : 'Siti'} Voice`
-                          : `Tes Suara ${isBudi ? 'Budi' : 'Siti'}`}
+                          ? `Test ${isBudi ? 'Budi (Boy)' : 'Siti (Girl)'} Voice`
+                          : `Tes Suara ${isBudi ? 'Budi (Anak Cowok)' : 'Siti (Anak Cewek)'}`}
                       </span>
                     </button>
                   </div>
@@ -444,8 +457,8 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
               >
                 <option value="">
                   {selectedLang === 'en'
-                    ? 'Otomatis (Sistem Suara Bahasa Inggris)'
-                    : 'Otomatis (Sistem Suara Asli Bahasa Indonesia id-ID)'}
+                    ? 'Otomatis: Suara Bahasa Inggris Alami'
+                    : 'Otomatis: Suara Damayanti (id-ID) - Standar Resmi Apple / Indonesia'}
                 </option>
                 {systemVoices.map((v) => (
                   <option key={v.voiceURI} value={v.voiceURI}>
@@ -459,7 +472,7 @@ export const VoiceSettingsModal: React.FC<VoiceSettingsModalProps> = ({ isOpen, 
                 <span>
                   {selectedLang === 'en'
                     ? 'Sistem Suara Bahasa Inggris Aktif'
-                    : 'Sistem Suara Asli Bahasa Indonesia (id-ID) Aktif'}
+                    : 'Sistem Suara Damayanti Asli Bahasa Indonesia (id-ID) Aktif'}
                 </span>
               </div>
             )}
