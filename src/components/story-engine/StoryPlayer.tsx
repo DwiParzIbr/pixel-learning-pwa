@@ -334,8 +334,8 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           className="candy-btn candy-btn-yellow flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-xs sm:text-base active:scale-95 shrink-0"
         >
           <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
-          <span className="hidden sm:inline">Peta Petualangan</span>
-          <span className="sm:hidden">Peta</span>
+          <span className="hidden sm:inline">{voiceLang === 'en' ? 'Adventure Map' : 'Peta Petualangan'}</span>
+          <span className="sm:hidden">{voiceLang === 'en' ? 'Map' : 'Peta'}</span>
         </button>
 
         {/* Center Title & Continuous Episode Badge */}
@@ -344,15 +344,15 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
             <span className="text-xs sm:text-base">🎬</span>
             <span className="font-black text-xs sm:text-sm text-amber-950 truncate max-w-[130px] xs:max-w-[190px] sm:max-w-xs">
               {isRemedialMode
-                ? 'Cerita Remedial'
+                ? (voiceLang === 'en' ? 'Remedial Story' : 'Cerita Remedial')
                 : currentLessonIdx >= 0
-                ? `Soal ${currentLessonIdx + 1}/${totalLessonsInLevel}: ${activeLesson.title.replace(/^Soal \d+:\s*/, '')}`
+                ? `${voiceLang === 'en' ? 'Question' : 'Soal'} ${currentLessonIdx + 1}/${totalLessonsInLevel}: ${activeLesson.title.replace(/^Soal \d+:\s*/, '')}`
                 : activeLesson.title}
             </span>
           </div>
           <span className="text-[10px] sm:text-xs font-black text-amber-800 mt-0.5 sm:mt-1 flex items-center gap-1">
             <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-            <span>Otomatis Berjalan</span>
+            <span>{voiceLang === 'en' ? 'Auto Playing' : 'Otomatis Berjalan'}</span>
           </span>
         </div>
 
@@ -485,7 +485,9 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                   </span>
 
                   <span className="text-xs font-black text-slate-500">
-                    Adegan {currentSceneIndex + 1} dari {scenes.length}
+                    {voiceLang === 'en'
+                      ? `Scene ${currentSceneIndex + 1} of ${scenes.length}`
+                      : `Adegan ${currentSceneIndex + 1} dari ${scenes.length}`}
                   </span>
                 </div>
 
@@ -554,14 +556,14 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
                 className="candy-btn candy-btn-yellow px-4 py-2.5 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-1.5"
               >
                 <RotateCcw className="w-4 h-4 stroke-[3]" />
-                <span>Putar Ulang Cerita</span>
+                <span>{voiceLang === 'en' ? 'Replay Story' : 'Putar Ulang Cerita'}</span>
               </button>
 
               <button
                 onClick={handleSkipToQuestion}
                 className="candy-btn candy-btn-green px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2"
               >
-                <span>Langsung ke Soal</span>
+                <span>{voiceLang === 'en' ? 'Go to Question' : 'Langsung ke Soal'}</span>
                 <FastForward className="w-4 h-4 stroke-[3]" />
               </button>
             </div>
