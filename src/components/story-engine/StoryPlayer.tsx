@@ -153,8 +153,14 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
     }
 
     const textToSpeak = currentScene.narration;
+    const sceneStartTime = Date.now();
+    const minReadingMs = textToSpeak ? Math.max(3800, textToSpeak.length * 55) : 3200;
 
     const advanceToNext = () => {
+      const elapsed = Date.now() - sceneStartTime;
+      const minRequiredTotal = currentScene.dialogue ? (minReadingMs + 2800) : minReadingMs;
+      const waitRemaining = Math.max(1200, minRequiredTotal - elapsed);
+
       autoAdvanceTimerRef.current = setTimeout(() => {
         if (currentSceneIndex < scenes.length - 1) {
           setCurrentSceneIndex(prev => prev + 1);
@@ -163,7 +169,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           setShowQuestion(true);
           soundEngine.playSfx('star');
         }
-      }, 1200); // 1.2s breathing pause between story beats
+      }, waitRemaining);
     };
 
     if (textToSpeak && !isMuted) {

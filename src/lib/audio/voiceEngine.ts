@@ -638,8 +638,18 @@ class VoiceEngine {
       utterance.onerror = (e) => {
         console.warn('Voice engine error or cancelled:', e);
         this.isSpeaking = false;
-        options.onEnd?.();
-        resolve();
+        // If cancelled or interrupted because of stop(), do not trigger onEnd to advance scene!
+        if (e.error === 'interrupted' || e.error === 'canceled') {
+          resolve();
+          return;
+        }
+        // If audio failed or was blocked by browser autoplay policy,
+        // wait for a reasonable reading duration based on sentence length so the scene does NOT skip!
+        const fallbackReadingTime = Math.max(3000, spokenText.length * 60);
+        setTimeout(() => {
+          options.onEnd?.();
+          resolve();
+        }, fallbackReadingTime);
       };
 
       utterance.onboundary = (e) => {

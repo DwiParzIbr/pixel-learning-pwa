@@ -108,6 +108,7 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
 
   const lastProcessedSceneRef = useRef<number>(-1);
   const lastScenesRef = useRef<SceneDef[] | null>(null);
+  const lastRestartNonceRef = useRef<number>(restartNonce);
 
   // Unified scene action processor that handles spawning, movement, and animations
   const processSceneActions = useCallback((sceneIdx: number, forceReset = false) => {
@@ -119,12 +120,75 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
     state.currentProcessedScene = sceneIdx;
     state.sceneTimer = 0;
 
-    // Reset world state ONLY on explicit reset or when scene 0 has no characters
-    if (forceReset || (sceneIdx === 0 && (forceReset || state.characters.size === 0))) {
+    // Reset world state ONLY when explicitly resetting Scene 0 or starting a new lesson
+    if (sceneIdx === 0 && (forceReset || state.characters.size === 0)) {
       state.characters.clear();
       state.objects = [];
       state.particles = [];
       setCountedTotal(0);
+    }
+
+    // Safety & Continuity: If at sceneIdx > 0 characters or objects are missing, reconstruct from prior scenes!
+    if (sceneIdx > 0 && (state.characters.size === 0 || state.objects.length === 0)) {
+      for (let prevIdx = 0; prevIdx < sceneIdx; prevIdx++) {
+        const prevScene = allScenes[prevIdx];
+        if (!prevScene) continue;
+        for (const act of prevScene.actions) {
+          if (act.type === 'spawn_character' && act.characterId && !state.characters.has(act.characterId)) {
+            const charDef = characters.find(c => c.id === act.characterId);
+            const finalX = act.position?.x ?? (act.characterId === 'siti' ? 550 : 220);
+            const finalY = act.position?.y ?? 330;
+            state.characters.set(act.characterId, {
+              id: act.characterId,
+              name: charDef?.name || act.characterId,
+              asset: charDef?.asset || 'character_budi',
+              x: finalX,
+              y: finalY,
+              targetX: finalX,
+              targetY: finalY,
+              isWalking: false,
+              walkSpeed: 2.5,
+              facing: finalX >= 400 ? 'left' : 'right',
+              emotion: 'happy',
+              speechBubble: undefined,
+              stepCycle: 0,
+            });
+          }
+          if (act.type === 'spawn_object' && act.object && act.quantity) {
+            const count = act.quantity;
+            const baseX = act.position?.x ?? (act.owner === 'siti' ? 520 : 380);
+            const groundY = act.position?.y ?? 355;
+            const existingCount = state.objects.filter(o => o.type === act.object && o.owner === act.owner).length;
+            const itemsToSpawn = Math.max(0, count - existingCount);
+            for (let i = 0; i < itemsToSpawn; i++) {
+              const col = (existingCount + i) % 5;
+              const row = Math.floor((existingCount + i) / 5);
+              const targetObjX = baseX + col * 36;
+              const targetObjY = groundY + row * 26;
+              state.objects.push({
+                id: `obj_${act.object}_${existingCount + i}_restored`,
+                type: act.object,
+                owner: act.owner,
+                x: targetObjX,
+                y: targetObjY,
+                targetX: targetObjX,
+                targetY: targetObjY,
+                groundY: targetObjY,
+                isTransferring: false,
+                transferProgress: 0,
+                fromX: targetObjX,
+                fromY: targetObjY,
+                toX: targetObjX,
+                toY: targetObjY,
+                colorIdx: existingCount + i,
+                isCounted: false,
+                isHighlighted: true,
+                bounceOffset: 0,
+              });
+            }
+          }
+        }
+      }
     }
 
     // 1. Process Characters
@@ -135,22 +199,28 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
         const finalY = act.position?.y ?? 330;
 
         if (!state.characters.has(act.characterId)) {
-          // If starting or restarting, spawn at start position or directly at final position
           const isBudi = act.characterId === 'budi';
-          const startX = forceReset ? finalX : (isBudi ? (finalX > 300 ? 50 : 20) : (finalX < 500 ? 760 : 700));
+          const shouldWalkIn = act.animation === 'walk' || sceneIdx === 0;
+
+          // Natural walk entrance:
+          // Left entrance for left-side characters (Budi), right entrance for right-side characters (Siti)
+          let startX = finalX;
+          if (shouldWalkIn) {
+            startX = finalX <= 380 ? -35 : 835;
+          }
 
           state.characters.set(act.characterId, {
             id: act.characterId,
             name: charDef?.name || act.characterId,
-            asset: charDef?.asset || 'character_budi',
+            asset: charDef?.asset || (isBudi ? 'character_budi' : 'character_siti'),
             x: startX,
             y: finalY,
             targetX: finalX,
             targetY: finalY,
             isWalking: startX !== finalX,
-            walkSpeed: 2.8,
+            walkSpeed: 2.5,
             facing: finalX >= startX ? 'right' : 'left',
-            emotion: act.animation || 'walk',
+            emotion: startX !== finalX ? 'walk' : (act.animation || 'idle'),
             speechBubble: undefined,
             stepCycle: 0,
           });
@@ -273,7 +343,10 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
   // Process scene actions without destroying existing world state
   useEffect(() => {
     const isNewLesson = lastScenesRef.current !== allScenes;
-    const isRestart = activeSceneIndex === 0 && (lastProcessedSceneRef.current > 0 || lastProcessedSceneRef.current === -1);
+    const isRestartNonceChanged = restartNonce !== lastRestartNonceRef.current;
+    lastRestartNonceRef.current = restartNonce;
+
+    const isRestart = (activeSceneIndex === 0 && (lastProcessedSceneRef.current > 0 || lastProcessedSceneRef.current === -1)) || isRestartNonceChanged;
     const isSceneChanged = lastProcessedSceneRef.current !== activeSceneIndex;
 
     lastScenesRef.current = allScenes;
@@ -283,8 +356,8 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       return;
     }
 
-    if (isRestart || isSceneChanged || restartNonce > 0) {
-      processSceneActions(activeSceneIndex, isRestart || restartNonce > 0);
+    if (isRestart || isSceneChanged) {
+      processSceneActions(activeSceneIndex, isRestart && activeSceneIndex === 0);
       return;
     }
   }, [activeSceneIndex, allScenes, characters, restartNonce, processSceneActions]);
@@ -330,8 +403,8 @@ export const PixelCanvas: React.FC<PixelCanvasProps> = ({
       ctx.imageSmoothingEnabled = false;
       drawEnvironment(ctx, w, h, currentScene.background, state.tick, boardText, voiceLang);
 
-      // Auto-recovery: If characters map is empty but scene specifies spawn_character, immediately restore characters!
-      if (state.characters.size === 0 && currentScene && currentScene.actions.some(a => a.type === 'spawn_character')) {
+      // Auto-recovery / Safety net: If characters map is empty for ANY reason, restore characters!
+      if (state.characters.size === 0 && characters && characters.length > 0) {
         processSceneActions(activeSceneIndex, false);
       }
 
