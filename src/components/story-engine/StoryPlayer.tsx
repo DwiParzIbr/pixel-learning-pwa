@@ -575,6 +575,7 @@ export const StoryPlayer: React.FC<StoryPlayerProps> = ({
           <QuestionModal
             question={isRemedialMode && activeLesson.remedialStory ? activeLesson.remedialStory.question : activeLesson.question}
             remedialStory={activeLesson.remedialStory}
+            voiceLang={voiceLang}
             onAnswerSubmit={handleAnswerSubmit}
             onProceedNext={handleProceedNext}
             onLaunchRemedial={handleLaunchRemedial}

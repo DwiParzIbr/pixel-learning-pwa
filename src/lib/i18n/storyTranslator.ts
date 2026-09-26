@@ -265,6 +265,43 @@ export const DICTIONARY_MAP: Record<string, string> = {
   'Belum tepat. Tidak apa-apa, yuk coba hitung lagi ya!': "Not quite right yet. That's okay, let's count again together!",
   'Masih belum tepat. Buka Petunjuk di bawah untuk membantu kamu!': "Still not quite right. Open the hint below to guide you!",
   'Yuk coba kita lihat Cerita Remedial singkat bersama Budi!': "Let's review the quick remedial story with Budi!",
+
+  // Math Hints
+  'Awalnya ada 10 kelereng. Coba hitung mundur 4 langkah: 9, 8, 7, 6!': 'Initially there are 10 marbles. Try counting backwards 4 steps: 9, 8, 7, 6!',
+  'Sentuh atau hitung setiap apel dari kiri ke kanan!': 'Touch or count each apple from left to right!',
+  'Perhatikan balon yang melayang di dekat Siti, hitung satu per satu ya!': 'Notice the balloons floating near Siti, count them one by one!',
+  'Hitung cupcake dari piring kiri hingga ke kanan!': 'Count the cupcakes from the left plate to the right!',
+  'Sentuh setiap bunga perlahan dan sebut angkanya secara berurutan!': 'Touch each flower gently and say the numbers in order!',
+  'Hitung bintang-bintang yang berkelap-kelip keemasan di langit!': 'Count the golden twinkling stars in the sky!',
+  'Mulai dari 3, lalu lanjutkan hitung maju 4 langkah: 4, 5, 6, 7!': 'Start from 3, then continue counting forward 4 steps: 4, 5, 6, 7!',
+  'Bandingkan jumlahnya: Budi punya 8, Siti punya 5. Angka mana yang lebih besar?': 'Compare the amounts: Budi has 8, Siti has 5. Which number is greater?',
+  'Jumlahkan 3 sebanyak tiga kali: 3 + 3 + 3 = ?': 'Add 3 three times: 3 + 3 + 3 = ?',
+  'Coba bagi 8 menjadi dua bagian yang sama banyak: 4 dan 4!': 'Try dividing 8 into two equal parts: 4 and 4!',
+  'Hitung 15 - 7 = ? Ingat: 7 + 8 = 15!': 'Calculate 15 - 7 = ? Remember: 7 + 8 = 15!',
+  'Mulai dari 5, lalu hitung maju 3 langkah: 6, 7, 8!': 'Start from 5, then count forward 3 steps: 6, 7, 8!',
+  'Hitung maju dari 4 sebanyak 2 langkah: 5, 6!': 'Count forward from 4 by 2 steps: 5, 6!',
+  'Gunakan jari tangan: 6 jari ditambah 4 jari lagi akan menjadi 10 jari lengkap!': 'Use your fingers: 6 fingers plus 4 more fingers makes 10 fingers in total!',
+  'Ingat penjumlahan kembar: 5 di tangan kiri ditambah 5 di tangan kanan = 10!': 'Remember the double addition: 5 on the left hand plus 5 on the right hand = 10!',
+  'Hitung mundur dari 8 sebanyak 3 langkah: 7, 6, 5!': 'Count backward from 8 by 3 steps: 7, 6, 5!',
+  'Hitung mundur 2 langkah dari 7: 6, 5!': 'Count backward 2 steps from 7: 6, 5!',
+  'Hitung mundur dari 9 sebanyak 5 langkah: 8, 7, 6, 5, 4!': 'Count backward from 9 by 5 steps: 8, 7, 6, 5, 4!',
+  'Ingat pasangan 10: 7 ditambah 3 adalah 10, jadi 10 - 7 = 3!': 'Remember number bonds of 10: 7 plus 3 is 10, so 10 - 7 = 3!',
+  'Bandingkan angka 4 dan 7. Angka mana yang nilainya lebih kecil?': 'Compare the numbers 4 and 7. Which number is smaller?',
+  'Bandingkan jumlah balonnya: 6 dan 6 memiliki nilai yang sama persis!': 'Compare the balloons: 6 and 6 have the exact same value!',
+  'Bandingkan angka 9 dan 6. Angka mana yang bernilai lebih besar?': 'Compare the numbers 9 and 6. Which number is greater?',
+  'Kurangkan jumlah kelereng Budi dengan kelereng Siti: 10 - 7 = ?': "Subtract Siti's marbles from Budi's marbles: 10 - 7 = ?",
+  'Jumlahkan angka 2 sebanyak 4 kali: 2 + 2 = 4, 4 + 2 = 6, 6 + 2 = 8!': 'Add the number 2 four times: 2 + 2 = 4, 4 + 2 = 6, 6 + 2 = 8!',
+  'Jumlahkan 5 sebanyak 2 kali: 5 + 5 = ?': 'Add 5 two times: 5 + 5 = ?',
+  'Jumlahkan angka 4 sebanyak tiga kali: 4 + 4 = 8, 8 + 4 = 12!': 'Add the number 4 three times: 4 + 4 = 8, 8 + 4 = 12!',
+  'Hitung loncat dua-dua sebanyak 5 kali: 2, 4, 6, 8, 10!': 'Skip count by twos 5 times: 2, 4, 6, 8, 10!',
+  'Berapa kali 3 yang hasilnya 6? Ingat 3 x 2 = 6, jadi 6 ÷ 3 = 2!': 'How many times 3 equals 6? Remember 3 x 2 = 6, so 6 ÷ 3 = 2!',
+  'Bagi 10 menjadi dua kelompok yang sama: 5 dan 5!': 'Divide 10 into two equal groups: 5 and 5!',
+  'Ingat perkalian 3: 3 x 3 = 9, jadi 9 ÷ 3 = 3!': 'Remember multiplication by 3: 3 x 3 = 9, so 9 ÷ 3 = 3!',
+  'Berapa kali 3 yang menghasilkan 12? 3 x 4 = 12!': 'How many times 3 equals 12? 3 x 4 = 12!',
+  'Penjumlahan kembar: 6 + 6 = 12!': 'Double addition: 6 + 6 = 12!',
+  'Kurangkan 12 dengan 8: 12 - 8 = ?': 'Subtract 8 from 12: 12 - 8 = ?',
+  'Hitung loncat lima: 5, 10, 15!': 'Skip count by fives: 5, 10, 15!',
+  'Bagi 20 menjadi dua bagian yang sama banyak: 10 dan 10!': 'Divide 20 into two equal parts: 10 and 10!',
 };
 
 /**
@@ -396,7 +433,115 @@ export function translateStoryToEnglish(text: string): string {
   if (/^Jika 20 koin bintang dibagi sama rata berdua/i.test(trimmed)) {
     return 'If 20 star coins are divided equally between Budi and Siti, how many coins does each hero receive?';
   }
+  if (/^Berapa banyak balon warna-warni yang dibawa Siti di taman/i.test(trimmed)) {
+    return 'How many colorful balloons is Siti carrying in the park?';
+  }
+  if (/^Ada berapa jumlah kue cupcake lezat di atas meja toko roti/i.test(trimmed)) {
+    return 'How many delicious cupcakes are there on the bakery table?';
+  }
+  if (/^Berapa banyak bunga cantik yang sedang bermekaran di kebun/i.test(trimmed)) {
+    return 'How many pretty flowers are blooming in the garden?';
+  }
+  if (/^Berapa banyak bintang ajaib yang berkelap-kelip terang di langit malam/i.test(trimmed)) {
+    return 'How many magical stars are twinkling brightly in the night sky?';
+  }
 
-  // 4. Default clean fallback (returns translated English or trimmed text)
+  // 4. Option & Unit Patterns for Math
+  if (/^(\d+)\s+Butir$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Butir$/i, '$1 Marbles');
+  }
+  if (/^(\d+)\s+Apel$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Apel$/i, '$1 Apples');
+  }
+  if (/^(\d+)\s+Balon$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Balon$/i, '$1 Balloons');
+  }
+  if (/^(\d+)\s+Kue$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Kue$/i, '$1 Cakes');
+  }
+  if (/^(\d+)\s+Bunga$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Bunga$/i, '$1 Flowers');
+  }
+  if (/^(\d+)\s+Bintang$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Bintang$/i, '$1 Stars');
+  }
+  if (/^(\d+)\s+Buah$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Buah$/i, '$1 Fruits');
+  }
+  if (/^(\d+)\s+Buku$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Buku$/i, '$1 Books');
+  }
+  if (/^(\d+)\s+Cupcake$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Cupcake$/i, '$1 Cupcakes');
+  }
+  if (/^(\d+)\s+Donat$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Donat$/i, '$1 Donuts');
+  }
+  if (/^(\d+)\s+Koin$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Koin$/i, '$1 Coins');
+  }
+  if (/^(\d+)\s+Tangkai$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Tangkai$/i, '$1 Stems');
+  }
+  if (/^(\d+)\s+Krayon$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Krayon$/i, '$1 Crayons');
+  }
+  if (/^(\d+)\s+Kristal$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Kristal$/i, '$1 Crystals');
+  }
+  if (/^(\d+)\s+Permata$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Permata$/i, '$1 Gems');
+  }
+  if (/^(\d+)\s+Obor$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Obor$/i, '$1 Torches');
+  }
+  if (/^(\d+)\s+Botol$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Botol$/i, '$1 Bottles');
+  }
+  if (/^(\d+)\s+Potong$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Potong$/i, '$1 Slices');
+  }
+  if (/^(\d+)\s+Permen$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Permen$/i, '$1 Candies');
+  }
+  if (/^(\d+)\s+Koin Bintang$/i.test(trimmed)) {
+    return trimmed.replace(/^(\d+)\s+Koin Bintang$/i, '$1 Star Coins');
+  }
+  if (/^Lebih Banyak\s+(\d+)\s+Butir$/i.test(trimmed)) {
+    return trimmed.replace(/^Lebih Banyak\s+(\d+)\s+Butir$/i, '$1 More Marbles');
+  }
+  if (/^Lebih Banyak\s+(\d+)\s+Obor$/i.test(trimmed)) {
+    return trimmed.replace(/^Lebih Banyak\s+(\d+)\s+Obor$/i, '$1 More Torches');
+  }
+  if (/^Budi\s*\((.*?)\)$/i.test(trimmed)) {
+    const inner = trimmed.match(/^Budi\s*\((.*?)\)$/i)?.[1] || '';
+    return `Budi (${translateStoryToEnglish(inner)})`;
+  }
+  if (/^Siti\s*\((.*?)\)$/i.test(trimmed)) {
+    const inner = trimmed.match(/^Siti\s*\((.*?)\)$/i)?.[1] || '';
+    return `Siti (${translateStoryToEnglish(inner)})`;
+  }
+  if (/^Keranjang A\s*\((.*?)\)$/i.test(trimmed)) {
+    const inner = trimmed.match(/^Keranjang A\s*\((.*?)\)$/i)?.[1] || '';
+    return `Basket A (${translateStoryToEnglish(inner)})`;
+  }
+  if (/^Keranjang B\s*\((.*?)\)$/i.test(trimmed)) {
+    const inner = trimmed.match(/^Keranjang B\s*\((.*?)\)$/i)?.[1] || '';
+    return `Basket B (${translateStoryToEnglish(inner)})`;
+  }
+  if (/^Keduanya Sama Banyak$/i.test(trimmed)) {
+    return 'Both are Equal';
+  }
+  if (/^Keduanya Sama Banyak\s*\((.*?)\)$/i.test(trimmed)) {
+    return 'Both are Equal (6 = 6)';
+  }
+  if (/^Balon Budi Lebih Banyak$/i.test(trimmed)) {
+    return 'Budi has More Balloons';
+  }
+  if (/^Balon Siti Lebih Banyak$/i.test(trimmed)) {
+    return 'Siti has More Balloons';
+  }
+
+  // 5. Default clean fallback (returns translated English or trimmed text)
   return trimmed;
 }

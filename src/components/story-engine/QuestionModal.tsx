@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { StoryQuestion, RemedialStory, BadgeDef } from '@/types/story';
 import { soundEngine } from '@/lib/audio/soundEngine';
-import { voiceEngine } from '@/lib/audio/voiceEngine';
-import { Lightbulb, Sparkles, CheckCircle2, HeartHandshake, ArrowRight, BookOpen } from 'lucide-react';
+import { voiceEngine, VoiceLanguage } from '@/lib/audio/voiceEngine';
+import { translateStoryToEnglish } from '@/lib/i18n/storyTranslator';
+import { Lightbulb, Sparkles, CheckCircle2, HeartHandshake, ArrowRight, BookOpen, Volume2 } from 'lucide-react';
 
 interface QuestionModalProps {
   question: StoryQuestion;
   remedialStory?: RemedialStory;
+  voiceLang?: VoiceLanguage;
   onAnswerSubmit: (isCorrect: boolean, hintUsed: boolean, attempts: number, remedialUsed: boolean) => {
     xpEarned: number;
     newBadges: BadgeDef[];
@@ -22,6 +24,7 @@ interface QuestionModalProps {
 export const QuestionModal: React.FC<QuestionModalProps> = ({
   question,
   remedialStory,
+  voiceLang = voiceEngine.getLanguage(),
   onAnswerSubmit,
   onProceedNext,
   onLaunchRemedial,
@@ -58,7 +61,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         colors: ['#fbbf24', '#38bdf8', '#4ade80', '#f472b6', '#a855f7'],
       });
 
-      const currentLang = voiceEngine.getLanguage();
+      const currentLang = voiceLang;
       const congratulation = `Hebat sekali! Jawabanmu benar! ${question.explanation}`;
       setFeedbackMessage(congratulation);
       voiceEngine.speak(congratulation, { speaker: 'narrator', lang: currentLang });
@@ -69,7 +72,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
       setFeedbackState('wrong');
       soundEngine.playSfx('wrong_gentle');
 
-      const currentLang = voiceEngine.getLanguage();
+      const currentLang = voiceLang;
       if (currentAttempts === 1) {
         const msg = 'Belum tepat. Tidak apa-apa, yuk coba hitung lagi ya!';
         setFeedbackMessage(msg);
@@ -104,21 +107,41 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         <div className="flex items-center gap-1 bg-amber-100 px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-full border border-amber-300">
           <span className="text-xs sm:text-base">🌟</span>
           <span className="font-extrabold text-[10px] sm:text-xs text-amber-900 uppercase tracking-wide">
-            Tantangan Seru!
+            {voiceLang === 'en' ? 'Fun Challenge!' : 'Tantangan Seru!'}
           </span>
         </div>
 
         <div className="bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold border border-sky-300">
-          Percobaan ke-{attempts + 1}
+          {voiceLang === 'en' ? `Attempt ${attempts + 1}` : `Percobaan ke-${attempts + 1}`}
         </div>
       </div>
 
-      {/* Main Question Text (Compact font size as requested) */}
-      <h3 className="text-sm sm:text-lg md:text-xl font-black text-center text-slate-800 mb-2.5 sm:mb-4 leading-snug px-1">
-        {question.question}
-      </h3>
+      {/* Main Question Text with Audio Read-Aloud Button */}
+      <div className="flex items-center justify-center gap-2 mb-2.5 sm:mb-4 px-1">
+        <div className="text-center flex-1">
+          <h3 className="text-sm sm:text-lg md:text-xl font-black text-slate-800 leading-snug">
+            {voiceLang === 'en' ? translateStoryToEnglish(question.question) : question.question}
+          </h3>
+          {voiceLang === 'en' && (
+            <p className="text-xs sm:text-sm font-bold text-slate-400 mt-0.5 italic">
+              🇮🇩 &ldquo;{question.question}&rdquo;
+            </p>
+          )}
+        </div>
+        <button
+          onClick={() => {
+            soundEngine.playSfx('click');
+            const qText = voiceLang === 'en' ? translateStoryToEnglish(question.question) : question.question;
+            voiceEngine.speak(qText, { speaker: 'narrator', lang: voiceLang });
+          }}
+          title={voiceLang === 'en' ? 'Listen to question' : 'Dengarkan pertanyaan'}
+          className="candy-btn bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 p-2 sm:p-2.5 rounded-xl sm:rounded-2xl shrink-0 flex items-center justify-center shadow-xs"
+        >
+          <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-amber-900" />
+        </button>
+      </div>
 
-      {/* Options Layout: Ke Bawah (1 kolom / vertikal) jika jawaban panjang, atau Tetap 2 Kolom jika jawaban sedikit/pendek */}
+      {/* Options Layout */}
       {(() => {
         const isLongAnswers = question.options.some(opt => {
           const text = (opt.label || String(opt.value)).trim();
@@ -133,6 +156,9 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
               const isCorrectAnswer = feedbackState === 'correct' && opt.id === question.correctAnswer;
               const isWrongSelected = feedbackState === 'wrong' && isSelected;
               const colorTheme = optionColorStyles[idx % optionColorStyles.length];
+
+              const rawLabel = opt.label || String(opt.value);
+              const displayLabel = voiceLang === 'en' ? translateStoryToEnglish(rawLabel) : rawLabel;
 
               return (
                 <button
@@ -153,7 +179,9 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
                     ${isSelected ? 'bg-amber-900 text-amber-100' : colorTheme.badge}`}>
                     {opt.id}
                   </span>
-                  <span className="leading-snug break-words flex-1 font-extrabold text-xs sm:text-sm md:text-base">{opt.label || String(opt.value)}</span>
+                  <span className="leading-snug break-words flex-1 font-extrabold text-xs sm:text-sm md:text-base">
+                    {displayLabel}
+                  </span>
                   {isCorrectAnswer && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-white shrink-0 ml-1" />}
                 </button>
               );
@@ -176,8 +204,15 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
           ) : (
             <HeartHandshake className="w-7 h-7 text-amber-500 shrink-0 mt-0.5" />
           )}
-          <div className="text-base sm:text-lg">
-            <p className="font-extrabold">{feedbackMessage}</p>
+          <div className="text-base sm:text-lg flex-1">
+            <p className="font-extrabold leading-snug">
+              {voiceLang === 'en' ? translateStoryToEnglish(feedbackMessage) : feedbackMessage}
+            </p>
+            {voiceLang === 'en' && (
+              <p className="text-xs sm:text-sm font-bold text-slate-500 mt-1 italic">
+                🇮🇩 &ldquo;{feedbackMessage}&rdquo;
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -187,9 +222,16 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         <div className="p-5 rounded-3xl bg-amber-50 border-2 border-amber-300 text-amber-950 mb-5 animate-pop-in">
           <div className="flex items-center gap-2 mb-2 font-black text-amber-800 text-base">
             <Lightbulb className="w-6 h-6 text-yellow-500" />
-            <span>Petunjuk Ramah:</span>
+            <span>{voiceLang === 'en' ? 'Helpful Hint:' : 'Petunjuk Ramah:'}</span>
           </div>
-          <p className="text-base sm:text-lg font-bold mb-3">{question.hint}</p>
+          <p className="text-base sm:text-lg font-bold mb-1">
+            {voiceLang === 'en' ? translateStoryToEnglish(question.hint) : question.hint}
+          </p>
+          {voiceLang === 'en' && (
+            <p className="text-xs sm:text-sm font-semibold text-amber-700/80 mb-3 italic">
+              🇮🇩 &ldquo;{question.hint}&rdquo;
+            </p>
+          )}
           {question.visualHint?.formula && (
             <div className="bg-white px-4 py-2 rounded-2xl border-2 border-amber-300 text-amber-900 font-black text-lg inline-block shadow-sm">
               {question.visualHint.formula}
@@ -204,15 +246,19 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
           <div className="flex items-center gap-3">
             <BookOpen className="w-7 h-7 text-indigo-500 shrink-0" />
             <div>
-              <span className="font-black text-indigo-950 block text-base sm:text-lg">Mau coba cerita lain?</span>
-              <span className="text-xs sm:text-sm text-indigo-700 font-bold">Yuk kita pelajari bersama cerita buah apel yang lezat!</span>
+              <span className="font-black text-indigo-950 block text-base sm:text-lg">
+                {voiceLang === 'en' ? 'Want to try another story?' : 'Mau coba cerita lain?'}
+              </span>
+              <span className="text-xs sm:text-sm text-indigo-700 font-bold">
+                {voiceLang === 'en' ? 'Let us explore another fun story together with Budi!' : 'Yuk kita pelajari bersama cerita buah apel yang lezat!'}
+              </span>
             </div>
           </div>
           <button
             onClick={onLaunchRemedial}
             className="candy-btn candy-btn-purple font-extrabold px-5 py-2.5 rounded-2xl text-sm shrink-0"
           >
-            Buka Cerita
+            {voiceLang === 'en' ? 'Open Story' : 'Buka Cerita'}
           </button>
         </div>
       )}
@@ -222,11 +268,17 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
         <div className="p-5 rounded-3xl bg-gradient-to-r from-amber-100 via-yellow-100 to-emerald-100 border-2 border-amber-300 mb-5 text-center animate-pop-in">
           <div className="flex items-center justify-center gap-2 font-black text-amber-900 text-xl mb-1">
             <Sparkles className="w-6 h-6 text-yellow-500 animate-spin" />
-            <span>+ {rewardData.xpEarned} XP BERHASIL DIDAPATKAN!</span>
+            <span>
+              {voiceLang === 'en'
+                ? `+ ${rewardData.xpEarned} XP SUCCESSFULLY EARNED!`
+                : `+ ${rewardData.xpEarned} XP BERHASIL DIDAPATKAN!`}
+            </span>
           </div>
           {rewardData.newBadges.length > 0 && (
             <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-              <span className="text-xs font-bold text-amber-800">Lencana Baru:</span>
+              <span className="text-xs font-bold text-amber-800">
+                {voiceLang === 'en' ? 'New Badges:' : 'Lencana Baru:'}
+              </span>
               {rewardData.newBadges.map(b => (
                 <span key={b.id} className="bg-amber-400 text-amber-950 text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                   <span>{b.icon}</span>
@@ -251,7 +303,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
               className="candy-btn candy-btn-yellow flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm"
             >
               <Lightbulb className="w-4 h-4 text-amber-800" />
-              <span>Petunjuk</span>
+              <span>{voiceLang === 'en' ? 'Hint' : 'Petunjuk'}</span>
             </button>
           )}
         </div>
@@ -262,7 +314,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
               onClick={onProceedNext}
               className="w-full sm:w-auto candy-btn candy-btn-green flex items-center justify-center gap-2 px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl font-black text-sm sm:text-xl animate-wiggle"
             >
-              <span>Lanjut Petualangan!</span>
+              <span>{voiceLang === 'en' ? 'Continue Adventure!' : 'Lanjut Petualangan!'}</span>
               <ArrowRight className="w-4 h-4 sm:w-6 sm:h-6 stroke-[3]" />
             </button>
           ) : (
@@ -275,7 +327,7 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
                   : 'bg-slate-200 text-slate-400 border-b-4 border-slate-300 cursor-not-allowed shadow-none'
               }`}
             >
-              Periksa Jawaban
+              {voiceLang === 'en' ? 'Check Answer' : 'Periksa Jawaban'}
             </button>
           )}
         </div>
